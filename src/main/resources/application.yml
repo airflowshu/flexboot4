@@ -1,0 +1,40 @@
+server:
+  port: 8080
+
+#debug: true
+
+spring:
+  application:
+    name: flexboot4
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  sql:
+    init:
+      mode: always
+      continue-on-error: true
+      schema-locations: classpath:schema.sql
+  main:
+    allow-bean-definition-overriding: true
+  web:
+    error:
+      include-stacktrace: always
+
+mybatis-flex:
+  datasource:
+    ds1:
+      url: jdbc:postgresql://192.168.11.104:5433/flexboot4
+      username: flexboot4
+      password: flexboot4
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  inject-sql-session-on-mapper-scan: true
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+scalar:
+  enabled: true
+  path: /scalar
