@@ -4,7 +4,6 @@ import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.interceptor.CacheOperationInvocationContext;
 import org.springframework.cache.interceptor.SimpleCacheResolver;
-import org.springframework.util.StringUtils;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -23,7 +22,7 @@ public class DynamicCacheResolver extends SimpleCacheResolver {
     protected Collection<String> getCacheNames(CacheOperationInvocationContext<?> context) {
         // 1. 尝试获取方法或类上的 @Cacheable/@CacheEvict 等注解中显式指定的 cacheNames
         Collection<String> cacheNames = super.getCacheNames(context);
-        if (cacheNames != null && !cacheNames.isEmpty()) {
+        if (!cacheNames.isEmpty()) {
             return cacheNames;
         }
 

@@ -7,18 +7,17 @@ import com.yunlbd.flexboot4.common.ApiResult;
 import com.yunlbd.flexboot4.dto.SearchDto;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.annotation.Resource;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.function.Consumer;
 
 /**
  * 通用 Controller 基类
@@ -260,8 +259,7 @@ public abstract class BaseController<S extends IService<T>, T, ID extends Serial
         
         // 针对 PostgreSQL 时间字段的处理：尝试将字符串解析为 LocalDateTime
         Object processedVal = val;
-        if (val instanceof String && (field.toLowerCase().contains("time") || field.toLowerCase().contains("date"))) {
-            String valStr = (String) val;
+        if (val instanceof String valStr && (field.toLowerCase().contains("time") || field.toLowerCase().contains("date"))) {
             // 尝试解析常见的日期时间格式
             try {
                 // 1. yyyy-MM-dd HH:mm:ss

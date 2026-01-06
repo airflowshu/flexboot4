@@ -11,13 +11,15 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 
+import com.yunlbd.flexboot4.entity.BaseEntity;
+
 /**
  * 通用业务层实现基类，封装了带缓存的CRUD操作
  * 
  * 注意：需要在子类上使用 @CacheConfig(cacheNames = "xxx") 指定缓存名称。
  * 父类方法使用了 cacheResolver = "dynamicCacheResolver" 来动态获取子类配置的缓存名称。
  */
-public class BaseServiceImpl<M extends BaseMapper<T>, T> extends CacheableServiceImpl<M, T> {
+public class BaseServiceImpl<M extends BaseMapper<T>, T extends BaseEntity> extends CacheableServiceImpl<M, T> {
 
     @Override
     @CacheEvict(allEntries = true, cacheResolver = "dynamicCacheResolver")

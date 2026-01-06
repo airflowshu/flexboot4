@@ -90,13 +90,14 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
 
                 String typeStr = "menu";
                 if (menu.getType() != null) {
-                    switch (menu.getType()) {
-                        case 0: typeStr = "catalog"; break;
-                        case 1: typeStr = "menu"; break;
-                        case 2: typeStr = "button"; break;
-                        case 3: typeStr = "embedded"; break;
-                        case 4: typeStr = "link"; break;
-                    }
+                    typeStr = switch (menu.getType()) {
+                        case 0 -> "catalog";
+                        case 1 -> "menu";
+                        case 2 -> "button";
+                        case 3 -> "embedded";
+                        case 4 -> "link";
+                        default -> typeStr;
+                    };
                 }
                 node.setType(typeStr);
 
