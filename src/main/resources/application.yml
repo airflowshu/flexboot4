@@ -38,3 +38,14 @@ springdoc:
 scalar:
   enabled: true
   path: /scalar
+
+
+security:
+  ignore:
+    urls:
+      - /resources/**
+      - /static/**
+      - /api/auth/**
+      - /v3/api-docs/**
+      - /scalar/**
+      - /error

@@ -55,7 +55,7 @@ public class AuthController {
         if (token == null) {
             return ApiResult.error(401, "Unauthorized");
         }
-        Long userId = jwtUtil.extractUserId(token);
+        String userId = jwtUtil.extractUserId(token);
         List<String> codes = sysMenuService.getPermissionCodes(userId);
         return ApiResult.success(codes);
     }

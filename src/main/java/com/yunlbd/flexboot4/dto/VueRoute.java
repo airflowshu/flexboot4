@@ -6,8 +6,8 @@ import java.util.List;
 
 @Data
 public class VueRoute implements Serializable {
-    private Long id;
-    private Long pid;
+    private String id;
+    private String pid;
     private String path;
     private String name;
     private String component;

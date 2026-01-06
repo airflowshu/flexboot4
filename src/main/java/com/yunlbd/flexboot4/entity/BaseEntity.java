@@ -3,6 +3,7 @@ package com.yunlbd.flexboot4.entity;
 import com.mybatisflex.annotation.Column;
 import com.mybatisflex.annotation.Id;
 import com.mybatisflex.annotation.KeyType;
+import com.mybatisflex.core.keygen.KeyGenerators;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -11,8 +12,8 @@ import java.time.LocalDateTime;
 @Data
 public class BaseEntity implements Serializable {
 
-    @Id(keyType = KeyType.Auto)
-    private Long id;
+    @Id(keyType = KeyType.Generator, value = KeyGenerators.snowFlakeId)
+    private String id;
 
     @Column(version = true)
     private Long version;

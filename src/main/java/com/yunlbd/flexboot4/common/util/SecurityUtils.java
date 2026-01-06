@@ -36,7 +36,7 @@ public class SecurityUtils {
     /**
      * Get current user ID
      */
-    public static Long getUserId() {
+    public static String getUserId() {
         SysUser sysUser = getSysUser();
         return sysUser != null ? sysUser.getId() : null;
     }

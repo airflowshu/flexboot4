@@ -1,6 +1,6 @@
 -- SysUser Table
 CREATE TABLE IF NOT EXISTS sys_user (
-    id BIGSERIAL PRIMARY KEY,
+    id VARCHAR(32) NOT NULL UNIQUE,
     username VARCHAR(100) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     real_name VARCHAR(100),
@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS sys_user (
 
 -- SysRole Table
 CREATE TABLE IF NOT EXISTS sys_role (
-    id BIGSERIAL PRIMARY KEY,
+    id VARCHAR(32) NOT NULL UNIQUE,
     role_name VARCHAR(100) NOT NULL,
     role_value VARCHAR(100) NOT NULL UNIQUE,
     status INTEGER DEFAULT 1,
@@ -36,8 +36,8 @@ CREATE TABLE IF NOT EXISTS sys_role (
 
 -- SysMenu Table
 CREATE TABLE IF NOT EXISTS sys_menu (
-    id BIGSERIAL PRIMARY KEY,
-    parent_id BIGINT DEFAULT 0,
+    id VARCHAR(32) NOT NULL UNIQUE,
+    parent_id VARCHAR(32) NOT NULL UNIQUE DEFAULT '0',
     path VARCHAR(255),
     name VARCHAR(100),
     component VARCHAR(255),
@@ -73,9 +73,9 @@ CREATE TABLE IF NOT EXISTS sys_menu (
 
 -- SysUserRole Table
 CREATE TABLE IF NOT EXISTS sys_user_role (
-    id BIGSERIAL PRIMARY KEY,
-    user_id BIGINT NOT NULL,
-    role_id BIGINT NOT NULL,
+    id VARCHAR(32) NOT NULL UNIQUE,
+    user_id VARCHAR(32) NOT NULL,
+    role_id VARCHAR(32) NOT NULL,
     version BIGINT DEFAULT 0,
     del_flag INTEGER DEFAULT 0,
     create_time TIMESTAMP DEFAULT NOW(),
@@ -87,9 +87,9 @@ CREATE TABLE IF NOT EXISTS sys_user_role (
 
 -- SysRoleMenu Table
 CREATE TABLE IF NOT EXISTS sys_role_menu (
-    id BIGSERIAL PRIMARY KEY,
-    role_id BIGINT NOT NULL,
-    menu_id BIGINT NOT NULL,
+    id VARCHAR(32) NOT NULL UNIQUE,
+    role_id VARCHAR(32) NOT NULL,
+    menu_id VARCHAR(32) NOT NULL,
     version BIGINT DEFAULT 0,
     del_flag INTEGER DEFAULT 0,
     create_time TIMESTAMP DEFAULT NOW(),

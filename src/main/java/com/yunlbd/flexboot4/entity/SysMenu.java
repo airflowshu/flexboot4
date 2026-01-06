@@ -9,7 +9,7 @@ import lombok.EqualsAndHashCode;
 @Table("sys_menu")
 public class SysMenu extends BaseEntity {
 
-    private Long parentId;
+    private String parentId;
     private String path;
     private String name; // Router name
     private String component; // Component path

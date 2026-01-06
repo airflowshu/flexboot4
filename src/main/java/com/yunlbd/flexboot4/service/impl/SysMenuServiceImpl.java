@@ -17,8 +17,8 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
-
 
 @Service
 @CacheConfig(cacheNames = "sysMenu")
@@ -26,14 +26,14 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
 
     @Override
     @Cacheable(key = "'user:' + #userId")
-    public List<VueRoute> getUserMenus(Long userId) {
+    public List<VueRoute> getUserMenus(String userId) {
         // Filter by user roles and exclude buttons (type = 2)
         // Only return Catalog (0) and Menu (1)
         List<SysMenu> allMenus = this.list(QueryWrapper.create()
                 .where(SysMenu::getStatus).eq(1)
                 .and(SysMenu::getType).in(0, 1) // 0: Catalog, 1: Menu
                 .orderBy("order_no", true));
-        return buildMenuTree(allMenus, 0L);
+        return buildMenuTree(allMenus, "0");
     }
 
     private String sanitizeComponentPath(String component) {
@@ -55,7 +55,7 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
 
     @Override
     @Cacheable(key = "'codes:' + #userId")
-    public List<String> getPermissionCodes(Long userId) {
+    public List<String> getPermissionCodes(String userId) {
         // Query: SysMenu -> SysRoleMenu -> SysRole -> SysUserRole -> SysUser
         // Join tables to get permissions for the specific user
         QueryWrapper queryWrapper = QueryWrapper.create()
@@ -74,10 +74,10 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
                 .collect(Collectors.toList());
     }
 
-    private List<VueRoute> buildMenuTree(List<SysMenu> menus, Long parentId) {
+    private List<VueRoute> buildMenuTree(List<SysMenu> menus, String parentId) {
         List<VueRoute> tree = new ArrayList<>();
         for (SysMenu menu : menus) {
-            if (parentId.equals(menu.getParentId())) {
+            if (Objects.equals(menu.getParentId(), parentId)) {
                 VueRoute node = new VueRoute();
                 node.setId(menu.getId());
                 node.setPid(menu.getParentId());
@@ -99,29 +99,11 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
                     }
                 }
                 node.setType(typeStr);
-                
-                RouteMeta meta = new RouteMeta();
-                meta.setTitle(menu.getTitle());
-                meta.setIcon(menu.getIcon());
-                meta.setActiveIcon(menu.getActiveIcon());
-                meta.setHideMenu(menu.getHideMenu());
-                meta.setOrder(menu.getOrderNo());
-                meta.setBadge(menu.getBadge());
-                meta.setBadgeType(menu.getBadgeType());
-                meta.setBadgeVariants(menu.getBadgeVariants());
-                meta.setLink(menu.getLink());
-                meta.setIframeSrc(menu.getIframeSrc());
-                meta.setAffixTab(menu.getAffixTab());
-                meta.setHideChildrenInMenu(menu.getHideChildrenInMenu());
-                meta.setHideBreadcrumb(menu.getHideBreadcrumb());
-                meta.setHideTab(menu.getHideTab());
-                meta.setKeepAlive(menu.getKeepAlive());
-                meta.setMenuVisibleWithForbidden(menu.getMenuVisibleWithForbidden());
-                if (menu.getAuthority() != null && !menu.getAuthority().isEmpty()) {
-                    meta.setAuthority(Arrays.asList(menu.getAuthority().split(",")));
-                }
+
+                RouteMeta meta = getRouteMeta(menu);
                 node.setMeta(meta);
                 
+                // Recursively build children
                 List<VueRoute> children = buildMenuTree(menus, menu.getId());
                 if (!children.isEmpty()) {
                     node.setChildren(children);
@@ -131,6 +113,30 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
             }
         }
         return tree;
+    }
+
+    private static RouteMeta getRouteMeta(SysMenu menu) {
+        RouteMeta meta = new RouteMeta();
+        meta.setTitle(menu.getTitle());
+        meta.setIcon(menu.getIcon());
+        meta.setActiveIcon(menu.getActiveIcon());
+        meta.setHideMenu(menu.getHideMenu());
+        meta.setOrder(menu.getOrderNo());
+        meta.setBadge(menu.getBadge());
+        meta.setBadgeType(menu.getBadgeType());
+        meta.setBadgeVariants(menu.getBadgeVariants());
+        meta.setLink(menu.getLink());
+        meta.setIframeSrc(menu.getIframeSrc());
+        meta.setAffixTab(menu.getAffixTab());
+        meta.setHideChildrenInMenu(menu.getHideChildrenInMenu());
+        meta.setHideBreadcrumb(menu.getHideBreadcrumb());
+        meta.setHideTab(menu.getHideTab());
+        meta.setKeepAlive(menu.getKeepAlive());
+        meta.setMenuVisibleWithForbidden(menu.getMenuVisibleWithForbidden());
+        if (menu.getAuthority() != null && !menu.getAuthority().isEmpty()) {
+            meta.setAuthority(Arrays.asList(menu.getAuthority().split(",")));
+        }
+        return meta;
     }
 
 }
