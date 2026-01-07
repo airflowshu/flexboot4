@@ -1,20 +1,20 @@
 package com.yunlbd.flexboot4.config;
 
-import org.springframework.boot.CommandLineRunner;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.cache.support.NoOpCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+
 import java.time.Duration;
-import org.springframework.core.env.Environment;
-import org.springframework.beans.factory.annotation.Autowired;
 import java.util.Arrays;
-import org.springframework.cache.support.NoOpCacheManager;
 
 @Configuration
 @EnableCaching
