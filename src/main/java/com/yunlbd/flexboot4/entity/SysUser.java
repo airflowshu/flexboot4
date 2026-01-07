@@ -22,8 +22,8 @@ public class SysUser extends BaseEntity {
 
     @RelationManyToMany(
             joinTable = "sys_user_role",
-            selfField = "id", joinTargetColumn = "role_id",
-            targetField = "id", joinSelfColumn = "user_id"
+            selfField = "id", joinSelfColumn = "user_id",
+            targetField = "id", joinTargetColumn = "role_id"
     )
     private List<SysRole> roles;
 }

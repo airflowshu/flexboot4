@@ -4,12 +4,11 @@ import com.mybatisflex.core.query.QueryWrapper;
 import com.yunlbd.flexboot4.dto.RouteMeta;
 import com.yunlbd.flexboot4.dto.VueRoute;
 import com.yunlbd.flexboot4.entity.*;
-import com.yunlbd.flexboot4.entity.table.SysMenuTableDef;
-import com.yunlbd.flexboot4.entity.table.SysRoleMenuTableDef;
-import com.yunlbd.flexboot4.entity.table.SysRoleTableDef;
-import com.yunlbd.flexboot4.entity.table.SysUserRoleTableDef;
+import com.yunlbd.flexboot4.entity.table.*;
 import com.yunlbd.flexboot4.mapper.SysMenuMapper;
+import com.yunlbd.flexboot4.mapper.SysUserRoleMapper;
 import com.yunlbd.flexboot4.service.SysMenuService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -17,24 +16,129 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 @CacheConfig(cacheNames = "sysMenu")
 public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> implements SysMenuService {
+
+    private final SysUserRoleMapper sysUserRoleMapper;
 
     @Override
     @Cacheable(key = "'user:' + #userId")
     public List<VueRoute> getUserMenus(String userId) {
-        // Filter by user roles and exclude buttons (type = 2)
-        // Only return Catalog (0) and Menu (1)
-        List<SysMenu> allMenus = this.list(QueryWrapper.create()
-                .where(SysMenu::getStatus).eq(1)
-                .and(SysMenu::getType).in(0, 1) // 0: Catalog, 1: Menu
-                .orderBy("order_no", true));
-        return buildMenuTree(allMenus, "0");
+        List<SysMenu> fullTree = mapper.selectListWithRelationsByQuery(
+                QueryWrapper.create()
+                        .where(SysMenu::getStatus).eq(1)
+                        .and(SysMenu::getType).in(0, 1) // 0: Catalog, 1: Menu
+                        .and(SysMenu::getParentId).eq("0") // Fetch roots
+                        .orderBy(SysMenu::getOrderNo).asc()
+        );
+        // 1. Super Admin (userId = "1"): Return all enabled menus
+        if ("1".equals(userId)) {
+            return buildVueRoutes(fullTree);
+        }
+
+        // 2. Regular User: Filter by RBAC (User -> Role -> Menu)
+        QueryWrapper accessQuery = QueryWrapper.create()
+                .select(SysMenuTableDef.SYS_MENU.ID)
+                .from(SysMenu.class)
+                .leftJoin(SysRoleMenu.class).on(SysRoleMenuTableDef.SYS_ROLE_MENU.MENU_ID.eq(SysMenuTableDef.SYS_MENU.ID))
+                .leftJoin(SysUserRole.class).on(SysUserRoleTableDef.SYS_USER_ROLE.ROLE_ID.eq(SysRoleMenuTableDef.SYS_ROLE_MENU.ROLE_ID))
+                .where(SysUserRoleTableDef.SYS_USER_ROLE.USER_ID.eq(userId))
+                .and(SysMenu::getStatus).eq(1);
+        
+        List<String> accessibleMenuIds = mapper.selectListByQueryAs(accessQuery, String.class);
+
+        if (accessibleMenuIds.isEmpty()) {
+            return new ArrayList<>();
+        }
+        return buildVueRoutesWithFilter(fullTree, accessibleMenuIds);
     }
+
+    private List<VueRoute> buildVueRoutesWithFilter(List<SysMenu> menus, List<String> accessibleIds) {
+        List<VueRoute> routes = new ArrayList<>();
+        for (SysMenu menu : menus) {
+            // Check if this menu or any of its children are accessible
+            if (isMenuAccessibleOrHasAccessibleChildren(menu, accessibleIds)) {
+                VueRoute route = convertToVueRouteWithFilter(menu, accessibleIds);
+                if (route != null) {
+                    routes.add(route);
+                }
+            }
+        }
+        return routes;
+    }
+
+    private boolean isMenuAccessibleOrHasAccessibleChildren(SysMenu menu, List<String> accessibleIds) {
+        if (accessibleIds == null) {
+            return true; // If null, assume super admin or full access
+        }
+        if (accessibleIds.contains(menu.getId())) {
+            return true;
+        }
+        if (menu.getChildren() != null) {
+            for (SysMenu child : menu.getChildren()) {
+                if (isMenuAccessibleOrHasAccessibleChildren(child, accessibleIds)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private VueRoute convertToVueRouteWithFilter(SysMenu menu, List<String> accessibleIds) {
+        // Even if the parent itself isn't in accessibleIds, if it has accessible children, 
+        // we usually want to show it (perhaps as a folder).
+        // However, standard RBAC usually implies parent is assigned if child is assigned.
+        // Here we strictly follow: show if accessible OR has accessible children.
+        
+        VueRoute route = new VueRoute();
+        route.setId(menu.getId());
+        route.setPid(menu.getParentId());
+        route.setName(menu.getName());
+        route.setPath(menu.getPath());
+        route.setComponent(sanitizeComponentPath(menu.getComponent()));
+        route.setRedirect(menu.getRedirect());
+        route.setMeta(getRouteMeta(menu));
+        
+        List<VueRoute> childrenRoutes = new ArrayList<>();
+        if (menu.getChildren() != null && !menu.getChildren().isEmpty()) {
+            for (SysMenu child : menu.getChildren()) {
+                if (child.getStatus() == 1 && (child.getType() == 0 || child.getType() == 1)) {
+                    if (isMenuAccessibleOrHasAccessibleChildren(child, accessibleIds)) {
+                        VueRoute childRoute = convertToVueRouteWithFilter(child, accessibleIds);
+                        if (childRoute != null) {
+                            childrenRoutes.add(childRoute);
+                        }
+                    }
+                }
+            }
+        }
+        
+        if (!childrenRoutes.isEmpty()) {
+            route.setChildren(childrenRoutes);
+        } else {
+            // If leaf node and not accessible, don't return it
+            if (accessibleIds != null && !accessibleIds.contains(menu.getId())) {
+                return null;
+            }
+        }
+        
+        return route;
+    }
+    
+    // Kept for backward compatibility or direct full tree conversion
+    private List<VueRoute> buildVueRoutes(List<SysMenu> menus) {
+        return buildVueRoutesWithFilter(menus, null); // null means no filter (super admin)
+    }
+
+    // Helper to unify logic: if accessibleIds is null, it means allow all
+    private boolean isAccessible(String menuId, List<String> accessibleIds) {
+        return accessibleIds == null || accessibleIds.contains(menuId);
+    }
+
 
     private String sanitizeComponentPath(String component) {
         if (component == null) {
@@ -64,7 +168,7 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
                 .leftJoin(SysRoleMenu.class).on(SysRoleMenuTableDef.SYS_ROLE_MENU.MENU_ID.eq(SysMenuTableDef.SYS_MENU.ID))
                 .leftJoin(SysRole.class).on(SysRoleTableDef.SYS_ROLE.ID.eq(SysRoleMenuTableDef.SYS_ROLE_MENU.ROLE_ID))
                 .leftJoin(SysUserRole.class).on(SysUserRoleTableDef.SYS_USER_ROLE.ROLE_ID.eq(SysRoleTableDef.SYS_ROLE.ID))
-                .where(SysUserRole::getUserId).eq(userId)
+                .where(SysUserRoleTableDef.SYS_USER_ROLE.USER_ID.eq(userId))
                 .and(SysMenu::getStatus).eq(1)
                 .and(SysMenu::getPermission).isNotNull()
                 .and(SysMenu::getPermission).ne(""); // Ensure not empty
@@ -72,48 +176,6 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
         return mapper.selectListByQueryAs(queryWrapper, String.class).stream()
                 .distinct()
                 .collect(Collectors.toList());
-    }
-
-    private List<VueRoute> buildMenuTree(List<SysMenu> menus, String parentId) {
-        List<VueRoute> tree = new ArrayList<>();
-        for (SysMenu menu : menus) {
-            if (Objects.equals(menu.getParentId(), parentId)) {
-                VueRoute node = new VueRoute();
-                node.setId(menu.getId());
-                node.setPid(menu.getParentId());
-                node.setPath(menu.getPath());
-                node.setName(menu.getName());
-                node.setComponent(sanitizeComponentPath(menu.getComponent()));
-                node.setRedirect(menu.getRedirect());
-                node.setStatus(menu.getStatus());
-                node.setAuthCode(menu.getPermission());
-
-                String typeStr = "menu";
-                if (menu.getType() != null) {
-                    typeStr = switch (menu.getType()) {
-                        case 0 -> "catalog";
-                        case 1 -> "menu";
-                        case 2 -> "button";
-                        case 3 -> "embedded";
-                        case 4 -> "link";
-                        default -> typeStr;
-                    };
-                }
-                node.setType(typeStr);
-
-                RouteMeta meta = getRouteMeta(menu);
-                node.setMeta(meta);
-                
-                // Recursively build children
-                List<VueRoute> children = buildMenuTree(menus, menu.getId());
-                if (!children.isEmpty()) {
-                    node.setChildren(children);
-                }
-                
-                tree.add(node);
-            }
-        }
-        return tree;
     }
 
     private static RouteMeta getRouteMeta(SysMenu menu) {

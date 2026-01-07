@@ -16,7 +16,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/menu")
 @RequiredArgsConstructor
-public class MenuController extends BaseController<SysMenuService, SysMenu, String> {
+public class SysMenuController extends BaseController<SysMenuService, SysMenu, String> {
 
     private final SysMenuService sysMenuService;
 

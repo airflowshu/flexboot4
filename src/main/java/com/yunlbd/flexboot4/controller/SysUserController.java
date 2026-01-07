@@ -4,6 +4,7 @@ import com.yunlbd.flexboot4.common.ApiResult;
 import com.yunlbd.flexboot4.common.util.SecurityUtils;
 import com.yunlbd.flexboot4.entity.SysRole;
 import com.yunlbd.flexboot4.entity.SysUser;
+import com.yunlbd.flexboot4.service.SysUserService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,7 +17,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/user")
 @RequiredArgsConstructor
-public class UserController {
+public class SysUserController extends BaseController<SysUserService, SysUser, String> {
 
     @Operation(summary = "获取用户信息", description = "获取登录认证用户信息")
     @GetMapping("/info")

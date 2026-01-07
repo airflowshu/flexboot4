@@ -1,0 +1,14 @@
+package com.yunlbd.flexboot4.service;
+
+import com.mybatisflex.core.service.IService;
+import com.yunlbd.flexboot4.entity.SysUser;
+
+/**
+ *
+ * @author Wangts
+ * @Project_Name flexboot4
+ * @since 2026年01月07日 12:38
+ */
+public interface SysUserService extends IService<SysUser> {
+
+}

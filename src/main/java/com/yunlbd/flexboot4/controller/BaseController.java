@@ -6,7 +6,7 @@ import com.mybatisflex.core.service.IService;
 import com.yunlbd.flexboot4.common.ApiResult;
 import com.yunlbd.flexboot4.dto.SearchDto;
 import io.swagger.v3.oas.annotations.Operation;
-import jakarta.annotation.Resource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.Serializable;
@@ -49,7 +49,8 @@ public abstract class BaseController<S extends IService<T>, T, ID extends Serial
             "    { \"column\": \"id\", \"asc\": true }\n" +
             "  ]\n" +
             "}";
-    @Resource
+    @Autowired
+    @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     protected S service;
 
     /**

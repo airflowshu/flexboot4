@@ -1,8 +1,11 @@
 package com.yunlbd.flexboot4.entity;
 
+import com.mybatisflex.annotation.RelationManyToMany;
 import com.mybatisflex.annotation.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+
+import java.util.List;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -14,4 +17,18 @@ public class SysRole extends BaseEntity {
     private Integer status; // 1: enabled, 0: disabled
     private String description;
     private Integer orderNo;
+
+    @RelationManyToMany(
+            joinTable = "sys_role_menu",
+            selfField = "id", joinSelfColumn = "role_id",
+            targetField = "id", joinTargetColumn = "menu_id"
+    )
+    private List<SysMenu> menus;
+
+    @RelationManyToMany(
+            joinTable = "sys_user_role",
+            selfField = "id", joinSelfColumn = "role_id",
+            targetField = "id", joinTargetColumn = "user_id"
+    )
+    private List<SysUser> users;
 }

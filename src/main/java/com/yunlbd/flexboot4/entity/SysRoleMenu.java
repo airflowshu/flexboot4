@@ -8,6 +8,6 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 @Table("sys_role_menu")
 public class SysRoleMenu extends BaseEntity {
-    private Long roleId;
-    private Long menuId;
+    private String roleId;
+    private String menuId;
 }
