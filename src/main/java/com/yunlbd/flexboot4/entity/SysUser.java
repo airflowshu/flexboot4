@@ -1,5 +1,7 @@
 package com.yunlbd.flexboot4.entity;
 
+import com.alibaba.excel.annotation.ExcelProperty;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.mybatisflex.annotation.RelationManyToMany;
 import com.mybatisflex.annotation.RelationManyToOne;
 import com.mybatisflex.annotation.Table;
@@ -12,14 +14,21 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 @Table("sys_user")
 public class SysUser extends BaseEntity {
-
+    @ExcelProperty("登录名")
     private String username;
+    @JsonIgnore
     private String password;
+    @ExcelProperty("用户名")
     private String realName;
+    @ExcelProperty("头像")
     private String avatar;
+    @ExcelProperty("邮箱")
     private String email;
+    @ExcelProperty("手机")
     private String phone;
+    @ExcelProperty("部门ID")
     private String deptId;
+    @ExcelProperty("状态")
     private Integer status; // 1: enabled, 0: disabled
 
     @RelationManyToOne(selfField = "deptId", targetField = "id")

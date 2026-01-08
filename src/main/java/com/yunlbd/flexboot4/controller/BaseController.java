@@ -7,13 +7,20 @@ import com.mybatisflex.core.service.IService;
 import com.yunlbd.flexboot4.common.ApiResult;
 import com.yunlbd.flexboot4.dto.SearchDto;
 import com.yunlbd.flexboot4.query.SearchDtoUtils;
+import com.yunlbd.flexboot4.support.ReactiveExportSupport;
+import com.yunlbd.flexboot4.util.ExcelExportUtil;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * 通用 Controller 基类
@@ -47,6 +54,7 @@ public abstract class BaseController<S extends IService<T>, T, ID extends Serial
     @Autowired
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     protected S service;
+    private static final Logger log = LoggerFactory.getLogger(BaseController.class);
 
     /**
      * 新增或更新
@@ -144,6 +152,38 @@ public abstract class BaseController<S extends IService<T>, T, ID extends Serial
             RelationManager.queryRelations(service.getMapper(), records);
         }
         return ApiResult.success(records);
+    }
+
+    @Operation(summary = "Export Excel", description = "Export matching records to Excel. Supports GET/POST and HTTP Range resume.")
+    @GetMapping("/export")
+    public void exportGet(@ModelAttribute SearchDto searchDto, HttpServletRequest request, HttpServletResponse response) {
+        doExport(searchDto, request, response);
+    }
+
+    @Operation(summary = "Export Excel", description = "Export matching records to Excel. Supports GET/POST and HTTP Range resume.")
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            description = "Search parameters",
+            content = @io.swagger.v3.oas.annotations.media.Content(
+                    schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = SearchDto.class),
+                    examples = @io.swagger.v3.oas.annotations.media.ExampleObject(
+                            value = SearchDtoExample
+                    )
+            )
+    )
+    @PostMapping("/export")
+    public void exportPost(@RequestBody SearchDto searchDto, HttpServletRequest request, HttpServletResponse response) {
+        doExport(searchDto, request, response);
+    }
+
+    protected void doExport(SearchDto searchDto, HttpServletRequest request, HttpServletResponse response) {
+        long startNs = System.nanoTime();
+        QueryWrapper queryWrapper = buildQueryWrapper(searchDto, getEntityClass());
+        var flux = ReactiveExportSupport.queryFlux(service, queryWrapper, getEntityClass(), 1000);
+        String name = getEntityClass().getSimpleName() + "_" + UUID.randomUUID();
+        var file = ExcelExportUtil.writeFluxToTempFile(flux, getEntityClass(), 1000);
+        ExcelExportUtil.streamFileWithRange(request, response, file, name + ".xlsx");
+        long endNs = System.nanoTime();
+        log.info("Export {} rows done in {} ms", file.length(), (endNs - startNs) / 1_000_000);
     }
 
     protected QueryWrapper buildQueryWrapper(SearchDto searchDto) {
