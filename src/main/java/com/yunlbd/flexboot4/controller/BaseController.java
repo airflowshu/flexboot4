@@ -91,7 +91,11 @@ public abstract class BaseController<S extends IService<T>, T, ID extends Serial
     @Operation(summary = "Get by ID", description = "Get entity details by ID.")
     @GetMapping("/{id}")
     public ApiResult<T> get(@PathVariable ID id) {
-        return ApiResult.success(service.getById(id));
+        T entity = service.getById(id);
+        if (entity != null) {
+            RelationManager.queryRelations(service.getMapper(), List.of(entity));
+        }
+        return ApiResult.success(entity);
     }
 
     /**
@@ -152,5 +156,5 @@ public abstract class BaseController<S extends IService<T>, T, ID extends Serial
         return com.yunlbd.flexboot4.query.DefaultQueryWrapperBuilder.get().build(searchDto, entityClass);
     }
 
-    
+
 }
