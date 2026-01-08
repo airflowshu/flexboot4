@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @since 2026-01-07
  */
 @RestController
-@RequestMapping("/dept")
+@RequestMapping("/api/dept")
 public class SysDeptController extends BaseController<SysDeptService, SysDept, String>  {
 
     @Override

@@ -1,8 +1,9 @@
 package com.yunlbd.flexboot4.service.impl;
 
 import com.yunlbd.flexboot4.entity.SysDept;
-import com.yunlbd.flexboot4.mapper.DeptMapper;
+import com.yunlbd.flexboot4.mapper.SysDeptMapper;
 import com.yunlbd.flexboot4.service.SysDeptService;
+import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.stereotype.Service;
 
 /**
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
  * @since 2026-01-07
  */
 @Service
-public class SysDeptServiceImpl extends BaseServiceImpl<DeptMapper, SysDept>  implements SysDeptService {
+@CacheConfig(cacheNames = "sysDept")
+public class SysDeptServiceImpl extends BaseServiceImpl<SysDeptMapper, SysDept>  implements SysDeptService {
 
 }

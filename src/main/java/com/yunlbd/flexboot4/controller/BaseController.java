@@ -113,7 +113,7 @@ public abstract class BaseController<S extends IService<T>, T, ID extends Serial
         Page<T> page = new Page<>(searchDto.getPageNumber(), searchDto.getPageSize());
         QueryWrapper queryWrapper = buildQueryWrapper(searchDto);
         service.page(page, queryWrapper);
-        if (!SearchDtoUtils.hasRelationPaths(searchDto)) {
+        if (SearchDtoUtils.hasRelationPaths(searchDto)) {
             RelationManager.queryRelations(service.getMapper(), page.getRecords());
         }
         return ApiResult.success(page);
@@ -136,7 +136,7 @@ public abstract class BaseController<S extends IService<T>, T, ID extends Serial
     public ApiResult<List<T>> list(@RequestBody SearchDto searchDto) {
         QueryWrapper queryWrapper = buildQueryWrapper(searchDto, getEntityClass());
         List<T> records = service.list(queryWrapper);
-        if (!SearchDtoUtils.hasRelationPaths(searchDto)) {
+        if (SearchDtoUtils.hasRelationPaths(searchDto)) {
             RelationManager.queryRelations(service.getMapper(), records);
         }
         return ApiResult.success(records);

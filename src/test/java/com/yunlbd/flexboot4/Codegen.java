@@ -1,8 +1,10 @@
 package com.yunlbd.flexboot4;
 
 import com.mybatisflex.codegen.Generator;
-import com.mybatisflex.codegen.config.ColumnConfig;
 import com.mybatisflex.codegen.config.GlobalConfig;
+import com.mybatisflex.codegen.template.impl.EnjoyTemplate;
+import com.mybatisflex.core.BaseMapper;
+import com.yunlbd.flexboot4.entity.BaseEntity;
 import com.zaxxer.hikari.HikariDataSource;
 
 public class Codegen {
@@ -15,8 +17,8 @@ public class Codegen {
         dataSource.setPassword("flexboot4");
 
         //创建配置内容，两种风格都可以。
-        GlobalConfig globalConfig = createGlobalConfigUseStyle1();
-        //GlobalConfig globalConfig = createGlobalConfigUseStyle2();
+        // GlobalConfig globalConfig = createGlobalConfigUseStyle1();
+        GlobalConfig globalConfig = createGlobalConfigUseFlexBoot4Style();
 
         //通过 datasource 和 globalConfig 创建代码生成器
         Generator generator = new Generator(dataSource, globalConfig);
@@ -28,13 +30,14 @@ public class Codegen {
     public static GlobalConfig createGlobalConfigUseStyle1() {
         //创建配置内容
         GlobalConfig globalConfig = new GlobalConfig();
+        globalConfig.getJavadocConfig().setAuthor("Wangts").setSince("1.0.0");
 
         //设置根包
         globalConfig.setBasePackage("com.yunlbd.flexboot4");
 
         //设置表前缀和只生成哪些表
         // globalConfig.setTablePrefix("sys_");
-        globalConfig.setGenerateTable("sys_dept");
+        globalConfig.setGenerateTable("sys_role");
         // globalConfig.setGenerateTable("sys_dept", "tb_account_session");
 
         //设置项目的JDK版本，项目的JDK为14及以上时建议设置该项，小于14则可以不设置
@@ -43,6 +46,7 @@ public class Codegen {
         //设置生成 entity 并启用 Lombok
         globalConfig.setEntityGenerateEnable(true);
         globalConfig.setEntityWithLombok(true);
+        globalConfig.setEntitySuperClass(BaseEntity.class);
         //设置生成 mapper
         globalConfig.setMapperGenerateEnable(true);
         //feat 想生成那个类，就指定true....
@@ -60,34 +64,38 @@ public class Codegen {
         return globalConfig;
     }
 
-    public static GlobalConfig createGlobalConfigUseStyle2() {
+    public static GlobalConfig createGlobalConfigUseFlexBoot4Style() {
         //创建配置内容
         GlobalConfig globalConfig = new GlobalConfig();
+        globalConfig.getJavadocConfig().setAuthor("Wangts").setSince("1.0.0");
 
-        //设置根包
         globalConfig.getPackageConfig()
-                .setBasePackage("com.test");
+                .setSourceDir("e:/vsWorkspace/flexboot4/src/main/java")
+                .setBasePackage("com.yunlbd.flexboot4");
 
-        //设置表前缀和只生成哪些表，setGenerateTable 未配置时，生成所有表
         globalConfig.getStrategyConfig()
-                .setTablePrefix("tb_")
-                .setGenerateTable("tb_account", "tb_account_session");
+                // .setTablePrefix("sys_")
+                .setGenerateTable("sys_role");
 
-        //设置生成 entity 并启用 Lombok
+        globalConfig.setEntityJdkVersion(25);
+
         globalConfig.enableEntity()
                 .setWithLombok(true)
-                .setJdkVersion(25);
+                .setSuperClass(BaseEntity.class);
+        globalConfig.enableMapper()
+                .setSuperClass(BaseMapper.class)
+                .setMapperAnnotation(true);
+        globalConfig.enableController();
+        globalConfig.enableService();
+        globalConfig.enableServiceImpl();
 
-        //设置生成 mapper
-        globalConfig.enableMapper();
-
-        //可以单独配置某个列
-        ColumnConfig columnConfig = new ColumnConfig();
-        columnConfig.setColumnName("tenant_id");
-        columnConfig.setLarge(true);
-        columnConfig.setVersion(true);
-        globalConfig.getStrategyConfig()
-                .setColumnConfig("tb_account", columnConfig);
+        globalConfig.getTemplateConfig()
+                .setTemplate(new EnjoyTemplate())
+                .setEntity("e:/vsWorkspace/flexboot4/src/test/java/com/yunlbd/flexboot4/templates/enjoy/Entity.tpl")
+                .setMapper("e:/vsWorkspace/flexboot4/src/test/java/com/yunlbd/flexboot4/templates/enjoy/Mapper.tpl")
+                .setService("e:/vsWorkspace/flexboot4/src/test/java/com/yunlbd/flexboot4/templates/enjoy/Service.tpl")
+                .setServiceImpl("e:/vsWorkspace/flexboot4/src/test/java/com/yunlbd/flexboot4/templates/enjoy/ServiceImpl.tpl")
+                .setController("e:/vsWorkspace/flexboot4/src/test/java/com/yunlbd/flexboot4/templates/enjoy/Controller.tpl");
 
         return globalConfig;
     }

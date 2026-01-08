@@ -18,6 +18,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SysMenuController extends BaseController<SysMenuService, SysMenu, String> {
 
+    @Override
+    protected Class<SysMenu> getEntityClass() {
+        return SysMenu.class;
+    }
+
     private final SysMenuService sysMenuService;
 
     @Operation(summary = "获取菜单权限", description = "获取登录认证用户所拥有的所有菜单访问数据")
@@ -30,8 +35,5 @@ public class SysMenuController extends BaseController<SysMenuService, SysMenu, S
         return ApiResult.success(sysMenuService.getUserMenus(userId));
     }
 
-    @Override
-    protected Class<SysMenu> getEntityClass() {
-        return SysMenu.class;
-    }
+
 }
