@@ -27,18 +27,6 @@ public class SearchDto implements Serializable {
     private List<OrderItem> orders;
 
     /**
-     * 搜索关键字
-     */
-    @Schema(description = "全局搜索关键字，需配合 searchFields 使用", example = "测试")
-    private String keyword;
-    
-    /**
-     * 搜索字段列表（用于keyword匹配多个字段）
-     */
-    @Schema(description = "指定 keyword 匹配的字段列表", example = "[\"name\", \"code\"]")
-    private List<String> searchFields;
-
-    /**
      * 高级搜索条件列表
      */
     @Schema(description = "高级搜索条件列表")

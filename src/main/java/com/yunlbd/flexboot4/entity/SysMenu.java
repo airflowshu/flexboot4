@@ -1,5 +1,6 @@
 package com.yunlbd.flexboot4.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.mybatisflex.annotation.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -48,6 +49,7 @@ public class SysMenu extends BaseEntity {
     @RelationOneToMany(selfField = "id", targetField = "parentId", orderBy = "order_no")
     private List<SysMenu> children;
 
+    @JsonIgnore
     @RelationManyToMany(
             joinTable = "sys_role_menu",
             selfField = "id", joinSelfColumn = "menu_id",

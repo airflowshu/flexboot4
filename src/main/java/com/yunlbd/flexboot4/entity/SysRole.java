@@ -1,5 +1,6 @@
 package com.yunlbd.flexboot4.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.mybatisflex.annotation.RelationManyToMany;
 import com.mybatisflex.annotation.Table;
 import lombok.Data;
@@ -25,6 +26,7 @@ public class SysRole extends BaseEntity {
     )
     private List<SysMenu> menus;
 
+    @JsonIgnore
     @RelationManyToMany(
             joinTable = "sys_user_role",
             selfField = "id", joinSelfColumn = "role_id",

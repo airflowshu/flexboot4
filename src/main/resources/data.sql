@@ -85,3 +85,14 @@ VALUES (121, 118, '/vben-admin/antdv', 'VbenAntdv', 'IFrameView', NULL, 'demos.v
 -- 19. About
 INSERT INTO sys_menu (id, parent_id, path, name, component, redirect, title, icon, order_no, keep_alive, type, status)
 VALUES (122, 0, '/about', 'About', '_core/about/index', NULL, 'demos.vben.about', 'lucide:copyright', 9999, true, 1, 1);
+
+-- SysDept Data
+-- Level 1
+INSERT INTO sys_dept (id, dept_name, order_no, status, parent_id) VALUES ('1', 'Headquarters', 1, 1, '0');
+-- Level 2
+INSERT INTO sys_dept (id, dept_name, order_no, status, parent_id) VALUES ('2', 'R&D Department', 1, 1, '1');
+-- Level 3
+INSERT INTO sys_dept (id, dept_name, order_no, status, parent_id) VALUES ('3', 'Development Team 1', 1, 1, '2');
+-- Level 4
+INSERT INTO sys_dept (id, dept_name, order_no, status, parent_id) VALUES ('4', 'Backend Group', 1, 1, '3');
+

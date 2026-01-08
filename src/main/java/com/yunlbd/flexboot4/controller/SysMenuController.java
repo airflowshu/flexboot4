@@ -29,4 +29,9 @@ public class SysMenuController extends BaseController<SysMenuService, SysMenu, S
         }
         return ApiResult.success(sysMenuService.getUserMenus(userId));
     }
+
+    @Override
+    protected Class<SysMenu> getEntityClass() {
+        return SysMenu.class;
+    }
 }

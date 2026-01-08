@@ -1,6 +1,7 @@
 package com.yunlbd.flexboot4.entity;
 
 import com.mybatisflex.annotation.RelationManyToMany;
+import com.mybatisflex.annotation.RelationManyToOne;
 import com.mybatisflex.annotation.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -18,7 +19,11 @@ public class SysUser extends BaseEntity {
     private String avatar;
     private String email;
     private String phone;
+    private String deptId;
     private Integer status; // 1: enabled, 0: disabled
+
+    @RelationManyToOne(selfField = "deptId", targetField = "id")
+    private SysDept dept;
 
     @RelationManyToMany(
             joinTable = "sys_user_role",

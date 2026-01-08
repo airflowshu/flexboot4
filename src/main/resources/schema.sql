@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS sys_user (
     avatar VARCHAR(500),
     email VARCHAR(255),
     phone VARCHAR(50),
+    dept_id VARCHAR(32),
     status INTEGER DEFAULT 1,
     version BIGINT DEFAULT 0,
     del_flag INTEGER DEFAULT 0,
@@ -37,7 +38,7 @@ CREATE TABLE IF NOT EXISTS sys_role (
 -- SysMenu Table
 CREATE TABLE IF NOT EXISTS sys_menu (
     id VARCHAR(32) NOT NULL UNIQUE,
-    parent_id VARCHAR(32) NOT NULL UNIQUE DEFAULT '0',
+    parent_id VARCHAR(32) NOT NULL DEFAULT '0',
     path VARCHAR(255),
     name VARCHAR(100),
     component VARCHAR(255),
@@ -61,6 +62,22 @@ CREATE TABLE IF NOT EXISTS sys_menu (
     authority VARCHAR(255),
     permission VARCHAR(100),
     type INTEGER,
+    status INTEGER DEFAULT 1,
+    version BIGINT DEFAULT 0,
+    del_flag INTEGER DEFAULT 0,
+    create_time TIMESTAMP DEFAULT NOW(),
+    last_modify_time TIMESTAMP DEFAULT NOW(),
+    create_by VARCHAR(255),
+    last_modify_by VARCHAR(255),
+    remark VARCHAR(500)
+);
+
+-- SysDept Table
+CREATE TABLE IF NOT EXISTS sys_dept (
+    id VARCHAR(32) NOT NULL UNIQUE,
+    parent_id VARCHAR(32) NOT NULL DEFAULT '0',
+    dept_name VARCHAR(100) NOT NULL,
+    order_no INTEGER DEFAULT 0,
     status INTEGER DEFAULT 1,
     version BIGINT DEFAULT 0,
     del_flag INTEGER DEFAULT 0,
