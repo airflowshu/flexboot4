@@ -2,9 +2,11 @@ package com.yunlbd.flexboot4.controller;
 
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
+import com.mybatisflex.core.relation.RelationManager;
 import com.mybatisflex.core.service.IService;
 import com.yunlbd.flexboot4.common.ApiResult;
 import com.yunlbd.flexboot4.dto.SearchDto;
+import com.yunlbd.flexboot4.query.SearchDtoUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -22,25 +24,26 @@ import java.util.List;
  */
 public abstract class BaseController<S extends IService<T>, T, ID extends Serializable> {
 
-    public static final String SearchDtoExample = "{\n" +
-            "  \"pageNumber\": 1,\n" +
-            "  \"pageSize\": 10,\n" +
-            "  \"logic\": \"AND\",\n" +
-            "  \"items\": [\n" +
-            "    { \"field\": \"status\", \"op\": \"eq\", \"val\": 1 },\n" +
-            "    { \n" +
-            "      \"logic\": \"OR\",\n" +
-            "      \"children\": [\n" +
-            "        { \"field\": \"type\", \"op\": \"eq\", \"val\": \"A\" },\n" +
-            "        { \"field\": \"type\", \"op\": \"eq\", \"val\": \"B\" }\n" +
-            "      ]\n" +
-            "    }\n" +
-            "  ],\n" +
-            "  \"orders\": [\n" +
-            "    { \"column\": \"createTime\", \"asc\": false },\n" +
-            "    { \"column\": \"id\", \"asc\": true }\n" +
-            "  ]\n" +
-            "}";
+    public static final String SearchDtoExample = """
+            {
+              "pageNumber": 1,
+              "pageSize": 10,
+              "logic": "AND",
+              "items": [
+                { "field": "status", "op": "eq", "val": 1 },
+                {\s
+                  "logic": "OR",
+                  "children": [
+                    { "field": "type", "op": "eq", "val": "A" },
+                    { "field": "type", "op": "eq", "val": "B" }
+                  ]
+                }
+              ],
+              "orders": [
+                { "column": "createTime", "asc": false },
+                { "column": "id", "asc": true }
+              ]
+            }""";
     @Autowired
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     protected S service;
@@ -109,7 +112,11 @@ public abstract class BaseController<S extends IService<T>, T, ID extends Serial
     public ApiResult<Page<T>> page(@RequestBody SearchDto searchDto) {
         Page<T> page = new Page<>(searchDto.getPageNumber(), searchDto.getPageSize());
         QueryWrapper queryWrapper = buildQueryWrapper(searchDto);
-        return ApiResult.success(service.page(page, queryWrapper));
+        service.page(page, queryWrapper);
+        if (!SearchDtoUtils.hasRelationPaths(searchDto)) {
+            RelationManager.queryRelations(service.getMapper(), page.getRecords());
+        }
+        return ApiResult.success(page);
     }
 
     /**
@@ -128,7 +135,11 @@ public abstract class BaseController<S extends IService<T>, T, ID extends Serial
     @PostMapping("/list")
     public ApiResult<List<T>> list(@RequestBody SearchDto searchDto) {
         QueryWrapper queryWrapper = buildQueryWrapper(searchDto, getEntityClass());
-        return ApiResult.success(service.list(queryWrapper));
+        List<T> records = service.list(queryWrapper);
+        if (!SearchDtoUtils.hasRelationPaths(searchDto)) {
+            RelationManager.queryRelations(service.getMapper(), records);
+        }
+        return ApiResult.success(records);
     }
 
     protected QueryWrapper buildQueryWrapper(SearchDto searchDto) {
@@ -140,4 +151,6 @@ public abstract class BaseController<S extends IService<T>, T, ID extends Serial
     public QueryWrapper buildQueryWrapper(SearchDto searchDto, Class<?> entityClass) {
         return com.yunlbd.flexboot4.query.DefaultQueryWrapperBuilder.get().build(searchDto, entityClass);
     }
+
+    
 }

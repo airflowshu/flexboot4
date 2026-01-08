@@ -21,7 +21,7 @@ public class DefaultQueryWrapperBuilder extends AbstractQueryWrapperBuilder {
         RelationQueryBuilder.buildJoins(qw, ctx);
         List<SearchDto.SearchItem> items = dto.getItems() == null ? Collections.emptyList() : dto.getItems();
         String rootLogic = dto.getLogic() == null ? "AND" : dto.getLogic().trim().toUpperCase(Locale.ROOT);
-        boolean relationPresent = hasRelationPaths(dto);
+        boolean relationPresent = SearchDtoUtils.hasRelationPaths(dto);
         for (SearchDto.SearchItem it : items) {
             if (relationPresent && it.getField() != null && !it.getField().contains(".") && (it.getChildren() == null || it.getChildren().isEmpty())) {
                 throw new IllegalArgumentException("Ambiguous field '" + it.getField() + "' in relation query. Use table prefix like 'dept.status' or 'roles.createTime'.");
@@ -132,7 +132,6 @@ public class DefaultQueryWrapperBuilder extends AbstractQueryWrapperBuilder {
 
     private String opToSql(String op) {
         return switch (op) {
-            case "eq" -> "=";
             case "ne" -> "<>";
             case "gt" -> ">";
             case "ge" -> ">=";
@@ -144,28 +143,5 @@ public class DefaultQueryWrapperBuilder extends AbstractQueryWrapperBuilder {
         };
     }
 
-    private boolean hasRelationPaths(SearchDto dto) {
-        if (dto == null) return false;
-        if (dto.getItems() != null) {
-            for (SearchDto.SearchItem it : dto.getItems()) {
-                if (containsRelationPath(it)) return true;
-            }
-        }
-        if (dto.getOrders() != null) {
-            for (SearchDto.OrderItem od : dto.getOrders()) {
-                if (od.getColumn() != null && od.getColumn().contains(".")) return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean containsRelationPath(SearchDto.SearchItem it) {
-        if (it.getField() != null && it.getField().contains(".")) return true;
-        if (it.getChildren() != null) {
-            for (SearchDto.SearchItem c : it.getChildren()) {
-                if (containsRelationPath(c)) return true;
-            }
-        }
-        return false;
-    }
+    
 }
