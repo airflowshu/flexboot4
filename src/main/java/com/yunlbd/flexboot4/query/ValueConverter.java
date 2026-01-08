@@ -84,8 +84,7 @@ public class ValueConverter {
         Class<?> c = clazz;
         while (c != null) {
             try {
-                java.lang.reflect.Field f = c.getDeclaredField(name);
-                return f;
+                return c.getDeclaredField(name);
             } catch (NoSuchFieldException ignore) {
                 c = c.getSuperclass();
             }

@@ -3,8 +3,9 @@ package com.yunlbd.flexboot4.query;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.yunlbd.flexboot4.dto.SearchDto;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
 
 public class DefaultQueryWrapperBuilder extends AbstractQueryWrapperBuilder {
 

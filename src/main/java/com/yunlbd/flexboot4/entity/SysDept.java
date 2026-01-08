@@ -1,12 +1,6 @@
 package com.yunlbd.flexboot4.entity;
 
-import com.mybatisflex.annotation.Id;
 import com.mybatisflex.annotation.Table;
-import java.io.Serializable;
-import java.sql.Timestamp;
-
-import java.io.Serial;
-
 import lombok.*;
 
 /**

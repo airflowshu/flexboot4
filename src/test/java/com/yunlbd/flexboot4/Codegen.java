@@ -1,3 +1,5 @@
+package com.yunlbd.flexboot4;
+
 import com.mybatisflex.codegen.Generator;
 import com.mybatisflex.codegen.config.ColumnConfig;
 import com.mybatisflex.codegen.config.GlobalConfig;

@@ -7,7 +7,6 @@ import com.yunlbd.flexboot4.dto.SearchDto;
 
 import java.lang.reflect.Field;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class RelationQueryBuilder {
 
@@ -64,7 +63,7 @@ public class RelationQueryBuilder {
             }
             RelationManyToOne mto = f.getAnnotation(RelationManyToOne.class);
             if (mto != null) {
-                String targetTable = TableUtils.tableName(targetEntity(f));
+                String targetTable = TableUtils.tableName(Objects.requireNonNull(targetEntity(f)));
                 String left = targetTable + "." + TableUtils.columnName(mto.targetField());
                 String right = ctx.rootTable + "." + TableUtils.columnName(mto.selfField());
                 qw.leftJoin(targetTable).on(left + " = " + right);
@@ -73,7 +72,7 @@ public class RelationQueryBuilder {
             RelationManyToMany mtm = f.getAnnotation(RelationManyToMany.class);
             if (mtm != null) {
                 String joinTable = mtm.joinTable();
-                String targetTable = TableUtils.tableName(targetEntity(f));
+                String targetTable = TableUtils.tableName(Objects.requireNonNull(targetEntity(f)));
                 String sLeft = joinTable + "." + mtm.joinSelfColumn();
                 String sRight = ctx.rootTable + "." + TableUtils.columnName(mtm.selfField());
                 String tLeft = targetTable + "." + TableUtils.columnName(mtm.targetField());
