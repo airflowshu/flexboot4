@@ -3,8 +3,14 @@ package com.yunlbd.flexboot4.service.impl;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.yunlbd.flexboot4.dto.RouteMeta;
 import com.yunlbd.flexboot4.dto.VueRoute;
-import com.yunlbd.flexboot4.entity.*;
-import com.yunlbd.flexboot4.entity.table.*;
+import com.yunlbd.flexboot4.entity.SysMenu;
+import com.yunlbd.flexboot4.entity.SysRole;
+import com.yunlbd.flexboot4.entity.SysRoleMenu;
+import com.yunlbd.flexboot4.entity.SysUserRole;
+import com.yunlbd.flexboot4.entity.table.SysMenuTableDef;
+import com.yunlbd.flexboot4.entity.table.SysRoleMenuTableDef;
+import com.yunlbd.flexboot4.entity.table.SysRoleTableDef;
+import com.yunlbd.flexboot4.entity.table.SysUserRoleTableDef;
 import com.yunlbd.flexboot4.mapper.SysMenuMapper;
 import com.yunlbd.flexboot4.mapper.SysUserRoleMapper;
 import com.yunlbd.flexboot4.service.SysMenuService;
@@ -58,24 +64,6 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
         return buildVueRoutesWithFilter(fullTree, accessibleMenuIds);
     }
 
-    @Override
-    // @Cacheable(key = "'route:all'")
-    public List<VueRoute> getAllRoutes() {
-        List<SysMenu> fullTree = mapper.selectListWithRelationsByQuery(
-                QueryWrapper.create()
-                        .where(SysMenu::getStatus).eq(1)
-                        .and(SysMenu::getParentId).eq("0")
-                        .orderBy(SysMenu::getOrderNo).asc()
-        );
-        List<VueRoute> routes = new ArrayList<>();
-        for (SysMenu menu : fullTree) {
-            VueRoute route = convertToVueRouteAll(menu);
-            if (route != null) {
-                routes.add(route);
-            }
-        }
-        return routes;
-    }
 
     private List<VueRoute> buildVueRoutesWithFilter(List<SysMenu> menus, List<String> accessibleIds) {
         List<VueRoute> routes = new ArrayList<>();
@@ -124,7 +112,7 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
         route.setMeta(getRouteMeta(menu));
         route.setType(menu.getType());
         route.setStatus(menu.getStatus());
-        route.setAuthCode(menu.getPermission());
+        route.setAuthCode(menu.getAuthCode());
 
         
         List<VueRoute> childrenRoutes = new ArrayList<>();
@@ -195,15 +183,15 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
         // Query: SysMenu -> SysRoleMenu -> SysRole -> SysUserRole -> SysUser
         // Join tables to get permissions for the specific user
         QueryWrapper queryWrapper = QueryWrapper.create()
-                .select(SysMenu::getPermission)
+                .select(SysMenu::getAuthCode)
                 .from(SysMenu.class)
                 .leftJoin(SysRoleMenu.class).on(SysRoleMenuTableDef.SYS_ROLE_MENU.MENU_ID.eq(SysMenuTableDef.SYS_MENU.ID))
                 .leftJoin(SysRole.class).on(SysRoleTableDef.SYS_ROLE.ID.eq(SysRoleMenuTableDef.SYS_ROLE_MENU.ROLE_ID))
                 .leftJoin(SysUserRole.class).on(SysUserRoleTableDef.SYS_USER_ROLE.ROLE_ID.eq(SysRoleTableDef.SYS_ROLE.ID))
                 .where(SysUserRoleTableDef.SYS_USER_ROLE.USER_ID.eq(userId))
                 .and(SysMenu::getStatus).eq(1)
-                .and(SysMenu::getPermission).isNotNull()
-                .and(SysMenu::getPermission).ne(""); // Ensure not empty
+                .and(SysMenu::getAuthCode).isNotNull()
+                .and(SysMenu::getAuthCode).ne(""); // Ensure not empty
 
         return mapper.selectListByQueryAs(queryWrapper, String.class).stream()
                 .distinct()
@@ -248,7 +236,7 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
         route.setMeta(getRouteMeta(menu));
         route.setType(menu.getType());
         route.setStatus(menu.getStatus());
-        route.setAuthCode(menu.getPermission());
+        route.setAuthCode(menu.getAuthCode());
 
         List<VueRoute> childrenRoutes = new ArrayList<>();
         if (menu.getChildren() != null && !menu.getChildren().isEmpty()) {

@@ -2,21 +2,13 @@ package com.yunlbd.flexboot4.entity;
 
 import com.mybatisflex.annotation.RelationOneToMany;
 import com.mybatisflex.annotation.Table;
-import com.yunlbd.flexboot4.entity.BaseEntity;
-import java.io.Serializable;
-
-import java.io.Serial;
-import java.util.List;
-
-import com.yunlbd.flexboot4.mapper.SysDictItemMapper;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-import javax.management.relation.RelationType;
+import java.util.List;
 
 /**
  *  实体类。

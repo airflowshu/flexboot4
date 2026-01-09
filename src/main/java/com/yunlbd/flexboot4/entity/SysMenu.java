@@ -1,7 +1,10 @@
 package com.yunlbd.flexboot4.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.mybatisflex.annotation.*;
+import com.mybatisflex.annotation.RelationManyToMany;
+import com.mybatisflex.annotation.RelationManyToOne;
+import com.mybatisflex.annotation.RelationOneToMany;
+import com.mybatisflex.annotation.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -45,7 +48,7 @@ public class SysMenu extends BaseEntity {
     private Boolean menuVisibleWithForbidden; // 403 visible
     private String authority; // Role list, comma separated
 
-    private String permission; // Permission code e.g., 'sys:user:add'
+    private String authCode; // Permission code e.g., 'sys:user:add'
     private String type; //catalog menu button embedded link
     private Integer status;
 
