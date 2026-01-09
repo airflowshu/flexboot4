@@ -18,6 +18,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.yunlbd.flexboot4.common.constant.SysConstant.SYS_SUPER_USER_ID;
+
 @Service
 @RequiredArgsConstructor
 @CacheConfig(cacheNames = "sysMenu")
@@ -31,12 +33,11 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
         List<SysMenu> fullTree = mapper.selectListWithRelationsByQuery(
                 QueryWrapper.create()
                         .where(SysMenu::getStatus).eq(1)
-                        .and(SysMenu::getType).in(0, 1) // 0: Catalog, 1: Menu
                         .and(SysMenu::getParentId).eq("0") // Fetch roots
                         .orderBy(SysMenu::getOrderNo).asc()
         );
         // 1. Super Admin (userId = "1"): Return all enabled menus
-        if ("1".equals(userId)) {
+        if (SYS_SUPER_USER_ID.equals(userId)) {
             return buildVueRoutes(fullTree);
         }
 
@@ -55,6 +56,25 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
             return new ArrayList<>();
         }
         return buildVueRoutesWithFilter(fullTree, accessibleMenuIds);
+    }
+
+    @Override
+    // @Cacheable(key = "'route:all'")
+    public List<VueRoute> getAllRoutes() {
+        List<SysMenu> fullTree = mapper.selectListWithRelationsByQuery(
+                QueryWrapper.create()
+                        .where(SysMenu::getStatus).eq(1)
+                        .and(SysMenu::getParentId).eq("0")
+                        .orderBy(SysMenu::getOrderNo).asc()
+        );
+        List<VueRoute> routes = new ArrayList<>();
+        for (SysMenu menu : fullTree) {
+            VueRoute route = convertToVueRouteAll(menu);
+            if (route != null) {
+                routes.add(route);
+            }
+        }
+        return routes;
     }
 
     private List<VueRoute> buildVueRoutesWithFilter(List<SysMenu> menus, List<String> accessibleIds) {
@@ -102,11 +122,15 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
         route.setComponent(sanitizeComponentPath(menu.getComponent()));
         route.setRedirect(menu.getRedirect());
         route.setMeta(getRouteMeta(menu));
+        route.setType(menu.getType());
+        route.setStatus(menu.getStatus());
+        route.setAuthCode(menu.getPermission());
+
         
         List<VueRoute> childrenRoutes = new ArrayList<>();
         if (menu.getChildren() != null && !menu.getChildren().isEmpty()) {
             for (SysMenu child : menu.getChildren()) {
-                if (child.getStatus() == 1 && (child.getType() == 0 || child.getType() == 1)) {
+                if (child.getStatus() == 1 && (child.getType().equals("catalog") || child.getType().equals("menu"))) {
                     if (isMenuAccessibleOrHasAccessibleChildren(child, accessibleIds)) {
                         VueRoute childRoute = convertToVueRouteWithFilter(child, accessibleIds);
                         if (childRoute != null) {
@@ -131,7 +155,15 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
     
     // Kept for backward compatibility or direct full tree conversion
     private List<VueRoute> buildVueRoutes(List<SysMenu> menus) {
-        return buildVueRoutesWithFilter(menus, null); // null means no filter (super admin)
+        // super admin默认也按所有type返回
+        List<VueRoute> routes = new ArrayList<>();
+        for (SysMenu menu : menus) {
+            VueRoute route = convertToVueRouteAll(menu);
+            if (route != null) {
+                routes.add(route);
+            }
+        }
+        return routes;
     }
 
     // Helper to unify logic: if accessibleIds is null, it means allow all
@@ -200,6 +232,37 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
             meta.setAuthority(Arrays.asList(menu.getAuthority().split(",")));
         }
         return meta;
+    }
+
+    private VueRoute convertToVueRouteAll(SysMenu menu) {
+        if (menu.getStatus() != null && menu.getStatus() != 1) {
+            return null;
+        }
+        VueRoute route = new VueRoute();
+        route.setId(menu.getId());
+        route.setPid(menu.getParentId());
+        route.setName(menu.getName());
+        route.setPath(menu.getPath());
+        route.setComponent(sanitizeComponentPath(menu.getComponent()));
+        route.setRedirect(menu.getRedirect());
+        route.setMeta(getRouteMeta(menu));
+        route.setType(menu.getType());
+        route.setStatus(menu.getStatus());
+        route.setAuthCode(menu.getPermission());
+
+        List<VueRoute> childrenRoutes = new ArrayList<>();
+        if (menu.getChildren() != null && !menu.getChildren().isEmpty()) {
+            for (SysMenu child : menu.getChildren()) {
+                VueRoute childRoute = convertToVueRouteAll(child);
+                if (childRoute != null) {
+                    childrenRoutes.add(childRoute);
+                }
+            }
+        }
+        if (!childrenRoutes.isEmpty()) {
+            route.setChildren(childrenRoutes);
+        }
+        return route;
     }
 
 }

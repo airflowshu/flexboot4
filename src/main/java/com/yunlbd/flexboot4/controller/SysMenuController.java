@@ -35,5 +35,12 @@ public class SysMenuController extends BaseController<SysMenuService, SysMenu, S
         return ApiResult.success(sysMenuService.getUserMenus(userId));
     }
 
+    @Operation(summary = "菜单管理-列表", description = "List RouteList All")
+    @GetMapping("/list-route-all")
+    public ApiResult<List<VueRoute>> listRouteAll() {
+        return ApiResult.success(sysMenuService.getAllRoutes());
+    }
+
+
 
 }

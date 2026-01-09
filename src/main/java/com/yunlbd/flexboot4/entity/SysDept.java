@@ -4,6 +4,7 @@ import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.mybatisflex.annotation.Table;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 /**
  * 部门表 实体类。
@@ -13,7 +14,7 @@ import lombok.*;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 @Table("sys_dept")

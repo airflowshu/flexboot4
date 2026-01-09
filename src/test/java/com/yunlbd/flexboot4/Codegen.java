@@ -17,8 +17,8 @@ public class Codegen {
         dataSource.setPassword("flexboot4");
 
         //创建配置内容，两种风格都可以。
-        // GlobalConfig globalConfig = createGlobalConfigUseStyle1();
-        GlobalConfig globalConfig = createGlobalConfigUseFlexBoot4Style();
+        GlobalConfig globalConfig = createGlobalConfigUseStyle1();
+        // GlobalConfig globalConfig = createGlobalConfigUseFlexBoot4Style();
 
         //通过 datasource 和 globalConfig 创建代码生成器
         Generator generator = new Generator(dataSource, globalConfig);
@@ -37,8 +37,8 @@ public class Codegen {
 
         //设置表前缀和只生成哪些表
         // globalConfig.setTablePrefix("sys_");
-        globalConfig.setGenerateTable("sys_role");
-        // globalConfig.setGenerateTable("sys_dept", "tb_account_session");
+        // globalConfig.setGenerateTable("sys_role");
+        globalConfig.setGenerateTable("sys_dict_item", "sys_dict_type");
 
         //设置项目的JDK版本，项目的JDK为14及以上时建议设置该项，小于14则可以不设置
         globalConfig.setEntityJdkVersion(25);
@@ -48,9 +48,11 @@ public class Codegen {
         globalConfig.setEntityWithLombok(true);
         globalConfig.setEntitySuperClass(BaseEntity.class);
         //设置生成 mapper
-        globalConfig.setMapperGenerateEnable(true);
+        globalConfig.enableMapper()
+                .setSuperClass(BaseMapper.class)
+                .setMapperAnnotation(true);
         //feat 想生成那个类，就指定true....
-        globalConfig.setControllerGenerateEnable(true);
+        globalConfig.enableController();
         globalConfig.setServiceGenerateEnable(true);
         globalConfig.setServiceImplGenerateEnable(true);
 

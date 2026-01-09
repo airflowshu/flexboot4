@@ -27,4 +27,9 @@ public interface SysMenuService extends IService<SysMenu> {
     List<VueRoute> getUserMenus(String userId);
 
     List<String> getPermissionCodes(String userId);
+
+    /**
+     * 无需用户权限，返回所有启用的菜单树（包含所有type）
+     */
+    List<VueRoute> getAllRoutes();
 }
