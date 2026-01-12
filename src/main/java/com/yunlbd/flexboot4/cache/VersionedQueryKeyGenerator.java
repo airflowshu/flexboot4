@@ -26,7 +26,7 @@ public class VersionedQueryKeyGenerator implements KeyGenerator {
                 page = pg;
             } else if (p instanceof QueryWrapper qw) {
                 query = qw;
-            } else if (p != null && id == null) {
+            } else if (id == null) {
                 id = p;
             }
         }
@@ -40,7 +40,7 @@ public class VersionedQueryKeyGenerator implements KeyGenerator {
         Set<String> tables = SqlTableNameExtractor.extractTables(sql);
         
         // 如果没有从SQL中提取到表名，尝试从目标类推断实体表名
-        if (tables == null || tables.isEmpty()) {
+        if (tables.isEmpty()) {
             tables = Set.of(inferTableName(target));
         }
         

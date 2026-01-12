@@ -20,8 +20,7 @@ public class GlobalDictSetListener implements SetListener {
                 } catch (NoSuchFieldException ignored) {
                 }
             }
-        } catch (NoSuchFieldException ignored) {
-        } catch (IllegalAccessException ignored) {
+        } catch (NoSuchFieldException | IllegalAccessException ignored) {
         }
         return value;
     }

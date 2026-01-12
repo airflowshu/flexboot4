@@ -44,7 +44,17 @@ dependencies {
     implementation("com.juxest:mybatis-flex-reactor-spring:0.2.2")
     //添加com.zaxxer.HikariCP的数据源
     implementation("com.zaxxer:HikariCP:4.0.3")
-    implementation("com.alibaba:easyexcel:3.1.1")
+    implementation("com.alibaba:easyexcel:4.0.3")
+    // 强制提升间接依赖版本
+    constraints {
+        implementation("org.apache.commons:commons-compress:1.28.0") {
+            because("fix CVE-2024-25710 and CVE-2024-26308")
+        }
+        implementation("org.apache.poi:poi:5.5.1") {
+            because("fix CVE-2025-31672")
+        }
+        implementation("org.apache.poi:poi-ooxml:5.5.1")
+    }
 
 	// JWT
 	implementation("io.jsonwebtoken:jjwt-api:0.13.0")

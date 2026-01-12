@@ -7,7 +7,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class SqlTableNameExtractor {
-    private static final Pattern FROM_JOIN = Pattern.compile("(?i)\\b(from|join)\\s+([`\\\"\\[]?)([a-z0-9_\\.]+)\\2");
+    private static final Pattern FROM_JOIN = Pattern.compile("(?i)\\b(from|join)\\s+([`\"\\[]?)([a-z0-9_.]+)\\2");
 
     private SqlTableNameExtractor() {
     }

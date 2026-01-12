@@ -17,6 +17,7 @@ public class RedisTableVersionProvider implements TableVersionProvider {
         if (table == null || table.isBlank()) {
             return 0L;
         }
+        assert redis.getConnectionFactory() != null;
         RedisAtomicLong counter = new RedisAtomicLong(keyPrefix + table, redis.getConnectionFactory());
         return counter.get();
     }
@@ -26,6 +27,7 @@ public class RedisTableVersionProvider implements TableVersionProvider {
         if (table == null || table.isBlank()) {
             return 0L;
         }
+        assert redis.getConnectionFactory() != null;
         RedisAtomicLong counter = new RedisAtomicLong(keyPrefix + table, redis.getConnectionFactory());
         return counter.incrementAndGet();
     }
