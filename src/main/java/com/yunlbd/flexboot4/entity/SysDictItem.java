@@ -1,6 +1,7 @@
 package com.yunlbd.flexboot4.entity;
 
 import com.mybatisflex.annotation.Table;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -19,6 +20,7 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @Table("sys_dict_item")
+@Schema(name = "SysDictItem")
 public class SysDictItem extends BaseEntity {
 
     private String typeCode;

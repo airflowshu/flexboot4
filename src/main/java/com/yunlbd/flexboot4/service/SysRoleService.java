@@ -1,6 +1,5 @@
 package com.yunlbd.flexboot4.service;
 
-import com.mybatisflex.core.service.IService;
 import com.yunlbd.flexboot4.entity.SysRole;
 
 /**
@@ -9,6 +8,6 @@ import com.yunlbd.flexboot4.entity.SysRole;
  * @author yunlbd_wts
  * @since 2026-01-07
  */
-public interface SysRoleService extends IService<SysRole> {
+public interface SysRoleService extends IExtendedService<SysRole> {
 
 }

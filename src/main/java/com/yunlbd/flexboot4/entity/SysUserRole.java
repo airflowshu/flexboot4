@@ -1,6 +1,7 @@
 package com.yunlbd.flexboot4.entity;
 
 import com.mybatisflex.annotation.Table;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -13,6 +14,7 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @Table("sys_user_role")
+@Schema(name = "SysUserRole")
 public class SysUserRole extends BaseEntity {
     private Long userId;
     private Long roleId;

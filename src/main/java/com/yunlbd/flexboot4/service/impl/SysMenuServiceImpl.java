@@ -183,7 +183,7 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
         // Query: SysMenu -> SysRoleMenu -> SysRole -> SysUserRole -> SysUser
         // Join tables to get permissions for the specific user
         QueryWrapper queryWrapper = QueryWrapper.create()
-                .select(SysMenu::getAuthCode)
+                .select(SysMenuTableDef.SYS_MENU.AUTH_CODE)
                 .from(SysMenu.class)
                 .leftJoin(SysRoleMenu.class).on(SysRoleMenuTableDef.SYS_ROLE_MENU.MENU_ID.eq(SysMenuTableDef.SYS_MENU.ID))
                 .leftJoin(SysRole.class).on(SysRoleTableDef.SYS_ROLE.ID.eq(SysRoleMenuTableDef.SYS_ROLE_MENU.ROLE_ID))

@@ -7,6 +7,8 @@ import com.yunlbd.flexboot4.dto.LoginResp;
 import com.yunlbd.flexboot4.entity.SysUser;
 import com.yunlbd.flexboot4.mapper.SysUserMapper;
 import com.yunlbd.flexboot4.security.JwtUtil;
+import com.yunlbd.flexboot4.security.UserDetailsServiceImpl;
+import com.yunlbd.flexboot4.service.SysMenuService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
@@ -23,12 +25,10 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Duration;
-import java.util.Map;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
-import com.yunlbd.flexboot4.service.SysMenuService;
 
 @Slf4j
 @RestController
@@ -42,6 +42,7 @@ public class AuthController {
     private final StringRedisTemplate redisTemplate;
     private final SysUserMapper sysUserMapper;
     private final SysMenuService sysMenuService;
+    private final UserDetailsServiceImpl userDetailsService;
 
     private static final String LOGIN_LIMIT_KEY_PREFIX = "auth:limit:";
     private static final String BLACKLIST_KEY_PREFIX = "auth:blacklist:";
@@ -130,12 +131,17 @@ public class AuthController {
     @PostMapping("/logout")
     public ApiResult<String> logout(HttpServletRequest request, HttpServletResponse response, @RequestBody(required = false) Map<String, Boolean> body) {
         String token = jwtUtil.resolveToken(request);
+        String username = null;
+        
         if (token != null) {
             // 1. Add to Blacklist
             long remainingTTL = jwtUtil.extractExpiration(token).getTime() - System.currentTimeMillis();
             if (remainingTTL > 0) {
                 redisTemplate.opsForValue().set(BLACKLIST_KEY_PREFIX + token, "revoked", remainingTTL, TimeUnit.MILLISECONDS);
             }
+            
+            // Extract username from token to clear user cache
+            username = jwtUtil.extractUsername(token);
         }
 
         // 2. Clear Cookie if requested or default behavior
@@ -148,6 +154,11 @@ public class AuthController {
         cookie.setPath("/");
         cookie.setMaxAge(0);
         response.addCookie(cookie);
+        
+        // 3. Clear user cache if username is available
+        if (username != null) {
+            userDetailsService.evictUserCache(username);
+        }
 
         log.info("User logged out");
         return ApiResult.success("Logged out successfully");

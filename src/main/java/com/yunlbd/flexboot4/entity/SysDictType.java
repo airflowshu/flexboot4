@@ -2,6 +2,7 @@ package com.yunlbd.flexboot4.entity;
 
 import com.mybatisflex.annotation.RelationOneToMany;
 import com.mybatisflex.annotation.Table;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -22,6 +23,7 @@ import java.util.List;
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @Table("sys_dict_type")
+@Schema(name = "SysDictType")
 public class SysDictType extends BaseEntity{
 
     private String code;
@@ -32,6 +34,7 @@ public class SysDictType extends BaseEntity{
 
     private Integer orderNo;
 
+    @Schema(accessMode = Schema.AccessMode.READ_ONLY) //只在入参中隐藏（响应中可见）
     @RelationOneToMany(selfField = "code", targetField = "typeCode", orderBy = "order_no")
     private List<SysDictItem> dictItems;
 

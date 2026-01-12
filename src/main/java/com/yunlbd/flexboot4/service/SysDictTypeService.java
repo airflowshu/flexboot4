@@ -1,6 +1,5 @@
 package com.yunlbd.flexboot4.service;
 
-import com.mybatisflex.core.service.IService;
 import com.yunlbd.flexboot4.entity.SysDictType;
 
 /**
@@ -9,6 +8,6 @@ import com.yunlbd.flexboot4.entity.SysDictType;
  * @author Wangts
  * @since 1.0.0
  */
-public interface SysDictTypeService extends IService<SysDictType> {
+public interface SysDictTypeService extends IExtendedService<SysDictType> {
 
 }

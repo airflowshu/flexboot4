@@ -1,12 +1,11 @@
 package com.yunlbd.flexboot4.service;
 
-import com.mybatisflex.core.service.IService;
 import com.yunlbd.flexboot4.dto.VueRoute;
 import com.yunlbd.flexboot4.entity.SysMenu;
 
 import java.util.List;
 
-public interface SysMenuService extends IService<SysMenu> {
+public interface SysMenuService extends IExtendedService<SysMenu> {
 
     /***
      * 功能描述：获取用户菜单权限

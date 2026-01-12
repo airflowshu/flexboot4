@@ -52,7 +52,7 @@ dependencies {
 	runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.13.0")
 
 	// OpenAPI
-	implementation("org.springdoc:springdoc-openapi-starter-webmvc-scalar:3.0.0")
+	implementation("org.springdoc:springdoc-openapi-starter-webmvc-scalar:3.0.1")
 
     // Test
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")

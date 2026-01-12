@@ -5,6 +5,7 @@ import com.mybatisflex.annotation.RelationManyToMany;
 import com.mybatisflex.annotation.RelationManyToOne;
 import com.mybatisflex.annotation.RelationOneToMany;
 import com.mybatisflex.annotation.Table;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -19,6 +20,7 @@ import java.util.List;
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @Table("sys_menu")
+@Schema(name = "SysMenu")
 public class SysMenu extends BaseEntity {
 
     private String parentId;
@@ -52,13 +54,16 @@ public class SysMenu extends BaseEntity {
     private String type; //catalog menu button embedded link
     private Integer status;
 
+    @Schema(accessMode = Schema.AccessMode.READ_ONLY) //只在入参中隐藏（响应中可见）
     @RelationManyToOne(selfField = "parentId", targetField = "id")
     private SysMenu parent;
 
+    @Schema(accessMode = Schema.AccessMode.READ_ONLY) //只在入参中隐藏（响应中可见）
     @RelationOneToMany(selfField = "id", targetField = "parentId", orderBy = "order_no")
     private List<SysMenu> children;
 
     @JsonIgnore
+    @Schema(hidden = true)
     @RelationManyToMany(
             joinTable = "sys_role_menu",
             selfField = "id", joinSelfColumn = "menu_id",

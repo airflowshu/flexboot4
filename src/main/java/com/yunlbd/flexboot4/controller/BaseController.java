@@ -2,12 +2,10 @@ package com.yunlbd.flexboot4.controller;
 
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
-import com.mybatisflex.core.relation.RelationManager;
-import com.mybatisflex.core.service.IService;
 import com.yunlbd.flexboot4.common.ApiResult;
 import com.yunlbd.flexboot4.dto.SearchDto;
 import com.yunlbd.flexboot4.entity.BaseEntity;
-import com.yunlbd.flexboot4.query.SearchDtoUtils;
+import com.yunlbd.flexboot4.service.IExtendedService;
 import com.yunlbd.flexboot4.support.ReactiveExportSupport;
 import com.yunlbd.flexboot4.util.ExcelExportUtil;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,7 +28,7 @@ import java.util.UUID;
  * @param <T> 实体类型
  * @param <ID> 主键类型
  */
-public abstract class BaseController<S extends IService<T>, T, ID extends Serializable> {
+public abstract class BaseController<S extends IExtendedService<T>, T, ID extends Serializable> {
 
     public static final String SearchDtoExample = """
             {
@@ -109,11 +107,7 @@ public abstract class BaseController<S extends IService<T>, T, ID extends Serial
     @Operation(summary = "Get by ID", description = "Get entity details by ID.")
     @GetMapping("/{id}")
     public ApiResult<T> get(@PathVariable ID id) {
-        T entity = service.getById(id);
-        if (entity != null) {
-            RelationManager.queryRelations(service.getMapper(), List.of(entity));
-        }
-        return ApiResult.success(entity);
+        return ApiResult.success(service.getById(id));
     }
 
     /**
@@ -132,12 +126,7 @@ public abstract class BaseController<S extends IService<T>, T, ID extends Serial
     )
     @PostMapping("/page")
     public ApiResult<Page<T>> page(@RequestBody SearchDto searchDto) {
-        Page<T> page = new Page<>(searchDto.getPageNumber(), searchDto.getPageSize());
-        QueryWrapper queryWrapper = buildQueryWrapper(searchDto);
-        service.page(page, queryWrapper);
-        if (SearchDtoUtils.hasRelationPaths(searchDto)) {
-            RelationManager.queryRelations(service.getMapper(), page.getRecords());
-        }
+        Page<T> page = service.pageWithRelations(searchDto);
         return ApiResult.success(page);
     }
 
@@ -156,11 +145,7 @@ public abstract class BaseController<S extends IService<T>, T, ID extends Serial
     @Operation(summary = "List Query", description = "List all entities matching criteria.")
     @PostMapping("/list")
     public ApiResult<List<T>> list(@RequestBody SearchDto searchDto) {
-        QueryWrapper queryWrapper = buildQueryWrapper(searchDto, getEntityClass());
-        List<T> records = service.list(queryWrapper);
-        if (SearchDtoUtils.hasRelationPaths(searchDto)) {
-            RelationManager.queryRelations(service.getMapper(), records);
-        }
+        List<T> records = service.listWithRelations(searchDto);
         return ApiResult.success(records);
     }
 
