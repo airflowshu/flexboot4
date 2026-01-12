@@ -6,6 +6,7 @@ import com.mybatisflex.core.relation.RelationManager;
 import com.mybatisflex.core.service.IService;
 import com.yunlbd.flexboot4.common.ApiResult;
 import com.yunlbd.flexboot4.dto.SearchDto;
+import com.yunlbd.flexboot4.entity.BaseEntity;
 import com.yunlbd.flexboot4.query.SearchDtoUtils;
 import com.yunlbd.flexboot4.support.ReactiveExportSupport;
 import com.yunlbd.flexboot4.util.ExcelExportUtil;
@@ -60,10 +61,19 @@ public abstract class BaseController<S extends IService<T>, T, ID extends Serial
      * 新增或更新
      * 若主键有值则更新，无值则插入
      */
-    @Operation(summary = "Create or Update", description = "Insert if ID is null, update otherwise. Ignores null values.")
-    @PutMapping
-    public ApiResult<Boolean> save(@RequestBody T entity) {
-        return ApiResult.success(service.saveOrUpdate(entity));
+    @Operation(summary = "Create", description = "Create entity.")
+    @PostMapping
+    public ApiResult<Boolean> create(@RequestBody T entity) {
+        return ApiResult.success(service.save(entity));
+    }
+
+    @Operation(summary = "Update by ID", description = "Update entity by ID. Ignores null values.")
+    @PutMapping("/{id}")
+    public ApiResult<Boolean> update(@PathVariable ID id, @RequestBody T entity) {
+        if (entity instanceof BaseEntity baseEntity) {
+            baseEntity.setId(String.valueOf(id));
+        }
+        return ApiResult.success(service.updateById(entity, true));
     }
 
     /**

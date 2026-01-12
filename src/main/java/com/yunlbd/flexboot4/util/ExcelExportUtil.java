@@ -1,6 +1,7 @@
 package com.yunlbd.flexboot4.util;
 
 import com.alibaba.excel.EasyExcel;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
@@ -11,25 +12,17 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 public final class ExcelExportUtil {
     private static final Logger log = LoggerFactory.getLogger(ExcelExportUtil.class);
@@ -40,7 +33,13 @@ public final class ExcelExportUtil {
             File temp = File.createTempFile("export_", ".xlsx");
             List<Field> fields = collectFields(modelClass);
             List<List<String>> head = fields.stream()
-                .map(f -> List.of(f.getName()))
+                .map(f -> {
+                    com.alibaba.excel.annotation.ExcelProperty p = f.getAnnotation(com.alibaba.excel.annotation.ExcelProperty.class);
+                    if (p != null && p.value().length > 0) {
+                        return Arrays.asList(p.value());
+                    }
+                    return List.of(f.getName());
+                })
                 .collect(Collectors.toList());
             var writer = EasyExcel.write(temp).build();
             var sheet = EasyExcel.writerSheet(1).head(head).build();
@@ -135,9 +134,11 @@ public final class ExcelExportUtil {
         List<Field> all = new ArrayList<>();
         Class<?> c = clazz;
         while (c != null && c != Object.class) {
-            for (Field f : c.getDeclaredFields()) {
+            Field[] declaredFields = c.getDeclaredFields();
+            for (Field f : declaredFields) {
                 if ((f.getModifiers() & java.lang.reflect.Modifier.STATIC) != 0) continue;
                 if ((f.getModifiers() & java.lang.reflect.Modifier.TRANSIENT) != 0) continue;
+                if (f.isAnnotationPresent(com.alibaba.excel.annotation.ExcelIgnore.class)) continue;
                 if (!names.add(f.getName())) continue;
                 f.setAccessible(true);
                 all.add(f);

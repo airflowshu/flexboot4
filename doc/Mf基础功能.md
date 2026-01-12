@@ -77,7 +77,22 @@
 - 排序支持多列与关联列
 
 ## 代码位置
-- BaseController：通用方法入口 [BaseController.java](file://../src/main/java/com/yunlbd/flexboot4/controller/BaseController.java)
-- 默认构建器：DefaultQueryWrapperBuilder [DefaultQueryWrapperBuilder.java](file://../src/main/java/com/yunlbd/flexboot4/query/DefaultQueryWrapperBuilder.java)
-- 关联解析：RelationQueryBuilder [RelationQueryBuilder.java](file:///../src/main/java/com/yunlbd/flexboot4/query/RelationQueryBuilder.java)
+- BaseController：通用方法入口 [BaseController.java](../src/main/java/com/yunlbd/flexboot4/controller/BaseController.java)
+- 默认构建器：DefaultQueryWrapperBuilder [DefaultQueryWrapperBuilder.java](../src/main/java/com/yunlbd/flexboot4/query/DefaultQueryWrapperBuilder.java)
+- 关联解析：RelationQueryBuilder [RelationQueryBuilder.java](../src/main/java/com/yunlbd/flexboot4/query/RelationQueryBuilder.java)
 - 工具：FieldResolver、ValueConverter、OperatorStrategies、SearchDtoUtils
+
+
+## 字典设计要点
+
+* 使用已有的静态解析器 [DictTextResolver](../src/main/java/com/yunlbd/flexboot4/excel/DictTextResolver.java) 作为统一入口，避免监听器直接依赖 Spring Bean。
+
+* 通过在实体字段上标注字典类型（使用注解 [ExcelDict](../src/main/java/com/yunlbd/flexboot4/excel/ExcelDict.java)），[GlobalDictSetListener.java](../src/main/java/com/yunlbd/flexboot4/listener/GlobalDictSetListener.java)全局监听器在 onSet 时读取注解决定字典类型（无需在具体的业务类上的@Table注解内增加配置onSet）。
+> e.g. 更新 SysUser.java 去除 @Table(onSet=...)，改用全局监听器；性别字段标注 @ExcelDict("gender") 保持回写到 genderStr
+
+* 监听器通用化：只要字段带有 @ExcelDict("<typeCode>") **声明取注解的字典类型 code**，就将解析得到的文本写入同名的 <fieldName>Str 字段。
+* 对于未标注的字段，维持现状，不做字典回写。
+* 未匹配字典项：返回原始 code 字符串，便于排查。
+* 顺序：typeHandler 优先于 SetListener，符合 MyBatis-Flex 官方说明。
+* 全局 onSet 能力：新增全局监听器，对所有继承 BaseEntity 的实体启用字典回写 
+* 多字典字段支持：按每次属性赋值触发，逐字段检测并解析，支持同一实体含多个字典字段

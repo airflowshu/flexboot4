@@ -8,7 +8,6 @@ import com.mybatisflex.annotation.Id;
 import com.mybatisflex.annotation.KeyType;
 import com.mybatisflex.core.keygen.KeyGenerators;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -30,7 +29,6 @@ public class BaseEntity implements Serializable {
     @ExcelIgnore
     private String id;
 
-    @JsonIgnore
     @ExcelIgnore
     @Column(version = true)
     private Long version;
