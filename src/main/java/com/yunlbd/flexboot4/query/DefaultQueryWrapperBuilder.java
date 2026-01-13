@@ -2,11 +2,13 @@ package com.yunlbd.flexboot4.query;
 
 import com.mybatisflex.core.query.QueryWrapper;
 import com.yunlbd.flexboot4.dto.SearchDto;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
+@Slf4j
 public class DefaultQueryWrapperBuilder extends AbstractQueryWrapperBuilder {
 
     private static final DefaultQueryWrapperBuilder INSTANCE = new DefaultQueryWrapperBuilder();
@@ -19,6 +21,12 @@ public class DefaultQueryWrapperBuilder extends AbstractQueryWrapperBuilder {
     public QueryWrapper build(SearchDto dto, Class<?> entityClass) {
         QueryWrapper qw = QueryWrapper.create().from(entityClass);
         RelationQueryBuilder.RelationContext ctx = RelationQueryBuilder.prepare(entityClass, dto);
+        log.info("=== Debug QueryWrapper Build ===");
+        log.info("entityClass: {}", entityClass.getSimpleName());
+        log.info("rootTable: {}", ctx.rootTable);
+        log.info("pathToTable: {}", ctx.pathToTable);
+        log.info("hasRelationPaths: {}", SearchDtoUtils.hasRelationPaths(dto));
+
         RelationQueryBuilder.buildJoins(qw, ctx);
         List<SearchDto.SearchItem> items = dto.getItems() == null ? Collections.emptyList() : dto.getItems();
         String rootLogic = dto.getLogic() == null ? "AND" : dto.getLogic().trim().toUpperCase(Locale.ROOT);
@@ -45,6 +53,7 @@ public class DefaultQueryWrapperBuilder extends AbstractQueryWrapperBuilder {
     private void applyItem(QueryWrapper qw, RelationQueryBuilder.RelationContext ctx, SearchDto.SearchItem it, String groupLogic) {
         boolean isAnd = "AND".equalsIgnoreCase(groupLogic);
         if (it.getChildren() != null && !it.getChildren().isEmpty()) {
+            log.info("Processing item with children, groupLogic: {}, childrenLogic: {}", groupLogic, it.getLogic());
             if (isAnd) {
                 qw.and((java.util.function.Consumer<QueryWrapper>) w -> applyChildren(w, ctx, it.getChildren(), it.getLogic()));
             } else {
@@ -53,18 +62,38 @@ public class DefaultQueryWrapperBuilder extends AbstractQueryWrapperBuilder {
             return;
         }
         if (it.getField() == null || it.getOp() == null) {
+            log.info("Skipping item: field={}, op={}", it.getField(), it.getOp());
             return;
         }
         String field = it.getField();
         String op = it.getOp().trim().toLowerCase(Locale.ROOT);
         Object val = ValueConverter.convert(ctx, field, it.getVal());
+        log.info("Processing field: {}, op: {}, val: {}, isAnd: {}", field, op, val, isAnd);
         if (field.contains(".")) {
             String[] parts = field.split("\\.");
             String alias = parts[0];
             String prop = parts[1];
             String rel = normalizeRel(ctx, alias);
             String targetTable = ctx.pathToTable.get(rel);
-            if (targetTable == null) return;
+            log.info("Field contains dot: alias={}, rel={}, targetTable={}", alias, rel, targetTable);
+            // 如果是根实体字段（rel为空字符串或匹配根表名/类名），则直接作为普通字段处理
+            if (targetTable == null || rel.isEmpty()) {
+                // 检查是否是根实体（通过表名或类名匹配）
+                String rootTableLower = ctx.rootTable.toLowerCase(Locale.ROOT);
+                String aliasLower = alias.toLowerCase(Locale.ROOT);
+                String rootEntitySimpleName = ctx.rootEntity.getSimpleName().toLowerCase(Locale.ROOT);
+                log.info("Checking root match: rootTableLower={}, aliasLower={}, rootEntitySimpleName={}", rootTableLower, aliasLower, rootEntitySimpleName);
+                if (rootTableLower.equals(aliasLower) || rootEntitySimpleName.equals(aliasLower) || rel.isEmpty()) {
+                    String col = ctx.rootTable + "." + RelationQueryBuilder.TableUtils.columnName(prop);
+                    log.info("Matched as root entity field, applying condition: {}", col);
+                    if (isAnd) {
+                        qw.and((java.util.function.Consumer<QueryWrapper>) wrapper -> OperatorStrategies.applyInto(wrapper, col, op, val));
+                    } else {
+                        qw.or((java.util.function.Consumer<QueryWrapper>) wrapper -> OperatorStrategies.applyInto(wrapper, col, op, val));
+                    }
+                }
+                return;
+            }
             String existsSql = buildExistsSql(ctx, rel, targetTable, prop, op);
             Object param = val;
             if (existsSql == null) return;

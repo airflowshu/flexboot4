@@ -28,7 +28,6 @@ public class SysUser extends BaseEntity {
     @ExcelProperty("登录名")
     private String username;
 
-    @JsonIgnore
     @ExcelIgnore //标明不需要导出
     @Schema(accessMode = Schema.AccessMode.WRITE_ONLY)
     private String password;
@@ -46,6 +45,7 @@ public class SysUser extends BaseEntity {
     private String phone;
 
     @DictEnum("gender")
+    @Schema(example = "1", title = "性别值")
     @ExcelIgnore //标明不需要导出
     private String gender;
 

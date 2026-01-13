@@ -3,12 +3,15 @@ package com.yunlbd.flexboot4.support;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.core.service.IService;
+import jakarta.annotation.Nullable;
 import reactor.core.publisher.Flux;
 
 import java.lang.reflect.Method;
 import java.util.List;
 
+@SuppressWarnings("all")
 public final class ReactiveExportSupport {
+    @SuppressWarnings("unchecked")
     public static <T, R> Flux<R> queryFlux(IService<T> service, QueryWrapper query, Class<R> asType, int pageSize) {
         Method m = findReactiveListAs(service);
         if (m != null) {
