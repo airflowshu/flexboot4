@@ -1,5 +1,8 @@
 package com.yunlbd.flexboot4.entity;
 
+import com.alibaba.excel.annotation.ExcelIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.mybatisflex.annotation.Column;
 import com.mybatisflex.annotation.Table;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -18,4 +21,13 @@ import lombok.experimental.SuperBuilder;
 public class SysRoleMenu extends BaseEntity {
     private String roleId;
     private String menuId;
+    /**
+     * 覆盖父类的 delFlag 属性
+     * 显式指定 isLogicDelete = false，此时对该实体的 delete 操作将变为物理删除
+     */
+    @Column(isLogicDelete = false)
+    @JsonIgnore
+    @ExcelIgnore
+    @Schema(hidden = true)
+    private Integer delFlag;
 }

@@ -29,7 +29,7 @@ public class ApiResult<T> {
         ApiResult<T> r = new ApiResult<>();
         r.setCode(-1);
         r.setMessage(msg);
-        r.setError("api响应错误");
+        r.setError("响应错误,请联系管理员");
         return r;
     }
     

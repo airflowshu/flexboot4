@@ -33,8 +33,7 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
 
     private final SysUserRoleMapper sysUserRoleMapper;
 
-    @Override
-    @Cacheable(key = "'user:' + #userId")
+    //这里不声明使用缓存，一般系统登录后初始会调用一次，使用缓存意义大不，徒增缓存数据一致性的维护成本
     public List<VueRoute> getUserMenus(String userId) {
         List<SysMenu> fullTree = mapper.selectListWithRelationsByQuery(
                 QueryWrapper.create()
@@ -177,6 +176,7 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
         return result;
     }
 
+    // todo ???
     @Override
     @Cacheable(key = "'codes:' + #userId")
     public List<String> getPermissionCodes(String userId) {

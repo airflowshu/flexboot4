@@ -41,8 +41,8 @@ public class BaseServiceImpl<M extends BaseMapper<T>, T extends BaseEntity> exte
 
     @Override
     @CacheEvict(allEntries = true, cacheResolver = "dynamicCacheResolver")
-    public boolean saveBatch(Collection<T> entities, int batchSize) {
-        boolean ok = super.saveBatch(entities, batchSize);
+    public boolean saveBatch(Collection<T> entities) {
+        boolean ok = super.saveBatch(entities);
         if (ok) {
             Class<?> c = firstEntityClass(entities);
             bumpVersionsOnWrite(c != null ? c : resolveEntityClass());
