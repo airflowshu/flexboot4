@@ -30,7 +30,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         // 使用服务层方法，这样可以利用缓存
         QueryWrapper queryWrapper = QueryWrapper.create()
                 .where(SysUser::getUsername).eq(username)
-                .and(SysUser::getDelFlag).eq(0);
+                .and(SysUser::getDelFlag).eq(0); // Eager fetch all relations (roles, dept)
 
         SysUser sysUser = sysUserService.getOne(queryWrapper);
 

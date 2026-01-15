@@ -134,7 +134,11 @@ public class BaseServiceImpl<M extends BaseMapper<T>, T extends BaseEntity> exte
     @Override
     @Cacheable(keyGenerator = "versionedQueryKeyGenerator", cacheResolver = "dynamicCacheResolver")
     public T getOne(QueryWrapper query) {
-        return super.getOne(query);
+        T one = super.getOne(query);
+        if (one != null) {
+            RelationManager.queryRelations(super.getMapper(), List.of(one));
+        }
+        return one;
     }
 
     @Override

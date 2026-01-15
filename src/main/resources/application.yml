@@ -20,6 +20,21 @@ spring:
   web:
     error:
       include-stacktrace: always
+  mail:
+    host: smtp.qq.com
+    port: 465
+    username: 657296200@qq.com
+    password: yzoyjinipamibfib
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          ssl:
+            enable: true
+    default-encoding: UTF-8
 
 mybatis-flex:
   datasource:
@@ -31,6 +46,14 @@ mybatis-flex:
     map-underscore-to-camel-case: true
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
   inject-sql-session-on-mapper-scan: true
+
+# 自定义邮件配置
+
+mail:
+  sender-name: ${spring.application.name}       # 发件人显示名称
+  reset-url: http://localhost:5666/auth/reset-password  # 前端重置密码页面
+  token-expiration-minutes: 30    # 重置链接有效期(分钟)
+
 
 springdoc:
   api-docs:

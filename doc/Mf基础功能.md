@@ -96,3 +96,52 @@
 * 顺序：typeHandler 优先于 SetListener，符合 MyBatis-Flex 官方说明。
 * 全局 onSet 能力：新增全局监听器，对所有继承 BaseEntity 的实体启用字典回写 
 * 多字典字段支持：按每次属性赋值触发，逐字段检测并解析，支持同一实体含多个字典字段
+
+# 邮件配置
+
+```yaml
+spring:
+    mail:
+    host: smtp.example.com        # SMTP 服务器地址
+    port: 587                     # SMTP 端口 (TLS)
+    username: your-email@example.com
+    password: your-app-password   # 或授权码
+    properties:
+        mail:
+            smtp:
+                auth: true
+                starttls:
+                 enable: true
+
+# 自定义邮件配置
+mail:
+    host: ${spring.mail.host}
+    port: ${spring.mail.port}
+    username: ${spring.mail.username}
+    password: ${spring.mail.password}
+    sender-name: "FlexBoot4"        # 发件人显示名称
+    reset-url: "http://localhost:3000/reset-password"  # 前端重置密码页面
+    token-expiration-minutes: 30    # 重置链接有效期(分钟)
+```
+## 生产配置：
+生产环境的 reset-url 应该是前端实际部署的域名：
+
+mail:
+    reset-url: https://your-frontend-domain.com/auth/reset-password
+
+> 
+    常用邮箱配置参考：
+    ┌────────────┬────────────────────┬─────────┐
+    │ 邮箱服务商 │    SMTP 服务器     │  端口   │
+    ├────────────┼────────────────────┼─────────┤
+    │ Gmail      │ smtp.gmail.com     │ 587     │
+    ├────────────┼────────────────────┼─────────┤
+    │ QQ 邮箱    │ smtp.qq.com        │ 465/587 │
+    ├────────────┼────────────────────┼─────────┤
+    │ 163 邮箱   │ smtp.163.com       │ 465/994 │
+    ├────────────┼────────────────────┼─────────┤
+    │ 企业邮箱   │ smtp.exmail.qq.com │ 465     │
+    └────────────┴────────────────────┴─────────┘
+    注意： Gmail 和 QQ 邮箱需要使用应用专用密码，而不是登录密码。
+
+

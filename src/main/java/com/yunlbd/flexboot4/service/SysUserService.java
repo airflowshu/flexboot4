@@ -10,4 +10,5 @@ import com.yunlbd.flexboot4.entity.SysUser;
  */
 public interface SysUserService extends IExtendedService<SysUser> {
 
+    boolean updatePasswordById(String id, String newPassword);
 }

@@ -2,18 +2,20 @@ package com.yunlbd.flexboot4.controller;
 
 import com.mybatisflex.core.query.QueryWrapper;
 import com.yunlbd.flexboot4.common.ApiResult;
-import com.yunlbd.flexboot4.dto.LoginReq;
-import com.yunlbd.flexboot4.dto.LoginResp;
+import com.yunlbd.flexboot4.dto.*;
 import com.yunlbd.flexboot4.entity.SysUser;
 import com.yunlbd.flexboot4.mapper.SysUserMapper;
 import com.yunlbd.flexboot4.security.JwtUtil;
 import com.yunlbd.flexboot4.security.UserDetailsServiceImpl;
+import com.yunlbd.flexboot4.service.EmailService;
 import com.yunlbd.flexboot4.service.SysMenuService;
+import com.yunlbd.flexboot4.service.SysUserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -27,6 +29,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -43,6 +46,8 @@ public class AuthController {
     private final SysUserMapper sysUserMapper;
     private final SysMenuService sysMenuService;
     private final UserDetailsServiceImpl userDetailsService;
+    private final EmailService emailService;
+    private final SysUserService sysUserService;
 
     private static final String LOGIN_LIMIT_KEY_PREFIX = "auth:limit:";
     private static final String BLACKLIST_KEY_PREFIX = "auth:blacklist:";
@@ -233,5 +238,102 @@ public class AuthController {
         }
     }
 
+    @Operation(summary = "Forget Password", description = "Send password reset email to the registered email address.")
+    @PostMapping("/forget-password")
+    public ApiResult<String> forgetPassword(@Valid @RequestBody ForgetPasswordReq req) {
+        String email = req.getEmail().toLowerCase().trim();
+
+        // Find user by email
+        SysUser user = sysUserMapper.selectOneByQuery(
+                QueryWrapper.create().where(SysUser::getEmail).eq(email)
+        );
+
+        // Always return success to prevent email enumeration
+        if (user == null) {
+            log.warn("Password reset requested for non-existent email: {}", email);
+            return ApiResult.success("重置链接已发送，请查收邮件");
+        }
+
+        // Generate reset token
+        String resetToken = UUID.randomUUID().toString().replace("-", "");
+
+        try {
+            emailService.sendPasswordResetEmail(email, resetToken, user.getId());
+            log.info("Password reset email sent for user: {} ({})", user.getUsername(), email);
+        } catch (Exception e) {
+            log.error("Failed to send password reset email to: {}", email, e);
+            return ApiResult.error("Failed to send reset email");
+        }
+
+        return ApiResult.success("重置链接已发送，请查收邮件");
+    }
+
+    @Operation(summary = "Reset Password", description = "Reset password using token received via email.")
+    @PostMapping("/reset-password")
+    public ApiResult<String> resetPassword(@Valid @RequestBody ResetPasswordReq req) {
+        String token = req.getToken().trim();
+        String newPassword = req.getNewPassword();
+
+        // Get user ID from token
+        String userId = emailService.validateResetToken(token);
+        if (userId == null) {
+            log.warn("Invalid or expired reset token");
+            return ApiResult.error("无效或已过期的重置链接");
+        }
+
+        // Update password by user ID
+        boolean updated = sysUserService.updatePasswordById(userId, newPassword);
+
+        if (!updated) {
+            log.error("Failed to update password for user ID: {}", userId);
+            return ApiResult.error("密码重置失败");
+        }
+
+        // Invalidate the reset token
+        emailService.invalidateResetToken(token);
+
+        // Clear user cache to force re-authentication
+        SysUser user = sysUserService.getById(userId);
+        if (user != null) {
+            userDetailsService.evictUserCache(user.getUsername());
+        }
+
+        log.info("Password reset successfully for user: {}", user != null ? user.getUsername() : userId);
+        return ApiResult.success("密码重置成功，请使用新密码登录");
+    }
+
+    @Operation(summary = "Super/Admin Reset User Password", description = "Super/Admin can reset any user's password by user ID.")
+    @PostMapping("/admin/reset-password")
+    public ApiResult<String> adminResetPassword(@Valid @RequestBody AdminResetPasswordReq req) {
+        // Get user info first
+        SysUser user = sysUserService.getById(req.getUserId());
+        if (user == null) {
+            log.error("User not found for ID: {}", req.getUserId());
+            return ApiResult.error("用户不存在");
+        }
+
+        // Update password
+        boolean updated = sysUserService.updatePasswordById(req.getUserId(), req.getNewPassword());
+
+        if (!updated) {
+            log.error("Failed to update password for user ID: {}", req.getUserId());
+            return ApiResult.error("密码重置失败");
+        }
+
+        // Clear user cache to force re-authentication
+        userDetailsService.evictUserCache(user.getUsername());
+
+        // Send notification email if mail is configured and user has email
+        if (user.getEmail() != null && !user.getEmail().isEmpty()) {
+            try {
+                emailService.sendPasswordResetNotification(user.getEmail(), req.getNewPassword());
+            } catch (Exception e) {
+                log.warn("Failed to send password reset notification email to: {}", user.getEmail());
+            }
+        }
+
+        log.info("Admin reset password successfully for user ID: {}", req.getUserId());
+        return ApiResult.success("密码重置成功");
+    }
 
 }

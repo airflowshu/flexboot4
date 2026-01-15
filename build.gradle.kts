@@ -67,6 +67,9 @@ dependencies {
     // Test
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
+
+	// Mail
+	implementation("org.springframework.boot:spring-boot-starter-mail")
 }
 
 tasks.withType<Test> {

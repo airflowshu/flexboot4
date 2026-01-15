@@ -7,6 +7,8 @@ import com.yunlbd.flexboot4.entity.SysUser;
 import com.yunlbd.flexboot4.service.SysUserService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
+import org.apache.poi.ss.formula.functions.T;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -22,6 +24,18 @@ public class SysUserController extends BaseController<SysUserService, SysUser, S
     @Override
     protected Class<SysUser> getEntityClass() {
         return SysUser.class;
+    }
+
+    private final PasswordEncoder passwordEncoder;
+
+    @Override
+    @Operation(summary = "Create", description = "Create entity.")
+    @PostMapping
+    public ApiResult<Boolean> create(@RequestBody SysUser user) {
+        //新增用户，默认密码111111，
+        // 重置密码需通过忘记密码，邮件方式重置;或者管理员才有操作权限reset
+        user.setPassword(passwordEncoder.encode("111111"));
+        return ApiResult.success(service.save(user));
     }
 
     @Operation(summary = "获取用户信息", description = "获取登录认证用户信息")
