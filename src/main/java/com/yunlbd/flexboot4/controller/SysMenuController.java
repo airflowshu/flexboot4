@@ -21,7 +21,7 @@ import java.util.List;
 public class SysMenuController extends BaseController<SysMenuService, SysMenu, String> {
 
     @Override
-    protected Class<SysMenu> getEntityClass() {
+    public Class<SysMenu> getEntityClass() {
         return SysMenu.class;
     }
 

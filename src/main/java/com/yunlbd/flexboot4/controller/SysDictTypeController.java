@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class SysDictTypeController extends BaseController<SysDictTypeService, SysDictType, String>  {
 
     @Override
-    protected Class<SysDictType> getEntityClass() {
+    public Class<SysDictType> getEntityClass() {
         return SysDictType.class;
     }
 }

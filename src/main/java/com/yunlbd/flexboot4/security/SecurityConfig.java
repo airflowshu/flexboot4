@@ -18,14 +18,17 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
-public class SecurityConfig {
+public class SecurityConfig implements WebMvcConfigurer {
 
     @Lazy
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final PermissionCheckInterceptor permissionCheckInterceptor;
     private final UserDetailsService userDetailsService;
     private final IgnoreUrlsConfig ignoreUrlsConfig;
     private final RestAuthenticationEntryPoint authenticationEntryPoint;
@@ -51,6 +54,12 @@ public class SecurityConfig {
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(permissionCheckInterceptor)
+                .addPathPatterns("/api/**"); // 对所有 API 请求进行权限校验
     }
 
     @Bean

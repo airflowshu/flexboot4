@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class SysDeptController extends BaseController<SysDeptService, SysDept, String>  {
 
     @Override
-    protected Class<SysDept> getEntityClass() {
+    public Class<SysDept> getEntityClass() {
         return SysDept.class;
     }
 }

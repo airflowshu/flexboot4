@@ -180,8 +180,20 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
     @Override
     @Cacheable(key = "'codes:' + #userId")
     public List<String> getPermissionCodes(String userId) {
-        // Query: SysMenu -> SysRoleMenu -> SysRole -> SysUserRole -> SysUser
-        // Join tables to get permissions for the specific user
+        // 超级管理员返回所有权限码
+        if (SYS_SUPER_USER_ID.equals(userId)) {
+            QueryWrapper queryWrapper = QueryWrapper.create()
+                    .select(SysMenuTableDef.SYS_MENU.AUTH_CODE)
+                    .from(SysMenu.class)
+                    .where(SysMenu::getStatus).eq(1)
+                    .and(SysMenu::getAuthCode).isNotNull()
+                    .and(SysMenu::getAuthCode).ne("");
+            return mapper.selectListByQueryAs(queryWrapper, String.class).stream()
+                    .distinct()
+                    .collect(Collectors.toList());
+        }
+
+        // 普通用户：通过角色关联查询
         QueryWrapper queryWrapper = QueryWrapper.create()
                 .select(SysMenuTableDef.SYS_MENU.AUTH_CODE)
                 .from(SysMenu.class)

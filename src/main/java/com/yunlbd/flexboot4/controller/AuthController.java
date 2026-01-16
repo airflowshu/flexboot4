@@ -33,7 +33,8 @@ public class AuthController {
     public ApiResult<List<String>> getCodes(HttpServletRequest request) {
         List<String> codes = authService.getPermissionCodes(request);
         if (codes == null || codes.isEmpty()) {
-            return ApiResult.error(401, "Unauthorized");
+            return ApiResult.success(List.of());
+            // return ApiResult.error(401, "Unauthorized");
         }
         return ApiResult.success(codes);
     }

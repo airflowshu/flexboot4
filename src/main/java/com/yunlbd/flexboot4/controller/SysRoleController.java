@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class SysRoleController extends BaseController<SysRoleService, SysRole, String>  {
 
     @Override
-    protected Class<SysRole> getEntityClass() {
+    public Class<SysRole> getEntityClass() {
         return SysRole.class;
     }
 }

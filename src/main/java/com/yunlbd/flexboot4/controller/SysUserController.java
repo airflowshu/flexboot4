@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 public class SysUserController extends BaseController<SysUserService, SysUser, String> {
 
     @Override
-    protected Class<SysUser> getEntityClass() {
+    public Class<SysUser> getEntityClass() {
         return SysUser.class;
     }
 

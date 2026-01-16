@@ -185,7 +185,7 @@ public abstract class BaseController<S extends IExtendedService<T>, T, ID extend
         return buildQueryWrapper(searchDto, getEntityClass());
     }
 
-    protected abstract Class<T> getEntityClass();
+    public abstract Class<T> getEntityClass();
 
     public QueryWrapper buildQueryWrapper(SearchDto searchDto, Class<?> entityClass) {
         return com.yunlbd.flexboot4.query.DefaultQueryWrapperBuilder.get().build(searchDto, entityClass);

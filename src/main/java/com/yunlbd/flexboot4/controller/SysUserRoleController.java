@@ -15,7 +15,7 @@ import java.util.List;
 public class SysUserRoleController extends BaseController<SysUserRoleService, SysUserRole, String> {
 
     @Override
-    protected Class<SysUserRole> getEntityClass() {
+    public Class<SysUserRole> getEntityClass() {
         return SysUserRole.class;
     }
 

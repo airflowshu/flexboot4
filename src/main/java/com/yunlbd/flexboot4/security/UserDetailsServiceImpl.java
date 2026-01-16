@@ -2,9 +2,11 @@ package com.yunlbd.flexboot4.security;
 
 import com.mybatisflex.core.query.QueryWrapper;
 import com.yunlbd.flexboot4.entity.SysUser;
+import com.yunlbd.flexboot4.service.SysMenuService;
 import com.yunlbd.flexboot4.service.SysUserService;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NullMarked;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -22,6 +24,7 @@ import java.util.stream.Collectors;
 public class UserDetailsServiceImpl implements UserDetailsService {
 
     private final SysUserService sysUserService;
+    private final SysMenuService sysMenuService;
 
     @Override
     @NullMarked
@@ -50,14 +53,20 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                     .collect(Collectors.toList());
         }
 
-        return new LoginUser(sysUser, authorities);
+        LoginUser loginUser = new LoginUser(sysUser, authorities, null);
+
+        // 加载用户的权限码列表
+        List<String> permissionCodes = sysMenuService.getPermissionCodes(sysUser.getId());
+        loginUser.setPermissionCodes(permissionCodes);
+
+        return loginUser;
     }
-    
+
     /**
      * 清除用户缓存
      * @param username 用户名
      */
-    @org.springframework.cache.annotation.CacheEvict(value = "userDetails", key = "#username")
+    @CacheEvict(value = "userDetails", key = "#username")
     public void evictUserCache(String username) {
         // 仅用于清除缓存，实际方法体不需要任何逻辑
     }

@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class SysRoleMenuController extends BaseController<SysRoleMenuService, SysRoleMenu, String>  {
 
     @Override
-    protected Class<SysRoleMenu> getEntityClass() {
+    public Class<SysRoleMenu> getEntityClass() {
         return SysRoleMenu.class;
     }
 }
