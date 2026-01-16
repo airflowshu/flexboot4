@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS sys_role
 CREATE TABLE IF NOT EXISTS sys_menu
 (
     id                          VARCHAR(32) NOT NULL UNIQUE,
-    parent_id                   VARCHAR(32) NOT NULL DEFAULT '0',
+    parent_id                   VARCHAR(32)  DEFAULT NULL,
     path                        VARCHAR(255),
     name                        VARCHAR(100),
     component                   VARCHAR(255),
@@ -79,7 +79,7 @@ CREATE TABLE IF NOT EXISTS sys_menu
 CREATE TABLE IF NOT EXISTS sys_dept
 (
     id               VARCHAR(32)  NOT NULL UNIQUE,
-    parent_id        VARCHAR(32)  NOT NULL DEFAULT '0',
+    parent_id        VARCHAR(32)  DEFAULT NULL,
     dept_name        VARCHAR(100) NOT NULL,
     order_no         INTEGER               DEFAULT 0,
     status           INTEGER               DEFAULT 1,

@@ -35,10 +35,11 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
 
     //这里不声明使用缓存，一般系统登录后初始会调用一次，使用缓存意义大不，徒增缓存数据一致性的维护成本
     public List<VueRoute> getUserMenus(String userId) {
+        // 查询所有状态为启用的菜单（包含所有type：catalog、menu、button）
         List<SysMenu> fullTree = mapper.selectListWithRelationsByQuery(
                 QueryWrapper.create()
                         .where(SysMenu::getStatus).eq(1)
-                        .and(SysMenu::getParentId).eq("0") // Fetch roots
+                        .and(SysMenu::getParentId).isNull() // Fetch roots
                         .orderBy(SysMenu::getOrderNo).asc()
         );
         // 1. Super Admin (userId = "1"): Return all enabled menus
@@ -54,7 +55,7 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
                 .leftJoin(SysUserRole.class).on(SysUserRoleTableDef.SYS_USER_ROLE.ROLE_ID.eq(SysRoleMenuTableDef.SYS_ROLE_MENU.ROLE_ID))
                 .where(SysUserRoleTableDef.SYS_USER_ROLE.USER_ID.eq(userId))
                 .and(SysMenu::getStatus).eq(1);
-        
+
         List<String> accessibleMenuIds = mapper.selectListByQueryAs(accessQuery, String.class);
 
         if (accessibleMenuIds.isEmpty()) {
@@ -82,9 +83,11 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
         if (accessibleIds == null) {
             return true; // If null, assume super admin or full access
         }
+        // 检查当前菜单（包括按钮类型）是否在权限列表中
         if (accessibleIds.contains(menu.getId())) {
             return true;
         }
+        // 递归检查子节点（包含所有type：catalog、menu、button）
         if (menu.getChildren() != null) {
             for (SysMenu child : menu.getChildren()) {
                 if (isMenuAccessibleOrHasAccessibleChildren(child, accessibleIds)) {
@@ -96,11 +99,6 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
     }
 
     private VueRoute convertToVueRouteWithFilter(SysMenu menu, List<String> accessibleIds) {
-        // Even if the parent itself isn't in accessibleIds, if it has accessible children, 
-        // we usually want to show it (perhaps as a folder).
-        // However, standard RBAC usually implies parent is assigned if child is assigned.
-        // Here we strictly follow: show if accessible OR has accessible children.
-        
         VueRoute route = new VueRoute();
         route.setId(menu.getId());
         route.setPid(menu.getParentId());
@@ -113,11 +111,11 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
         route.setStatus(menu.getStatus());
         route.setAuthCode(menu.getAuthCode());
 
-        
         List<VueRoute> childrenRoutes = new ArrayList<>();
         if (menu.getChildren() != null && !menu.getChildren().isEmpty()) {
             for (SysMenu child : menu.getChildren()) {
-                if (child.getStatus() == 1 && (child.getType().equals("catalog") || child.getType().equals("menu"))) {
+                if (child.getStatus() == 1) {
+                    // 如果子节点有权限或者有后代有权限，则处理
                     if (isMenuAccessibleOrHasAccessibleChildren(child, accessibleIds)) {
                         VueRoute childRoute = convertToVueRouteWithFilter(child, accessibleIds);
                         if (childRoute != null) {
@@ -127,17 +125,19 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
                 }
             }
         }
-        
+
         if (!childrenRoutes.isEmpty()) {
             route.setChildren(childrenRoutes);
-        } else {
-            // If leaf node and not accessible, don't return it
-            if (accessibleIds != null && !accessibleIds.contains(menu.getId())) {
-                return null;
-            }
+            return route;
         }
-        
-        return route;
+
+        // 如果是叶子节点（有 type 为 button 的子节点），并且自己在权限列表中，则返回
+        if (accessibleIds != null && accessibleIds.contains(menu.getId())) {
+            return route;
+        }
+
+        // 叶子节点且无权限，不返回
+        return null;
     }
     
     // Kept for backward compatibility or direct full tree conversion
