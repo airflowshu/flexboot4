@@ -236,14 +236,8 @@ public class AuthServiceImpl implements IAuthService {
 
         userDetailsService.evictUserCache(user.getUsername());
 
-        // Send notification email
-        if (user.getEmail() != null && !user.getEmail().isEmpty()) {
-            try {
-                emailService.sendPasswordResetNotification(user.getEmail(), req.getNewPassword());
-            } catch (Exception e) {
-                log.warn("Failed to send password reset notification email to: {}", user.getEmail());
-            }
-        }
+        // Send notification email asynchronously
+        emailService.sendPasswordResetNotificationAsync(user.getEmail(), req.getNewPassword());
 
         log.info("Admin reset password successfully for user ID: {}", req.getUserId());
         return "密码重置成功";

@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.TimeUnit;
@@ -118,6 +119,7 @@ public class EmailService {
      * @param email       recipient email address
      * @param newPassword new password
      */
+
     public void sendPasswordResetNotification(String email, String newPassword) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
@@ -136,6 +138,17 @@ public class EmailService {
             log.error("Failed to send password reset notification email to: {}", email, e);
             throw new RuntimeException("Failed to send notification email", e);
         }
+    }
+
+    /**
+     * Send password reset notification email asynchronously
+     *
+     * @param email       recipient email address
+     * @param newPassword new password
+     */
+    @Async
+    public void sendPasswordResetNotificationAsync(String email, String newPassword) {
+        sendPasswordResetNotification(email, newPassword);
     }
 
     private String buildNotificationEmailContent(String newPassword) {

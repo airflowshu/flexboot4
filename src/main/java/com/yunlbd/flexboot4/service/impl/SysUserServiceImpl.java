@@ -1,10 +1,10 @@
 package com.yunlbd.flexboot4.service.impl;
 
-import com.mybatisflex.core.query.QueryWrapper;
 import com.yunlbd.flexboot4.entity.SysUser;
 import com.yunlbd.flexboot4.mapper.SysUserMapper;
 import com.yunlbd.flexboot4.service.SysUserService;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -34,7 +34,7 @@ public class SysUserServiceImpl extends BaseServiceImpl<SysUserMapper, SysUser> 
         if (user == null) {
             return false;
         }
-
+        newPassword = StringUtils.isEmpty(newPassword) ? "111111" : newPassword;
         user.setPassword(passwordEncoder.encode(newPassword));
         return updateById(user, true);
     }
