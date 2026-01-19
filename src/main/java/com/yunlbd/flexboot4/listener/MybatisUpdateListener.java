@@ -9,9 +9,9 @@ public class MybatisUpdateListener implements UpdateListener {
     @Override
     public void onUpdate(Object o) {
         SysUser sysUser = SecurityUtils.getSysUser();
-        String username = sysUser != null ? sysUser.getUsername() : null;
-        if (username != null && o instanceof BaseEntity entity) {
-            entity.setLastModifyBy(username);
+        String userId = sysUser != null ? sysUser.getId() : null;
+        if (userId != null && o instanceof BaseEntity entity) {
+            entity.setLastModifyBy(userId);
         }
     }
 }
