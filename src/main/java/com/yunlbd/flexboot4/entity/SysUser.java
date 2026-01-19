@@ -2,7 +2,6 @@ package com.yunlbd.flexboot4.entity;
 
 import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.mybatisflex.annotation.Column;
 import com.mybatisflex.annotation.RelationManyToMany;
 import com.mybatisflex.annotation.RelationManyToOne;
@@ -51,7 +50,7 @@ public class SysUser extends BaseEntity {
 
     @Schema(accessMode = Schema.AccessMode.READ_ONLY) //只在入参中隐藏（响应中可见）
     @ExcelProperty("性别")
-    @Column(ignore = true)
+    @Column(ignore = true) //非实体表字段需这样声明
     private String genderStr;
 
     @ExcelProperty("部门ID")
@@ -60,10 +59,12 @@ public class SysUser extends BaseEntity {
     @ExcelProperty("状态")
     private Integer status; // 1: enabled, 0: disabled
 
+    @ExcelIgnore //标明不需要导出
     @Schema(accessMode = Schema.AccessMode.READ_ONLY) //只在入参中隐藏（响应中可见）
     @RelationManyToOne(selfField = "deptId", targetField = "id")
     private SysDept dept;
 
+    @ExcelIgnore //标明不需要导出
     @Schema(accessMode = Schema.AccessMode.READ_ONLY) //只在入参中隐藏（响应中可见）
     @RelationManyToMany(
             joinTable = "sys_user_role",

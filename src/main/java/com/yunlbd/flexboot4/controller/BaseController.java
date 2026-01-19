@@ -41,7 +41,7 @@ public abstract class BaseController<S extends IExtendedService<T>, T, ID extend
                   "logic": "OR",
                   "children": [
                     { "field": "type", "op": "eq", "val": "A" },
-                    { "field": "type", "op": "eq", "val": "B" }
+                    { "field": "createTime", "op": "gt", "val": "2026-01-01 00:00:00" }
                   ]
                 }
               ],
@@ -178,11 +178,7 @@ public abstract class BaseController<S extends IExtendedService<T>, T, ID extend
         var file = ExcelExportUtil.writeFluxToTempFile(flux, getEntityClass(), 1000);
         ExcelExportUtil.streamFileWithRange(request, response, file, name + ".xlsx");
         long endNs = System.nanoTime();
-        log.info("Export {} rows done in {} ms", file.length(), (endNs - startNs) / 1_000_000);
-    }
-
-    protected QueryWrapper buildQueryWrapper(SearchDto searchDto) {
-        return buildQueryWrapper(searchDto, getEntityClass());
+        log.info("Export {} Content-Length done in {} ms", file.length(), (endNs - startNs) / 1_000_000);
     }
 
     public abstract Class<T> getEntityClass();
