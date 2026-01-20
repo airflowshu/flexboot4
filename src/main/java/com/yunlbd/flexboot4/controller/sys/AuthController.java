@@ -1,6 +1,8 @@
-package com.yunlbd.flexboot4.controller;
+package com.yunlbd.flexboot4.controller.sys;
 
 import com.yunlbd.flexboot4.common.ApiResult;
+import com.yunlbd.flexboot4.common.annotation.OperLog;
+import com.yunlbd.flexboot4.common.enums.BusinessType;
 import com.yunlbd.flexboot4.dto.*;
 import com.yunlbd.flexboot4.security.JwtUtil;
 import com.yunlbd.flexboot4.service.IAuthService;
@@ -21,7 +23,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-@Tag(name = "Authentication", description = "User Login and Logout")
+@Tag(name = "认证管理", description = "Authentication - 用户登录和注销")
 public class AuthController {
 
     private final IAuthService authService;
@@ -40,6 +42,7 @@ public class AuthController {
     }
 
     @Operation(summary = "User Login", description = "Authenticate user and return JWT token. Sets HTTP-only cookie.")
+    @OperLog(title = "用户登录", businessType = BusinessType.LOGIN, isSaveResponseData = false)
     @PostMapping("/login")
     public ApiResult<LoginResp> login(@Valid @RequestBody LoginReq req, HttpServletRequest request, HttpServletResponse response) {
         String clientIp = JwtUtil.getClientIp(request);
@@ -59,6 +62,7 @@ public class AuthController {
     }
 
     @Operation(summary = "User Logout", description = "Invalidate JWT token and clear cookie.")
+    @OperLog(title = "用户登出", businessType = BusinessType.LOGOUT, isSaveRequestData = false, isSaveResponseData = false)
     @PostMapping("/logout")
     public ApiResult<String> logout(HttpServletRequest request, HttpServletResponse response) {
         authService.logout(request);

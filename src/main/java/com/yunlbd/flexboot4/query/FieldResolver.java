@@ -1,6 +1,5 @@
 package com.yunlbd.flexboot4.query;
 
-import java.lang.reflect.Field;
 import java.util.Locale;
 
 public class FieldResolver {

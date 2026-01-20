@@ -1,7 +1,9 @@
-package com.yunlbd.flexboot4.controller;
+package com.yunlbd.flexboot4.controller.sys;
 
 import com.yunlbd.flexboot4.entity.SysRole;
 import com.yunlbd.flexboot4.service.SysRoleService;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -13,6 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/api/role")
+@RequiredArgsConstructor
+@Tag(name = "角色管理", description = "SysRole - 角色管理")
 public class SysRoleController extends BaseController<SysRoleService, SysRole, String>  {
 
     @Override

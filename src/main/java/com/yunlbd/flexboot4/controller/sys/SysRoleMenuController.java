@@ -1,9 +1,10 @@
-package com.yunlbd.flexboot4.controller;
+package com.yunlbd.flexboot4.controller.sys;
 
 import com.yunlbd.flexboot4.common.ApiResult;
 import com.yunlbd.flexboot4.entity.SysRoleMenu;
 import com.yunlbd.flexboot4.service.SysRoleMenuService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,6 +19,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/role-menu")
 @RequiredArgsConstructor
+@Tag(name = "权限管理", description = "SysRoleMenu - 角色菜单关联管理")
 public class SysRoleMenuController extends BaseController<SysRoleMenuService, SysRoleMenu, String>  {
 
     @Override

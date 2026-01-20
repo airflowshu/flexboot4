@@ -15,3 +15,5 @@ mybatis-flex:
     map-underscore-to-camel-case: true
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
   inject-sql-session-on-mapper-scan: true
+  global-config:
+    print-banner: true

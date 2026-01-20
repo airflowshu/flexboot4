@@ -1,4 +1,4 @@
-package com.yunlbd.flexboot4.common.util;
+package com.yunlbd.flexboot4.util;
 
 import com.yunlbd.flexboot4.entity.SysUser;
 import com.yunlbd.flexboot4.security.LoginUser;

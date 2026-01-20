@@ -1,7 +1,8 @@
-package com.yunlbd.flexboot4.controller;
+package com.yunlbd.flexboot4.controller.sys;
 
 import com.yunlbd.flexboot4.entity.SysDictItem;
 import com.yunlbd.flexboot4.service.SysDictItemService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/dict-item")
 @RequiredArgsConstructor
+@Tag(name = "字典管理", description = "SysDictItem - 字典项管理")
 public class SysDictItemController extends BaseController<SysDictItemService, SysDictItem, String>  {
 
     @Override

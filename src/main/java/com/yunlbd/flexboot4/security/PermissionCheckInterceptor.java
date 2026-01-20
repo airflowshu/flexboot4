@@ -1,9 +1,9 @@
 package com.yunlbd.flexboot4.security;
 
 import com.yunlbd.flexboot4.common.annotation.RequirePermission;
-import com.yunlbd.flexboot4.common.util.SecurityUtils;
+import com.yunlbd.flexboot4.util.SecurityUtils;
 import com.yunlbd.flexboot4.config.IgnoreUrlsConfig;
-import com.yunlbd.flexboot4.controller.BaseController;
+import com.yunlbd.flexboot4.controller.sys.BaseController;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;

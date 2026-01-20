@@ -1,8 +1,10 @@
-package com.yunlbd.flexboot4.controller;
+package com.yunlbd.flexboot4.controller.sys;
 
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.yunlbd.flexboot4.common.ApiResult;
+import com.yunlbd.flexboot4.common.annotation.OperLog;
+import com.yunlbd.flexboot4.common.enums.BusinessType;
 import com.yunlbd.flexboot4.dto.SearchDto;
 import com.yunlbd.flexboot4.entity.BaseEntity;
 import com.yunlbd.flexboot4.service.IExtendedService;
@@ -60,12 +62,14 @@ public abstract class BaseController<S extends IExtendedService<T>, T, ID extend
      * 若主键有值则更新，无值则插入
      */
     @Operation(summary = "Create", description = "Create entity.")
+    @OperLog(businessType = BusinessType.INSERT)
     @PostMapping
     public ApiResult<Boolean> create(@RequestBody T entity) {
         return ApiResult.success(service.save(entity));
     }
 
     @Operation(summary = "Update by ID", description = "Update entity by ID. Ignores null values.")
+    @OperLog(businessType = BusinessType.UPDATE)
     @PutMapping("/{id}")
     public ApiResult<Boolean> update(@PathVariable ID id, @RequestBody T entity) {
         if (entity instanceof BaseEntity baseEntity) {
@@ -78,6 +82,7 @@ public abstract class BaseController<S extends IExtendedService<T>, T, ID extend
      * 批量新增
      */
     @Operation(summary = "Batch Create", description = "Batch insert entities.")
+    @OperLog(businessType = BusinessType.INSERT)
     @PostMapping("/batch")
     public ApiResult<Boolean> saveBatch(@RequestBody List<T> entities) {
         return ApiResult.success(service.saveBatch(entities));
@@ -87,6 +92,7 @@ public abstract class BaseController<S extends IExtendedService<T>, T, ID extend
      * 根据ID删除
      */
     @Operation(summary = "Delete by ID", description = "Delete entity by ID.")
+    @OperLog(businessType = BusinessType.DELETE)
     @DeleteMapping("/{id}")
     public ApiResult<Boolean> remove(@PathVariable ID id) {
         return ApiResult.success(service.removeById(id));
@@ -96,6 +102,7 @@ public abstract class BaseController<S extends IExtendedService<T>, T, ID extend
      * 批量删除
      */
     @Operation(summary = "Batch Delete", description = "Delete entities by IDs.")
+    @OperLog(businessType = BusinessType.DELETE)
     @DeleteMapping
     public ApiResult<Boolean> removeBatch(@RequestBody Collection<ID> ids) {
         return ApiResult.success(service.removeByIds(ids));
@@ -105,6 +112,7 @@ public abstract class BaseController<S extends IExtendedService<T>, T, ID extend
      * 根据ID获取详情
      */
     @Operation(summary = "Get by ID", description = "Get entity details by ID.")
+    @OperLog(businessType = BusinessType.QUERY, isSaveResponseData = false)
     @GetMapping("/{id}")
     public ApiResult<T> get(@PathVariable ID id) {
         return ApiResult.success(service.getById(id));
@@ -124,6 +132,7 @@ public abstract class BaseController<S extends IExtendedService<T>, T, ID extend
             )
         )
     )
+    @OperLog(businessType = BusinessType.QUERY, isSaveResponseData = false)
     @PostMapping("/page")
     public ApiResult<Page<T>> page(@RequestBody SearchDto searchDto) {
         Page<T> page = service.pageWithRelations(searchDto);
@@ -143,6 +152,7 @@ public abstract class BaseController<S extends IExtendedService<T>, T, ID extend
             )
     )
     @Operation(summary = "List Query", description = "List all entities matching criteria.")
+    @OperLog(businessType = BusinessType.QUERY, isSaveResponseData = false)
     @PostMapping("/list")
     public ApiResult<List<T>> list(@RequestBody SearchDto searchDto) {
         List<T> records = service.listWithRelations(searchDto);
@@ -150,6 +160,7 @@ public abstract class BaseController<S extends IExtendedService<T>, T, ID extend
     }
 
     @Operation(summary = "Export Excel", description = "Export matching records to Excel. Supports GET/POST and HTTP Range resume.")
+    @OperLog(businessType = BusinessType.EXPORT, isSaveResponseData = false)
     @GetMapping("/export")
     public void exportGet(@ModelAttribute SearchDto searchDto, HttpServletRequest request, HttpServletResponse response) {
         doExport(searchDto, request, response);
@@ -165,6 +176,7 @@ public abstract class BaseController<S extends IExtendedService<T>, T, ID extend
                     )
             )
     )
+    @OperLog(businessType = BusinessType.EXPORT, isSaveResponseData = false)
     @PostMapping("/export")
     public void exportPost(@RequestBody SearchDto searchDto, HttpServletRequest request, HttpServletResponse response) {
         doExport(searchDto, request, response);
@@ -186,6 +198,4 @@ public abstract class BaseController<S extends IExtendedService<T>, T, ID extend
     public QueryWrapper buildQueryWrapper(SearchDto searchDto, Class<?> entityClass) {
         return com.yunlbd.flexboot4.query.DefaultQueryWrapperBuilder.get().build(searchDto, entityClass);
     }
-
-
 }

@@ -4,6 +4,7 @@ plugins {
 	id("io.spring.dependency-management") version "1.1.7"
 }
 
+
 group = "com.yunlbd"
 version = "0.0.1-SNAPSHOT"
 description = "study project for Spring Boot4"
@@ -26,6 +27,7 @@ repositories {
 
 dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-web")
+	implementation("org.aspectj:aspectjweaver") // AspectJ for AOP
 	implementation("org.springframework.boot:spring-boot-starter-security")
 	implementation("org.springframework.boot:spring-boot-starter-data-redis")
 	implementation("org.springframework.boot:spring-boot-starter-validation")
@@ -35,7 +37,7 @@ dependencies {
 
 	// Database
 	implementation("org.springframework.boot:spring-boot-starter-jdbc")
-	runtimeOnly("org.postgresql:postgresql")
+	implementation("org.postgresql:postgresql")
 
 	// MyBatis Flex
 	implementation("com.mybatis-flex:mybatis-flex-spring-boot4-starter:1.11.5")
@@ -70,6 +72,9 @@ dependencies {
 
 	// Mail
 	implementation("org.springframework.boot:spring-boot-starter-mail")
+
+	// Ip2region
+	implementation("org.lionsoul:ip2region:2.7.0")
 }
 
 tasks.withType<Test> {

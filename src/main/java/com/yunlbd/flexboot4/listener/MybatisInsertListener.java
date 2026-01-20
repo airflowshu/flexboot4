@@ -1,7 +1,7 @@
 package com.yunlbd.flexboot4.listener;
 
 import com.mybatisflex.annotation.InsertListener;
-import com.yunlbd.flexboot4.common.util.SecurityUtils;
+import com.yunlbd.flexboot4.util.SecurityUtils;
 import com.yunlbd.flexboot4.entity.BaseEntity;
 import com.yunlbd.flexboot4.entity.SysUser;
 

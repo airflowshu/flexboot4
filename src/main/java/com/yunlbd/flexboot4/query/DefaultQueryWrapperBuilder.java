@@ -19,8 +19,28 @@ public class DefaultQueryWrapperBuilder extends AbstractQueryWrapperBuilder {
 
     @Override
     public QueryWrapper build(SearchDto dto, Class<?> entityClass) {
-        QueryWrapper qw = QueryWrapper.create().from(entityClass);
+        return build(dto, entityClass, null);
+    }
+
+    /**
+     * 构建QueryWrapper，支持指定具体表名
+     * @param dto 搜索条件
+     * @param entityClass 实体类
+     * @param tableName 指定表名，如果为null则使用实体类的默认表名
+     * @return QueryWrapper
+     */
+    public QueryWrapper build(SearchDto dto, Class<?> entityClass, String tableName) {
+        QueryWrapper qw;
+        if (tableName != null && !tableName.isEmpty()) {
+            qw = QueryWrapper.create().from(tableName);
+        } else {
+            qw = QueryWrapper.create().from(entityClass);
+        }
         RelationQueryBuilder.RelationContext ctx = RelationQueryBuilder.prepare(entityClass, dto);
+        if (tableName != null && !tableName.isEmpty()) {
+            ctx.rootTable = tableName;
+            ctx.pathToTable.put("", tableName);
+        }
         log.info("=== Debug QueryWrapper Build ===");
         log.info("entityClass: {}", entityClass.getSimpleName());
         log.info("rootTable: {}", ctx.rootTable);

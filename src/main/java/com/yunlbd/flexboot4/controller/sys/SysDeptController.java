@@ -1,6 +1,8 @@
-package com.yunlbd.flexboot4.controller;
+package com.yunlbd.flexboot4.controller.sys;
 
 import com.yunlbd.flexboot4.service.SysDeptService;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RequestMapping;
 import com.yunlbd.flexboot4.entity.SysDept;
 import org.springframework.web.bind.annotation.RestController;
@@ -13,6 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/api/dept")
+@RequiredArgsConstructor
+@Tag(name = "部门管理", description = "SysDept - 部门管理")
 public class SysDeptController extends BaseController<SysDeptService, SysDept, String>  {
 
     @Override

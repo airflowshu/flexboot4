@@ -1,12 +1,13 @@
-package com.yunlbd.flexboot4.controller;
+package com.yunlbd.flexboot4.controller.sys;
 
 import com.mybatisflex.core.query.QueryWrapper;
 import com.yunlbd.flexboot4.common.ApiResult;
-import com.yunlbd.flexboot4.common.util.SecurityUtils;
+import com.yunlbd.flexboot4.util.SecurityUtils;
 import com.yunlbd.flexboot4.dto.VueRoute;
 import com.yunlbd.flexboot4.entity.SysMenu;
 import com.yunlbd.flexboot4.service.SysMenuService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,6 +19,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/menu")
 @RequiredArgsConstructor
+@Tag(name = "菜单管理", description = "SysMenu - 菜单管理")
 public class SysMenuController extends BaseController<SysMenuService, SysMenu, String> {
 
     @Override

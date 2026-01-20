@@ -1,9 +1,10 @@
-package com.yunlbd.flexboot4.controller;
+package com.yunlbd.flexboot4.controller.sys;
 
 import com.yunlbd.flexboot4.common.ApiResult;
 import com.yunlbd.flexboot4.entity.SysUserRole;
 import com.yunlbd.flexboot4.service.SysUserRoleService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,6 +13,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/user-role")
 @RequiredArgsConstructor
+@Tag(name = "权限管理", description = "SysUserRole - 用户角色关联管理")
 public class SysUserRoleController extends BaseController<SysUserRoleService, SysUserRole, String> {
 
     @Override

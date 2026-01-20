@@ -1,13 +1,13 @@
-package com.yunlbd.flexboot4.controller;
+package com.yunlbd.flexboot4.controller.sys;
 
 import com.yunlbd.flexboot4.common.ApiResult;
-import com.yunlbd.flexboot4.common.util.SecurityUtils;
+import com.yunlbd.flexboot4.util.SecurityUtils;
 import com.yunlbd.flexboot4.entity.SysRole;
 import com.yunlbd.flexboot4.entity.SysUser;
 import com.yunlbd.flexboot4.service.SysUserService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.apache.poi.ss.formula.functions.T;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/user")
 @RequiredArgsConstructor
+@Tag(name = "用户管理", description = "SysUser - 用户管理")
 public class SysUserController extends BaseController<SysUserService, SysUser, String> {
 
     @Override
