@@ -33,12 +33,12 @@ public class Codegen {
         globalConfig.getJavadocConfig().setAuthor("Wangts").setSince("1.0.0");
 
         //设置根包
-        globalConfig.setBasePackage("com.yunlbd.flexboot4");
+        globalConfig.setBasePackage("com.yunlbd.flexboot4.test");
 
         //设置表前缀和只生成哪些表
         // globalConfig.setTablePrefix("sys_");
-        // globalConfig.setGenerateTable("sys_role");
-        globalConfig.setGenerateTable("sys_dict_item", "sys_dict_type");
+        globalConfig.setGenerateTable("sys_test");
+        // globalConfig.setGenerateTable("sys_dict_item", "sys_dict_type");
 
         //设置项目的JDK版本，项目的JDK为14及以上时建议设置该项，小于14则可以不设置
         globalConfig.setEntityJdkVersion(25);
@@ -53,8 +53,8 @@ public class Codegen {
                 .setMapperAnnotation(true);
         //feat 想生成那个类，就指定true....
         globalConfig.enableController();
-        globalConfig.setServiceGenerateEnable(true);
-        globalConfig.setServiceImplGenerateEnable(true);
+        globalConfig.enableService();
+        globalConfig.enableServiceImpl();
 
         //可以单独配置某个列
         // ColumnConfig columnConfig = new ColumnConfig();

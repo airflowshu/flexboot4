@@ -35,7 +35,7 @@ public class DictConfiguration {
                     .select(SysDictItemTableDef.SYS_DICT_ITEM.ALL_COLUMNS)
                     .from(SysDictItemTableDef.SYS_DICT_ITEM)
                     .where(SysDictItemTableDef.SYS_DICT_ITEM.TYPE_ID.eq(dictType.getId())
-                            .and(SysDictItemTableDef.SYS_DICT_ITEM.ITEM_CODE.eq(c)))
+                            .and(SysDictItemTableDef.SYS_DICT_ITEM.ITEM_VALUE.eq(c)))
                     .limit(1);
             SysDictItem item = dictItemService.getOneAs(qw, SysDictItem.class);
             return item != null ? item.getItemText() : c;

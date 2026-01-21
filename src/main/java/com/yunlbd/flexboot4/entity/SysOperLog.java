@@ -10,6 +10,7 @@ import com.yunlbd.flexboot4.common.annotation.DictEnum;
 import com.yunlbd.flexboot4.mybatis.typehandler.JsonbTypeHandler;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -20,7 +21,7 @@ import java.time.LocalDateTime;
 import java.util.Map;
 
 @Data
-@SuperBuilder
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(value = "sys_oper_log")

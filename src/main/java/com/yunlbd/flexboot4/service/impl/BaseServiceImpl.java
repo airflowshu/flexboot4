@@ -141,6 +141,35 @@ public class BaseServiceImpl<M extends BaseMapper<T>, T extends BaseEntity> exte
         return one;
     }
 
+    /**
+     * 带关系查询的分页查询方法
+     */
+    @Cacheable(keyGenerator = "versionedQueryKeyGenerator", cacheResolver = "dynamicCacheResolver")
+    public Page<T> pageWithRelations(SearchDto searchDto) {
+        Page<T> page = new Page<>(searchDto.getPageNumber(), searchDto.getPageSize());
+        QueryWrapper queryWrapper = DefaultQueryWrapperBuilder.get().build(searchDto, resolveEntityClass());
+        Page<T> result = super.page(page, queryWrapper);
+        if (SearchDtoUtils.hasRelationPaths(searchDto)) {
+            RelationManager.queryRelations(getMapper(), result.getRecords());
+            SearchDtoUtils.filterRelationCollections(searchDto, resolveEntityClass(), result.getRecords());
+        }
+        return result;
+    }
+
+    /**
+     * 带关系查询的列表查询方法
+     */
+    @Cacheable(keyGenerator = "versionedQueryKeyGenerator", cacheResolver = "dynamicCacheResolver")
+    public List<T> listWithRelations(SearchDto searchDto) {
+        QueryWrapper queryWrapper = DefaultQueryWrapperBuilder.get().build(searchDto, resolveEntityClass());
+        List<T> result = super.list(queryWrapper);
+        if (SearchDtoUtils.hasRelationPaths(searchDto)) {
+            RelationManager.queryRelations(getMapper(), result);
+            SearchDtoUtils.filterRelationCollections(searchDto, resolveEntityClass(), result);
+        }
+        return result;
+    }
+
     @Override
     @Cacheable(keyGenerator = "versionedQueryKeyGenerator", cacheResolver = "dynamicCacheResolver")
     public <R> R getOneAs(QueryWrapper query, Class<R> asType) {
@@ -183,32 +212,6 @@ public class BaseServiceImpl<M extends BaseMapper<T>, T extends BaseEntity> exte
         return super.pageAs(page, query, asType);
     }
 
-    /**
-     * 带关系查询的分页查询方法
-     */
-    @Cacheable(keyGenerator = "versionedQueryKeyGenerator", cacheResolver = "dynamicCacheResolver")
-    public Page<T> pageWithRelations(SearchDto searchDto) {
-        Page<T> page = new Page<>(searchDto.getPageNumber(), searchDto.getPageSize());
-        QueryWrapper queryWrapper = DefaultQueryWrapperBuilder.get().build(searchDto, resolveEntityClass());
-        Page<T> result = super.page(page, queryWrapper);
-        if (SearchDtoUtils.hasRelationPaths(searchDto)) {
-            RelationManager.queryRelations(getMapper(), result.getRecords());
-        }
-        return result;
-    }
-
-    /**
-     * 带关系查询的列表查询方法
-     */
-    @Cacheable(keyGenerator = "versionedQueryKeyGenerator", cacheResolver = "dynamicCacheResolver")
-    public List<T> listWithRelations(SearchDto searchDto) {
-        QueryWrapper queryWrapper = DefaultQueryWrapperBuilder.get().build(searchDto, resolveEntityClass());
-        List<T> result = super.list(queryWrapper);
-        if (SearchDtoUtils.hasRelationPaths(searchDto)) {
-            RelationManager.queryRelations(getMapper(), result);
-        }
-        return result;
-    }
 
     protected Collection<String> extraInvalidateTables() {
         return Collections.emptyList();

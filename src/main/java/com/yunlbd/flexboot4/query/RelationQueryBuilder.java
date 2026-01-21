@@ -2,6 +2,8 @@ package com.yunlbd.flexboot4.query;
 
 import com.mybatisflex.annotation.RelationManyToMany;
 import com.mybatisflex.annotation.RelationManyToOne;
+import com.mybatisflex.annotation.RelationOneToMany;
+import com.mybatisflex.annotation.RelationOneToOne;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.yunlbd.flexboot4.dto.SearchDto;
 
@@ -115,7 +117,10 @@ public class RelationQueryBuilder {
     private static Map<String, Field> relationFieldMap(Class<?> entityClass) {
         Map<String, Field> map = new LinkedHashMap<>();
         for (Field f : entityClass.getDeclaredFields()) {
-            if (f.getAnnotation(RelationManyToOne.class) != null || f.getAnnotation(RelationManyToMany.class) != null) {
+            if (f.getAnnotation(RelationManyToOne.class) != null
+                    || f.getAnnotation(RelationManyToMany.class) != null
+                    || f.getAnnotation(RelationOneToMany.class) != null
+                    || f.getAnnotation(RelationOneToOne.class) != null) {
                 map.put(f.getName(), f);
             }
         }
@@ -126,6 +131,16 @@ public class RelationQueryBuilder {
         RelationManyToOne mto = f.getAnnotation(RelationManyToOne.class);
         if (mto != null) {
             return f.getType();
+        }
+        RelationOneToOne oto = f.getAnnotation(RelationOneToOne.class);
+        if (oto != null) {
+            return f.getType();
+        }
+        RelationOneToMany otm = f.getAnnotation(RelationOneToMany.class);
+        if (otm != null) {
+            if (List.class.isAssignableFrom(f.getType())) {
+                return GenericUtils.resolveGenericType(f);
+            }
         }
         RelationManyToMany mtm = f.getAnnotation(RelationManyToMany.class);
         if (mtm != null) {
@@ -142,17 +157,66 @@ public class RelationQueryBuilder {
     }
 
     private static Field matchRelationByAlias(Map<String, Field> relationFields, String alias) {
-        String a = alias.toLowerCase(Locale.ROOT);
+        String a = normalizeKey(alias);
         for (Field f : relationFields.values()) {
+            String fieldName = normalizeKey(f.getName());
+            if (a.equals(fieldName)) {
+                return f;
+            }
             Class<?> target = targetEntity(f);
             if (target == null) continue;
-            String simple = target.getSimpleName().toLowerCase(Locale.ROOT);
-            String table = TableUtils.tableName(target).toLowerCase(Locale.ROOT);
-            if (a.equals(simple) || a.equals(table)) {
+            String simpleCamel = normalizeKey(lowerCamelFromSimpleName(target.getSimpleName()));
+            String tableCamel = normalizeKey(lowerCamelFromTableName(TableUtils.tableName(target)));
+            if (a.equals(simpleCamel)
+                    || a.equals(tableCamel)
+            ) {
                 return f;
             }
         }
         return null;
+    }
+
+    private static String normalizeKey(String s) {
+        return s == null ? "" : s.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private static String lowerCamelFromSimpleName(String simpleName) {
+        if (simpleName == null || simpleName.isBlank()) {
+            return "";
+        }
+        char first = simpleName.charAt(0);
+        if (Character.isLowerCase(first)) {
+            return simpleName;
+        }
+        return Character.toLowerCase(first) + simpleName.substring(1);
+    }
+
+    private static String lowerCamelFromTableName(String tableName) {
+        if (tableName == null || tableName.isBlank()) {
+            return "";
+        }
+        String t = tableName.trim();
+        int dot = t.lastIndexOf('.');
+        if (dot >= 0 && dot + 1 < t.length()) {
+            t = t.substring(dot + 1);
+        }
+        StringBuilder sb = new StringBuilder(t.length());
+        boolean upperNext = false;
+        for (int i = 0; i < t.length(); i++) {
+            char ch = t.charAt(i);
+            if (ch == '_' || ch == '-' || ch == ' ') {
+                upperNext = true;
+                continue;
+            }
+            if (sb.isEmpty()) {
+                sb.append(Character.toLowerCase(ch));
+                upperNext = false;
+                continue;
+            }
+            sb.append(upperNext ? Character.toUpperCase(ch) : ch);
+            upperNext = false;
+        }
+        return sb.toString();
     }
 
     public static class TableUtils {

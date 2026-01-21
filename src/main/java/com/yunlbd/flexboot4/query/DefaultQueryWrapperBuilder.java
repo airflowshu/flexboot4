@@ -96,21 +96,16 @@ public class DefaultQueryWrapperBuilder extends AbstractQueryWrapperBuilder {
             String rel = normalizeRel(ctx, alias);
             String targetTable = ctx.pathToTable.get(rel);
             log.info("Field contains dot: alias={}, rel={}, targetTable={}", alias, rel, targetTable);
-            // 如果是根实体字段（rel为空字符串或匹配根表名/类名），则直接作为普通字段处理
-            if (targetTable == null || rel.isEmpty()) {
-                // 检查是否是根实体（通过表名或类名匹配）
-                String rootTableLower = ctx.rootTable.toLowerCase(Locale.ROOT);
-                String aliasLower = alias.toLowerCase(Locale.ROOT);
-                String rootEntitySimpleName = ctx.rootEntity.getSimpleName().toLowerCase(Locale.ROOT);
-                log.info("Checking root match: rootTableLower={}, aliasLower={}, rootEntitySimpleName={}", rootTableLower, aliasLower, rootEntitySimpleName);
-                if (rootTableLower.equals(aliasLower) || rootEntitySimpleName.equals(aliasLower) || rel.isEmpty()) {
-                    String col = ctx.rootTable + "." + RelationQueryBuilder.TableUtils.columnName(prop);
-                    log.info("Matched as root entity field, applying condition: {}", col);
-                    if (isAnd) {
-                        qw.and((java.util.function.Consumer<QueryWrapper>) wrapper -> OperatorStrategies.applyInto(wrapper, col, op, val));
-                    } else {
-                        qw.or((java.util.function.Consumer<QueryWrapper>) wrapper -> OperatorStrategies.applyInto(wrapper, col, op, val));
-                    }
+            if (targetTable == null) {
+                throw new IllegalArgumentException("Unknown relation path '" + alias + "' in field '" + field + "'. Use lowerCamel entity/table name like 'sysDictType.code' or relation field name like 'dictItems.itemCode'.");
+            }
+            if (rel.isEmpty()) {
+                String col = ctx.rootTable + "." + RelationQueryBuilder.TableUtils.columnName(prop);
+                log.info("Matched as root entity field, applying condition: {}", col);
+                if (isAnd) {
+                    qw.and((java.util.function.Consumer<QueryWrapper>) wrapper -> OperatorStrategies.applyInto(wrapper, col, op, val));
+                } else {
+                    qw.or((java.util.function.Consumer<QueryWrapper>) wrapper -> OperatorStrategies.applyInto(wrapper, col, op, val));
                 }
                 return;
             }
@@ -144,16 +139,72 @@ public class DefaultQueryWrapperBuilder extends AbstractQueryWrapperBuilder {
 
     private String normalizeRel(RelationQueryBuilder.RelationContext ctx, String rel) {
         if (ctx.pathToTable.containsKey(rel)) return rel;
-        String a = rel.toLowerCase(Locale.ROOT);
+        String a = normalizeKey(rel);
+        String rootSimpleCamel = normalizeKey(lowerCamelFromSimpleName(ctx.rootEntity.getSimpleName()));
+        String rootTableCamel = normalizeKey(lowerCamelFromTableName(ctx.rootTable));
+        if (a.equals(rootSimpleCamel) || a.equals(rootTableCamel)) {
+            return "";
+        }
         for (var entry : ctx.pathToEntity.entrySet()) {
+            String key = entry.getKey();
+            if (key == null || key.isEmpty()) {
+                continue;
+            }
             Class<?> target = entry.getValue();
-            String simple = target.getSimpleName().toLowerCase(Locale.ROOT);
-            String table = RelationQueryBuilder.TableUtils.tableName(target).toLowerCase(Locale.ROOT);
-            if (a.equals(simple) || a.equals(table)) {
-                return entry.getKey();
+            String keyNorm = normalizeKey(key);
+            String simpleCamel = normalizeKey(lowerCamelFromSimpleName(target.getSimpleName()));
+            String tableCamel = normalizeKey(lowerCamelFromTableName(RelationQueryBuilder.TableUtils.tableName(target)));
+            if (a.equals(keyNorm)
+                    || a.equals(simpleCamel)
+                    || a.equals(tableCamel)
+            ) {
+                return key;
             }
         }
         return rel;
+    }
+
+    private String normalizeKey(String s) {
+        return s == null ? "" : s.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private String lowerCamelFromSimpleName(String simpleName) {
+        if (simpleName == null || simpleName.isBlank()) {
+            return "";
+        }
+        char first = simpleName.charAt(0);
+        if (Character.isLowerCase(first)) {
+            return simpleName;
+        }
+        return Character.toLowerCase(first) + simpleName.substring(1);
+    }
+
+    private String lowerCamelFromTableName(String tableName) {
+        if (tableName == null || tableName.isBlank()) {
+            return "";
+        }
+        String t = tableName.trim();
+        int dot = t.lastIndexOf('.');
+        if (dot >= 0 && dot + 1 < t.length()) {
+            t = t.substring(dot + 1);
+        }
+        StringBuilder sb = new StringBuilder(t.length());
+        boolean upperNext = false;
+        for (int i = 0; i < t.length(); i++) {
+            char ch = t.charAt(i);
+            if (ch == '_' || ch == '-' || ch == ' ') {
+                upperNext = true;
+                continue;
+            }
+            if (sb.isEmpty()) {
+                sb.append(Character.toLowerCase(ch));
+                upperNext = false;
+                continue;
+            }
+            sb.append(upperNext ? Character.toUpperCase(ch) : ch);
+            upperNext = false;
+        }
+        return sb.toString();
     }
 
     private String buildExistsSql(RelationQueryBuilder.RelationContext ctx, String rel, String targetTable, String prop, String op) {
@@ -164,6 +215,13 @@ public class DefaultQueryWrapperBuilder extends AbstractQueryWrapperBuilder {
         if (mto != null) {
             String left = "\"" + targetTable + "\".\"" + RelationQueryBuilder.TableUtils.columnName(mto.targetField()) + "\"";
             String right = "\"" + root + "\".\"" + RelationQueryBuilder.TableUtils.columnName(mto.selfField()) + "\"";
+            String tcol = "\"" + targetTable + "\".\"" + RelationQueryBuilder.TableUtils.columnName(prop) + "\"";
+            return "exists (select 1 from \"" + targetTable + "\" where " + left + " = " + right + " and " + tcol + " " + opToSql(op) + " ?)";
+        }
+        com.mybatisflex.annotation.RelationOneToMany otm = rf.getAnnotation(com.mybatisflex.annotation.RelationOneToMany.class);
+        if (otm != null) {
+            String left = "\"" + targetTable + "\".\"" + RelationQueryBuilder.TableUtils.columnName(otm.targetField()) + "\"";
+            String right = "\"" + root + "\".\"" + RelationQueryBuilder.TableUtils.columnName(otm.selfField()) + "\"";
             String tcol = "\"" + targetTable + "\".\"" + RelationQueryBuilder.TableUtils.columnName(prop) + "\"";
             return "exists (select 1 from \"" + targetTable + "\" where " + left + " = " + right + " and " + tcol + " " + opToSql(op) + " ?)";
         }

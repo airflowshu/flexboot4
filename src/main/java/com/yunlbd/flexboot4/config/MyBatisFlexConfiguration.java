@@ -4,6 +4,7 @@ import com.mybatisflex.core.FlexGlobalConfig;
 import com.mybatisflex.core.table.DynamicTableProcessor;
 import com.mybatisflex.core.table.TableManager;
 import com.yunlbd.flexboot4.entity.BaseEntity;
+import com.yunlbd.flexboot4.entity.SysOperLog;
 import com.yunlbd.flexboot4.listener.GlobalDictSetListener;
 import com.yunlbd.flexboot4.listener.MybatisInsertListener;
 import com.yunlbd.flexboot4.listener.MybatisUpdateListener;
@@ -25,6 +26,7 @@ public class MyBatisFlexConfiguration {
         config.registerInsertListener(mybatisInsertListener, BaseEntity.class);
         config.registerUpdateListener(mybatisUpdateListener, BaseEntity.class);
         config.registerSetListener(globalDictSetListener, BaseEntity.class);
+        config.registerSetListener(globalDictSetListener, SysOperLog.class);
         
         // 配置动态表名处理器
         TableManager.setDynamicTableProcessor(tableName -> {

@@ -2,6 +2,7 @@ package com.yunlbd.flexboot4.common.aspect;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yunlbd.flexboot4.common.annotation.OperLog;
+import com.yunlbd.flexboot4.common.constant.SysConstant;
 import com.yunlbd.flexboot4.controller.sys.BaseController;
 import com.yunlbd.flexboot4.entity.SysOperLog;
 import com.yunlbd.flexboot4.event.SysOperLogEvent;
@@ -100,7 +101,7 @@ public class LogAspect {
             }
 
             if (e != null) {
-                operLog.setStatus(1);
+                operLog.setStatus(SysConstant.SYS_ENUM_ERROR);
                 operLog.setErrorMsg(StringUtils.substring(e.getMessage(), 0, 2000));
             }
 

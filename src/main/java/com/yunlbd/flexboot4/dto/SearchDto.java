@@ -84,4 +84,12 @@ public class SearchDto implements Serializable {
         @Schema(description = "是否升序", example = "false", defaultValue = "true")
         private boolean asc = true;
     }
+
+    public static SearchDto.SearchItem item(String field, String op, Object val) {
+        SearchDto.SearchItem it = new SearchDto.SearchItem();
+        it.setField(field);
+        it.setOp(op);
+        it.setVal(val);
+        return it;
+    }
 }
