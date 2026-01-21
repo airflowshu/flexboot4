@@ -38,8 +38,7 @@ public class LogAspect {
     private final ApplicationEventPublisher applicationEventPublisher;
     private final ObjectMapper objectMapper;
 
-    // ThreadLocal to store start time for cost calculation
-    private static final ThreadLocal<LocalDateTime> START_TIME = ThreadLocal.withInitial(LocalDateTime::now);
+    private static final ScopedValue<LocalDateTime> START_TIME = ScopedValue.newInstance();
 
     private LogAspect(ApplicationEventPublisher applicationEventPublisher) {
         this.applicationEventPublisher = applicationEventPublisher;
@@ -56,14 +55,8 @@ public class LogAspect {
      */
     @Around("@annotation(controllerLog)")
     public Object doAround(ProceedingJoinPoint joinPoint, OperLog controllerLog) throws Throwable {
-        // 记录开始时间
-        START_TIME.set(LocalDateTime.now());
-        try {
-            // 执行目标方法
-            return joinPoint.proceed();
-        } finally {
-            // 注意：不在这里清理 ThreadLocal，需要在 handleLog 中清理
-        }
+        return ScopedValue.where(START_TIME, LocalDateTime.now())
+                .call(joinPoint::proceed);
     }
 
     /**
@@ -134,8 +127,10 @@ public class LogAspect {
             try {
                 String username = SecurityUtils.getSysUser() != null ? SecurityUtils.getSysUser().getUsername() : "未知";
                 String userId = SecurityUtils.getSysUser() != null ? SecurityUtils.getSysUser().getId() : "未知";
+                String deptId = SecurityUtils.getSysUser() != null ? SecurityUtils.getSysUser().getDeptId() : "未知";
                 operLog.setOperName(username);
                 operLog.setOperUserId(userId);
+                operLog.setDeptId(deptId);
             } catch (Exception ex) {
                 operLog.setOperName("未知");
             }
@@ -145,7 +140,7 @@ public class LogAspect {
             operLog.setOperTime(endTime);
 
             // 计算方法执行耗时（毫秒）
-            LocalDateTime startTime = START_TIME.get();
+            LocalDateTime startTime = START_TIME.isBound() ? START_TIME.get() : null;
             if (startTime != null) {
                 long costTimeMillis = ChronoUnit.MILLIS.between(startTime, endTime);
                 operLog.setCostTime(costTimeMillis);
@@ -160,9 +155,6 @@ public class LogAspect {
             // 记录本地异常日志
             log.error("==前置通知异常==");
             log.error("异常信息:{}", exp.getMessage());
-        } finally {
-            // 清理 ThreadLocal，避免内存泄漏
-            START_TIME.remove();
         }
     }
 
