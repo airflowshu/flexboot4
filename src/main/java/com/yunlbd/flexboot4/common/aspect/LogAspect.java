@@ -8,6 +8,7 @@ import com.yunlbd.flexboot4.entity.SysOperLog;
 import com.yunlbd.flexboot4.event.SysOperLogEvent;
 import com.yunlbd.flexboot4.util.IpUtils;
 import com.yunlbd.flexboot4.util.SecurityUtils;
+import com.yunlbd.flexboot4.util.UserAgentParser;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,6 +27,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.multipart.MultipartFile;
+
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Collection;
@@ -102,7 +104,7 @@ public class LogAspect {
                 // 采集终端信息
                 String userAgent = request.getHeader("User-Agent");
                 if (userAgent != null && !userAgent.isBlank()) {
-                    operLog.setTerminal(parseUserAgent(userAgent));
+                    operLog.setTerminal(UserAgentParser.parseUserAgent(userAgent));
                 }
             }
 
@@ -281,117 +283,4 @@ public class LogAspect {
                 || o instanceof BindingResult;
     }
 
-    /**
-     * 解析 User-Agent 字符串，提取终端信息
-     *
-     * @param userAgent User-Agent 字符串
-     * @return 格式化的终端信息，如 "Windows 10 - Chrome 120"
-     */
-    private String parseUserAgent(String userAgent) {
-        try {
-            StringBuilder terminal = new StringBuilder();
-
-            // 检测操作系统
-            String os = "Unknown OS";
-            if (userAgent.contains("Windows 10")) {
-                os = "Windows 10";
-            } else if (userAgent.contains("Windows 11")) {
-                os = "Windows 11";
-            } else if (userAgent.contains("Windows NT 10.0")) {
-                os = "Windows 10";
-            } else if (userAgent.contains("Windows NT 6.1")) {
-                os = "Windows 7";
-            } else if (userAgent.contains("Windows NT 6.3")) {
-                os = "Windows 8.1";
-            } else if (userAgent.contains("Windows NT 6.2")) {
-                os = "Windows 8";
-            } else if (userAgent.contains("Mac OS X")) {
-                os = "macOS";
-            } else if (userAgent.contains("Linux")) {
-                os = "Linux";
-            } else if (userAgent.contains("Android")) {
-                os = "Android";
-            } else if (userAgent.contains("iPhone") || userAgent.contains("iPad") || userAgent.contains("iOS")) {
-                os = "iOS";
-            }
-            terminal.append(os);
-
-            // 检测浏览器
-            String browser = "Unknown Browser";
-            if (userAgent.contains("Edg/")) {
-                String version = extractVersion(userAgent, "Edg/");
-                browser = "Microsoft Edge " + version;
-            } else if (userAgent.contains("Chrome/")) {
-                String version = extractVersion(userAgent, "Chrome/");
-                browser = "Chrome " + version;
-            } else if (userAgent.contains("Safari/") && !userAgent.contains("Chrome/")) {
-                String version = extractVersion(userAgent, "Version/");
-                browser = "Safari " + version;
-            } else if (userAgent.contains("Firefox/")) {
-                String version = extractVersion(userAgent, "Firefox/");
-                browser = "Firefox " + version;
-            } else if (userAgent.contains("MSIE") || userAgent.contains("Trident/")) {
-                browser = "Internet Explorer";
-            }
-            terminal.append(" - ").append(browser);
-
-            // 检测设备类型（移动端）
-            if (userAgent.contains("Mobile")) {
-                if (userAgent.contains("Android")) {
-                    String model = extractMobileModel(userAgent, "Android");
-                    if (!model.isEmpty()) {
-                        terminal.append(" (").append(model).append(")");
-                    } else {
-                        terminal.append(" (Mobile)");
-                    }
-                } else if (userAgent.contains("iPhone")) {
-                    terminal.append(" (iPhone)");
-                } else if (userAgent.contains("iPad")) {
-                    terminal.append(" (iPad)");
-                } else {
-                    terminal.append(" (Mobile)");
-                }
-            }
-
-            return terminal.toString();
-        } catch (Exception e) {
-            log.warn("Failed to parse User-Agent: {}", userAgent, e);
-            return "Unknown Terminal";
-        }
-    }
-
-    /**
-     * 提取版本号
-     */
-    private String extractVersion(String userAgent, String prefix) {
-        int index = userAgent.indexOf(prefix);
-        if (index == -1) {
-            return "";
-        }
-        index += prefix.length();
-        int endIndex = userAgent.indexOf(" ", index);
-        if (endIndex == -1) {
-            endIndex = userAgent.length();
-        }
-        return userAgent.substring(index, endIndex);
-    }
-
-    /**
-     * 提取移动设备型号
-     */
-    private String extractMobileModel(String userAgent, String os) {
-        int index = userAgent.indexOf(os);
-        if (index == -1) {
-            return "";
-        }
-        index += os.length();
-        int endIndex = userAgent.indexOf(";", index);
-        if (endIndex == -1) {
-            endIndex = userAgent.indexOf(")", index);
-        }
-        if (endIndex == -1) {
-            return "";
-        }
-        return userAgent.substring(index, endIndex).trim();
-    }
 }
