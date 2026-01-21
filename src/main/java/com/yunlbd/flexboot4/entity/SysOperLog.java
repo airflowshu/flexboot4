@@ -79,6 +79,9 @@ public class SysOperLog implements Serializable {
     @Schema(title = "操作地点")
     private String operLocation;
 
+    @Schema(title = "操作终端信息")
+    private String terminal;
+
     @Schema(title = "请求参数")
     @Column(typeHandler = JsonbTypeHandler.class)
     private Map<String, Object> operParam;
