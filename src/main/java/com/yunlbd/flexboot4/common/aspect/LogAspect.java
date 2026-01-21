@@ -8,7 +8,7 @@ import com.yunlbd.flexboot4.entity.SysOperLog;
 import com.yunlbd.flexboot4.event.SysOperLogEvent;
 import com.yunlbd.flexboot4.util.IpUtils;
 import com.yunlbd.flexboot4.util.SecurityUtils;
-import com.yunlbd.flexboot4.util.UserAgentParser;
+import com.yunlbd.flexboot4.util.UserAgentService;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
@@ -40,11 +40,13 @@ public class LogAspect {
 
     private final ApplicationEventPublisher applicationEventPublisher;
     private final ObjectMapper objectMapper;
+    private final UserAgentService userAgentService;
 
     private static final ScopedValue<LocalDateTime> START_TIME = ScopedValue.newInstance();
 
-    private LogAspect(ApplicationEventPublisher applicationEventPublisher) {
+    private LogAspect(ApplicationEventPublisher applicationEventPublisher, UserAgentService userAgentService) {
         this.applicationEventPublisher = applicationEventPublisher;
+        this.userAgentService = userAgentService;
         this.objectMapper = new ObjectMapper();
     }
 
@@ -104,7 +106,7 @@ public class LogAspect {
                 // 采集终端信息
                 String userAgent = request.getHeader("User-Agent");
                 if (userAgent != null && !userAgent.isBlank()) {
-                    operLog.setTerminal(UserAgentParser.parseUserAgent(userAgent));
+                    operLog.setTerminal(userAgentService.parseRequest(request));
                 }
             }
 

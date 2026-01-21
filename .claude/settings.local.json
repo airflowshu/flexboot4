@@ -12,7 +12,9 @@
       "Bash(./gradlew clean test:*)",
       "Bash(./gradlew test:*)",
       "Bash(./gradlew compileJava --no-daemon)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(./gradlew compileJava:*)",
+      "WebFetch(domain:mybatis-flex.com)"
     ]
   }
 }

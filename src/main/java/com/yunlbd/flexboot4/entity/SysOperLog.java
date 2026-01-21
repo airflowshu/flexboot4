@@ -13,7 +13,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -80,7 +79,8 @@ public class SysOperLog implements Serializable {
     private String operLocation;
 
     @Schema(title = "操作终端信息")
-    private String terminal;
+    @Column(typeHandler = JsonbTypeHandler.class)
+    private Map<String, String> terminal;
 
     @Schema(title = "请求参数")
     @Column(typeHandler = JsonbTypeHandler.class)

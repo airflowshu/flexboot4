@@ -9,6 +9,12 @@
   - orders：多字段排序，column 为实体属性或关联路径，asc 为方向
 - 空值忽略：当条件值为 null 时自动忽略该条件
 
+约定（推荐用法）
+
+- SearchItem.field 的前缀必须是“业务表名/实体名的驼峰写法”，例如：
+    - 表 iot_device → iotDevice.xxx
+    - 表 sys_dict_type → sysDictType.code
+
 单表示例：
 ```json
 {

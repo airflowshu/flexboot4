@@ -75,6 +75,8 @@ dependencies {
 
 	// Ip2region
 	implementation("org.lionsoul:ip2region:2.7.0")
+    // userAgentParser
+    implementation("nl.basjes.parse.useragent:yauaa:8.0.0")
 }
 
 tasks.withType<Test> {
