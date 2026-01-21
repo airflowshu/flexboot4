@@ -44,7 +44,7 @@ public class SysUser extends BaseEntity {
     private String phone;
 
     @DictEnum("gender")
-    @Schema(example = "1", title = "性别值")
+    @Schema(example = "male", title = "性别值")
     @ExcelIgnore //标明不需要导出
     private String gender;
 

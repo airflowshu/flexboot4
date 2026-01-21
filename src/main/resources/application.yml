@@ -10,16 +10,13 @@ spring:
     redis:
       host: localhost
       port: 6379
-  sql:
-    init:
-      mode: always
-      continue-on-error: true
-      schema-locations: classpath:schema.sql
-  main:
-    allow-bean-definition-overriding: true
-  web:
-    error:
-      include-stacktrace: always
+#  sql:
+#    init:
+#      mode: always
+#      continue-on-error: true
+#      schema-locations: classpath:schema.sql
+#  main:
+#    allow-bean-definition-overriding: true
   mail:
     host: smtp.qq.com
     port: 465

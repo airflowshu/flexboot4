@@ -2,9 +2,31 @@ package com.yunlbd.flexboot4.query;
 
 import com.yunlbd.flexboot4.dto.SearchDto;
 
+import java.util.List;
+
 public final class SearchDtoUtils {
 
     private SearchDtoUtils() {}
+
+    public static SearchDto create(Integer pageNumber,
+                                   Integer pageSize,
+                                   String logic,
+                                   List<SearchDto.SearchItem> items,
+                                   List<SearchDto.OrderItem> orders) {
+        SearchDto dto = new SearchDto();
+        if (pageNumber != null) {
+            dto.setPageNumber(pageNumber);
+        }
+        if (pageSize != null) {
+            dto.setPageSize(pageSize);
+        }
+        if (logic != null && !logic.isBlank()) {
+            dto.setLogic(logic);
+        }
+        dto.setItems(items);
+        dto.setOrders(orders);
+        return dto;
+    }
 
     public static boolean hasRelationPaths(SearchDto dto) {
         if (dto == null) return false;

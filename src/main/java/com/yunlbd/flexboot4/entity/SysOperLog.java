@@ -1,17 +1,21 @@
 package com.yunlbd.flexboot4.entity;
 
+import com.alibaba.excel.annotation.ExcelIgnore;
 import com.mybatisflex.annotation.Column;
+import com.mybatisflex.annotation.Id;
+import com.mybatisflex.annotation.KeyType;
 import com.mybatisflex.annotation.Table;
-import com.mybatisflex.core.handler.JacksonTypeHandler;
-import com.yunlbd.flexboot4.mybatis.typehandler.JsonbTypeHandler;
+import com.mybatisflex.core.keygen.KeyGenerators;
 import com.yunlbd.flexboot4.common.annotation.DictEnum;
+import com.yunlbd.flexboot4.mybatis.typehandler.JsonbTypeHandler;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.Map;
 
@@ -19,15 +23,22 @@ import java.util.Map;
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = true)
 @Table(value = "sys_oper_log")
 @Schema(name = "SysOperLog", description = "操作日志")
-public class SysOperLog extends BaseEntity {
+public class SysOperLog implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    @Id(keyType = KeyType.Generator, value = KeyGenerators.snowFlakeId)
+    @ExcelIgnore
+    @Schema(accessMode = Schema.AccessMode.READ_ONLY, title = "主键id")
+    private String id;
 
     @Schema(title = "模块标题")
     private String title;
 
-    @DictEnum("businessType")
+    @DictEnum("business_type")
     @Schema(title = "业务类型（0其它 1新增 2修改 3删除 4调用api 5导出 6导入 7查询 8登录 9登出）")
     private Integer businessType;
 
@@ -41,7 +52,7 @@ public class SysOperLog extends BaseEntity {
     @Schema(title = "请求方式")
     private String requestMethod;
 
-    @DictEnum("operatorType")
+    @DictEnum("operator_type")
     @Schema(title = "操作类别（0其它 1后台用户 2移动端用户）")
     private Integer operatorType;
 
@@ -56,7 +67,7 @@ public class SysOperLog extends BaseEntity {
     private String operUserId;
 
     @Schema(title = "部门名称")
-    private String deptName;
+    private String deptId;
 
     @Schema(title = "请求URL")
     private String operUrl;
@@ -90,4 +101,7 @@ public class SysOperLog extends BaseEntity {
     @Schema(title = "扩展参数")
     @Column(typeHandler = JsonbTypeHandler.class)
     private Map<String, Object> extParams;
+
+    @Schema(title = "备注")
+    private String remark;
 }

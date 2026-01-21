@@ -23,7 +23,7 @@ import lombok.experimental.SuperBuilder;
 @Schema(name = "SysDictItem")
 public class SysDictItem extends BaseEntity {
 
-    private String typeCode;
+    private String typeId;
 
     private String itemCode;
 

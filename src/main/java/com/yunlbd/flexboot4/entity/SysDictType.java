@@ -35,7 +35,7 @@ public class SysDictType extends BaseEntity{
     private Integer orderNo;
 
     @Schema(accessMode = Schema.AccessMode.READ_ONLY) //只在入参中隐藏（响应中可见）
-    @RelationOneToMany(selfField = "code", targetField = "typeCode", orderBy = "order_no")
+    @RelationOneToMany(selfField = "id", targetField = "typeId", orderBy = "order_no")
     private List<SysDictItem> dictItems;
 
 }

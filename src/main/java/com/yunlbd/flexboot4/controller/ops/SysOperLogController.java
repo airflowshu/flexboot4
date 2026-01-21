@@ -9,6 +9,7 @@ import com.yunlbd.flexboot4.query.DefaultQueryWrapperBuilder;
 import com.yunlbd.flexboot4.service.SysOperLogService;
 import com.yunlbd.flexboot4.util.LogTableUtils;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,8 +18,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
 import java.util.List;
-
-import static com.yunlbd.flexboot4.controller.sys.BaseController.SearchDtoExample;
 
 /**
  * 系统日志管理
@@ -30,8 +29,29 @@ import static com.yunlbd.flexboot4.controller.sys.BaseController.SearchDtoExampl
 @RestController
 @RequestMapping("/api/oper-log")
 @RequiredArgsConstructor
+@Tag(name = "操作日志", description = "SysOperLog - 用户操作日志记录")
 public class SysOperLogController {
     private final SysOperLogService operLogService;
+
+    public static final String SysOperSearchDtoExample = """
+            {
+              "pageNumber": 1,
+              "pageSize": 10,
+              "logic": "AND",
+              "items": [
+                { "field": "status", "op": "eq", "val": 1 },
+                {\s
+                  "logic": "AND",
+                  "children": [
+                    { "field": "operTime", "op": "gt", "val": "2026-01-01 00:00:00" },
+                    { "field": "operTime", "op": "lt", "val": "2026-01-31 00:00:00" }
+                  ]
+                }
+              ],
+              "orders": [
+                { "column": "operTime", "asc": false }
+              ]
+            }""";
 
     @Operation(summary = "分页查询日志记录", description = "通用分页查询日志记录，支持跨季度自动分表查询")
     @io.swagger.v3.oas.annotations.parameters.RequestBody(
@@ -39,7 +59,7 @@ public class SysOperLogController {
             content = @io.swagger.v3.oas.annotations.media.Content(
                     schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = SearchDto.class),
                     examples = @io.swagger.v3.oas.annotations.media.ExampleObject(
-                            value = SearchDtoExample
+                            value = SysOperSearchDtoExample
                     )
             )
     )

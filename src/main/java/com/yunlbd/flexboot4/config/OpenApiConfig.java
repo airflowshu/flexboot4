@@ -31,6 +31,12 @@ public class OpenApiConfig {
                                 "权限管理"
                         )
                 )
+                ,Map.of(
+                        "name","运维管理",
+                        "tags",List.of(
+                                "操作日志"
+                        )
+                )
         ));
         return openAPI;
     }

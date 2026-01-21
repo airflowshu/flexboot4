@@ -23,6 +23,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
+@Tag(name = "系统管理")
 @Tag(name = "认证管理", description = "Authentication - 用户登录和注销")
 public class AuthController {
 

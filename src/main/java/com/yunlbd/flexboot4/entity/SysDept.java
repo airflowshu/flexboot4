@@ -46,7 +46,7 @@ public class SysDept extends BaseEntity {
      */
 
     @ExcelIgnore //标明不需要导出
-    @DictEnum("dept_status")
+    @DictEnum("status")
     @Schema(example = "1", title = "状态值")
     private Integer status;
 

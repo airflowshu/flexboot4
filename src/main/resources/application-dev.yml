@@ -1,5 +1,8 @@
 #debug: true
 spring:
+  web:
+    error:
+      include-stacktrace: always #只要报错，就把完整的 Java 异常堆栈信息返回给调用方( dev推荐）
   data:
     redis:
       host: localhost
