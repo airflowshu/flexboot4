@@ -151,3 +151,8 @@ mail:
     注意： Gmail 和 QQ 邮箱需要使用应用专用密码，而不是登录密码。
 
 
+如何运行
+
+- 启动后台管理（MVC）： .\gradlew.bat :admin-server:bootRun
+- 启动 AI 中台（WebFlux）： .\gradlew.bat :ai-gateway:bootRun
+- 全量测试（根目录）： .\gradlew.bat test （已验证通过）

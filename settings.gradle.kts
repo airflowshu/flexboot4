@@ -3,3 +3,11 @@ plugins {
 }
 
 rootProject.name = "flexboot4"
+
+dependencyResolutionManagement {
+    repositories {
+        mavenCentral()
+    }
+}
+
+include(":admin-server", ":ai-gateway", ":common")

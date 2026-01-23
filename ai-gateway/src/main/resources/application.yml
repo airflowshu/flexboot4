@@ -1,0 +1,27 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: ai-gateway
+  data:
+    redis:
+      client-type: lettuce
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 3s
+  r2dbc:
+    url: r2dbc:postgresql://192.168.11.104:5434/flexboot4ai
+    username: flexboot4ai
+    password: flexboot4ai
+    pool:
+      initial-size: 10
+      max-size: 20
+
+jwt:
+  secret: ${JWT_SECRET:thisIsASecretKeyThatIsLongEnoughForHmacSha256SecurityRequirement}
+  expiration: ${JWT_EXPIRATION:7200000}
+
+operlog:
+  stream:
+    key: ${OPERLOG_STREAM_KEY:operlog:stream}
