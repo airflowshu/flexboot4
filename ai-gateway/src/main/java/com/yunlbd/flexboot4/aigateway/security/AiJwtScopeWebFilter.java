@@ -10,7 +10,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -27,10 +27,14 @@ import java.util.List;
 @Component
 public class AiJwtScopeWebFilter implements WebFilter {
 
-    private final ObjectMapper objectMapper;
+    private static final String AI_API_KEY_MAPPING = "aikey:mapping";
 
-    public AiJwtScopeWebFilter(ObjectMapper objectMapper) {
+    private final ObjectMapper objectMapper;
+    private final StringRedisTemplate redisTemplate;
+
+    public AiJwtScopeWebFilter(ObjectMapper objectMapper, StringRedisTemplate redisTemplate) {
         this.objectMapper = objectMapper;
+        this.redisTemplate = redisTemplate;
     }
 
     @Value("${jwt.secret:thisIsASecretKeyThatIsLongEnoughForHmacSha256SecurityRequirement}")
@@ -72,15 +76,6 @@ public class AiJwtScopeWebFilter implements WebFilter {
         Object scope = claims.get(JwtClaimKeys.SCOPE);
         if (!hasAiScope(scope)) {
             return writeErrorResponse(exchange, HttpStatus.FORBIDDEN, "无AI接口访问权限");
-        }
-
-        //TODO 目前只结构了`JWT 里有 claim: ai`，访问ai接口时应同时还带有`X-AI-API-KEY: sk-xxxx`,还未实现
-        // 从 Authorization 请求头获取ai-api-key
-        String aiAuth = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-        if (aiAuth != null && aiAuth.startsWith("X-AI-API-KEY ")) {
-            // 这里的 API Key 只是先验证，真正调用 AI 服务时通过 APISIX 进一步限流/鉴权。
-        } else {
-
         }
         return chain.filter(exchange).contextWrite(ctx -> ctx.put(Claims.class, claims).put(ServerWebExchange.class, exchange));
     }

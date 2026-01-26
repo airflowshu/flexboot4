@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/api-key")
+@RequestMapping("/api/admin/api-key")
 @RequiredArgsConstructor
 @Tag(name = "apiKey管理", description = "AiApiKey - key管理")
 public class AiApiKeyController extends BaseController<AiApiKeyService, AiApiKey, String> {

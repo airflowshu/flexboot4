@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @since 2026-01-07
  */
 @RestController
-@RequestMapping("/api/dict-item")
+@RequestMapping("/api/admin/dict-item")
 @RequiredArgsConstructor
 @Tag(name = "字典管理", description = "SysDictItem - 字典项管理")
 public class SysDictItemController extends BaseController<SysDictItemService, SysDictItem, String>  {

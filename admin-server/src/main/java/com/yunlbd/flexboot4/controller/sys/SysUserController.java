@@ -19,7 +19,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/user")
+@RequestMapping("/api/admin/user")
 @RequiredArgsConstructor
 @Tag(name = "用户管理", description = "SysUser - 用户管理")
 public class SysUserController extends BaseController<SysUserService, SysUser, String> {
@@ -55,10 +55,9 @@ public class SysUserController extends BaseController<SysUserService, SysUser, S
         info.put("username", user.getUsername());
         info.put("realName", user.getRealName());
         info.put("avatar", user.getAvatar());
-        info.put("roles", user.getRoles() != null 
-                ? user.getRoles().stream().map(SysRole::getRoleValue).collect(Collectors.toList()) 
+        info.put("roles", user.getRoles() != null
+                ? user.getRoles().stream().map(SysRole::getRoleValue).collect(Collectors.toList())
                 : new ArrayList<>());
-        
         return ApiResult.success(info);
     }
 

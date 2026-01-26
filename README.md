@@ -109,7 +109,7 @@ mybatis-flex:
 ```yaml
 spring:
   r2dbc:
-    url: r2dbc:postgresql://localhost:5432/flexboot4_ai
+    url: r2dbc:postgresql://localhost:5433/flexboot4_ai
 ```
 
 ### 3. 构建与运行

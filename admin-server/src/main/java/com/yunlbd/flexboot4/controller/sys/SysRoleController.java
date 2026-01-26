@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @since 2026-01-07
  */
 @RestController
-@RequestMapping("/api/role")
+@RequestMapping("/api/admin/role")
 @RequiredArgsConstructor
 @Tag(name = "角色管理", description = "SysRole - 角色管理")
 public class SysRoleController extends BaseController<SysRoleService, SysRole, String>  {

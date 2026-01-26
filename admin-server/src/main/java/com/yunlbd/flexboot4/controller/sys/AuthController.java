@@ -21,7 +21,7 @@ import java.util.List;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/api/admin/auth")
 @RequiredArgsConstructor
 @Tag(name = "系统管理")
 @Tag(name = "认证管理", description = "Authentication - 用户登录和注销")

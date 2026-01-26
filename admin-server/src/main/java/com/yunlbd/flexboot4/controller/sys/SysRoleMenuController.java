@@ -19,7 +19,7 @@ import java.util.List;
  * @since 2026-01-07
  */
 @RestController
-@RequestMapping("/api/role-menu")
+@RequestMapping("/api/admin/role-menu")
 @RequiredArgsConstructor
 @Tag(name = "权限管理", description = "SysRoleMenu - 角色菜单关联管理")
 public class SysRoleMenuController extends BaseController<SysRoleMenuService, SysRoleMenu, String>  {

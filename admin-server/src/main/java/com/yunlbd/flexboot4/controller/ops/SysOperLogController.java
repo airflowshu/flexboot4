@@ -27,7 +27,7 @@ import java.util.List;
  * @since 2026年01月20日 9:18
  */
 @RestController
-@RequestMapping("/api/oper-log")
+@RequestMapping("/api/admin/oper-log")
 @RequiredArgsConstructor
 @Tag(name = "操作日志", description = "SysOperLog - 用户操作日志记录")
 public class SysOperLogController {

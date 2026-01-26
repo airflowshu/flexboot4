@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/user-role")
+@RequestMapping("/api/admin/user-role")
 @RequiredArgsConstructor
 @Tag(name = "权限管理", description = "SysUserRole - 用户角色关联管理")
 public class SysUserRoleController extends BaseController<SysUserRoleService, SysUserRole, String> {

@@ -35,7 +35,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (token != null) {
             try {
                 String uri = request.getRequestURI();
-                if (!uri.startsWith("/api/auth") && !jwtUtil.hasScope(token, JwtScopes.ADMIN)) {
+                if (!uri.startsWith("/api/admin/auth") && !jwtUtil.hasScope(token, JwtScopes.ADMIN)) {
                     response.setStatus(403);
                     return;
                 }

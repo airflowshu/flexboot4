@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @since 2026-01-07
  */
 @RestController
-@RequestMapping("/api/dept")
+@RequestMapping("/api/admin/dept")
 @RequiredArgsConstructor
 @Tag(name = "部门管理", description = "SysDept - 部门管理")
 public class SysDeptController extends BaseController<SysDeptService, SysDept, String>  {

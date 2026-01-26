@@ -70,7 +70,7 @@ security:
     urls:
       - /resources/**
       - /static/**
-      - /api/auth/**
+      - /api/admin/auth/**
       - /v3/api-docs/**
       - /scalar/**
       - /error

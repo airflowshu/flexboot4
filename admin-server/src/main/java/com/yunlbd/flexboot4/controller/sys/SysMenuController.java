@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/menu")
+@RequestMapping("/api/admin/menu")
 @RequiredArgsConstructor
 @Tag(name = "菜单管理", description = "SysMenu - 菜单管理")
 public class SysMenuController extends BaseController<SysMenuService, SysMenu, String> {

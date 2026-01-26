@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @since 2026-01-07
  */
 @RestController
-@RequestMapping("/api/dict-type")
+@RequestMapping("/api/admin/dict-type")
 @RequiredArgsConstructor
 @Tag(name = "字典管理", description = "SysDictType - 字典类型管理")
 public class SysDictTypeController extends BaseController<SysDictTypeService, SysDictType, String>  {
