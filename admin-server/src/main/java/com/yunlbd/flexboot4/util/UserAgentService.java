@@ -28,25 +28,16 @@ public class UserAgentService {
     }
 
     public Map<String, String> parseRequest(HttpServletRequest request) {
-        // 关键：为了准确性，必须将所有 Sec-CH-UA 请求头传递给解析器
-        Map<String, String> requestHeaders = new HashMap<>();
-        String header1 = request.getHeader("User-Agent");
-        // // 传统的 User-Agent
-        // requestHeaders.put("User-Agent", request.getHeader("User-Agent"));
-        //
-        // // 2026 年核心：Client Hints 相关头部
-        // // Yauaa 会自动根据这些高熵信息修正 UA 冻结导致的版本误差
-        // String[] chHeaders = {
-        //         "Sec-CH-UA", "Sec-CH-UA-Mobile", "Sec-CH-UA-Platform",
-        //         "Sec-CH-UA-Platform-Version", "Sec-CH-UA-Model", "Sec-CH-UA-Full-Version-List"
-        // };
-        //
-        // for (String header : chHeaders) {
-        //     requestHeaders.put(header, request.getHeader(header));
-        // }
+        String userAgent = request.getHeader("User-Agent");
+        return parse(userAgent);
+    }
 
+    public Map<String, String> parse(String userAgent) {
+        if (userAgent == null || userAgent.isBlank()) {
+            return new HashMap<>();
+        }
         // 执行解析
-        UserAgent result = uaa.parse(header1);
+        UserAgent result = uaa.parse(userAgent);
 
         // 提取常用字段
         Map<String, String> info = new HashMap<>();

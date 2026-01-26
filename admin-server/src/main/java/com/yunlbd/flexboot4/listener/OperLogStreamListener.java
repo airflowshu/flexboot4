@@ -6,6 +6,7 @@ import com.yunlbd.flexboot4.entity.SysOperLog;
 import com.yunlbd.flexboot4.operlog.OperLogRecord;
 import com.yunlbd.flexboot4.service.SysOperLogService;
 import com.yunlbd.flexboot4.util.IpUtils;
+import com.yunlbd.flexboot4.util.UserAgentService;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.RedisConnection;
@@ -19,6 +20,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -30,16 +32,19 @@ public class OperLogStreamListener {
     private final SysOperLogService sysOperLogService;
     private final ObjectMapper objectMapper;
     private final OperLogStreamProperties properties;
+    private final UserAgentService userAgentService;
     private final RedisConnectionFactory connectionFactory;
 
     public OperLogStreamListener(StringRedisTemplate redisTemplate,
                                  SysOperLogService sysOperLogService,
                                  ObjectMapper objectMapper,
-                                 OperLogStreamProperties properties) {
+                                 OperLogStreamProperties properties,
+                                 UserAgentService userAgentService) {
         this.redisTemplate = redisTemplate;
         this.sysOperLogService = sysOperLogService;
         this.objectMapper = objectMapper;
         this.properties = properties;
+        this.userAgentService = userAgentService;
         this.connectionFactory = Objects.requireNonNull(redisTemplate.getConnectionFactory());
     }
 
@@ -118,7 +123,24 @@ public class OperLogStreamListener {
         sysOperLog.setRequestMethod(r.requestMethod());
         sysOperLog.setOperUrl(r.operUrl());
         sysOperLog.setOperIp(r.operIp());
-        sysOperLog.setTerminal(r.terminal());
+        
+        // 处理终端信息解析
+        Map<String, String> terminal = r.terminal();
+        if (terminal != null && terminal.containsKey("userAgent")) {
+            String ua = terminal.get("userAgent");
+            Map<String, String> parsed = userAgentService.parse(ua);
+            if (parsed != null && !parsed.isEmpty()) {
+                // 合并解析后的信息，保留原始 userAgent 以防万一
+                Map<String, String> merged = new HashMap<>(parsed);
+                merged.put("userAgent", ua);
+                sysOperLog.setTerminal(merged);
+            } else {
+                sysOperLog.setTerminal(terminal);
+            }
+        } else {
+            sysOperLog.setTerminal(terminal);
+        }
+        
         sysOperLog.setOperName(r.operName());
         sysOperLog.setOperUserId(r.operUserId());
         sysOperLog.setDeptId(r.deptId());

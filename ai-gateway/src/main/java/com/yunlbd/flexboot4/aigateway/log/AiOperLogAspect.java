@@ -10,6 +10,7 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
@@ -18,9 +19,11 @@ import reactor.core.publisher.Mono;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Aspect
 @Component
+@Order(1) // 确保日志切面在最外层，可以捕获权限等异常
 public class AiOperLogAspect {
 
     private final OperLogSink operLogSink;
@@ -57,23 +60,25 @@ public class AiOperLogAspect {
             Map<String, Object> operParam = operLog.isSaveRequestData() ? buildOperParam(joinPoint.getArgs()) : null;
             Map<String, Object> jsonResult = operLog.isSaveResponseData() ? Map.of("note", "ai_response_omitted") : null;
 
+            AtomicBoolean logged = new AtomicBoolean(false);
+
             return mono
-                    .flatMap(v -> {
-                        long costMillis = (System.nanoTime() - startNanos) / 1_000_000;
-                        OperLogRecord record = buildRecord(eventId, joinPoint, operLog, exchange, claims, costMillis, null, operParam, jsonResult);
-                        return Mono.fromCompletionStage(operLogSink.write(record)).onErrorResume(e -> Mono.empty()).thenReturn(v);
+                    .doOnEach(signal -> {
+                        if (signal.isOnComplete() || signal.isOnError()) {
+                            if (logged.compareAndSet(false, true)) {
+                                long costMillis = (System.nanoTime() - startNanos) / 1_000_000;
+                                Throwable ex = signal.getThrowable();
+                                OperLogRecord record = buildRecord(eventId, joinPoint, operLog, exchange, claims, costMillis, ex, operParam, jsonResult);
+                                operLogSink.write(record).toCompletableFuture().join();
+                            }
+                        }
                     })
-                    .switchIfEmpty(Mono.defer(() -> {
-                        long costMillis = (System.nanoTime() - startNanos) / 1_000_000;
-                        OperLogRecord record = buildRecord(eventId, joinPoint, operLog, exchange, claims, costMillis, null, operParam, jsonResult);
-                        return Mono.fromCompletionStage(operLogSink.write(record)).onErrorResume(e -> Mono.empty()).then(Mono.empty());
-                    }))
-                    .onErrorResume(ex -> {
-                        long costMillis = (System.nanoTime() - startNanos) / 1_000_000;
-                        OperLogRecord record = buildRecord(eventId, joinPoint, operLog, exchange, claims, costMillis, ex, operParam, jsonResult);
-                        return Mono.fromCompletionStage(operLogSink.write(record))
-                                .onErrorResume(e -> Mono.empty())
-                                .then(Mono.error(ex));
+                    .doOnCancel(() -> {
+                        if (logged.compareAndSet(false, true)) {
+                            long costMillis = (System.nanoTime() - startNanos) / 1_000_000;
+                            OperLogRecord record = buildRecord(eventId, joinPoint, operLog, exchange, claims, costMillis, null, operParam, jsonResult);
+                            operLogSink.write(record);
+                        }
                     });
         });
     }
@@ -87,19 +92,26 @@ public class AiOperLogAspect {
             Map<String, Object> operParam = operLog.isSaveRequestData() ? buildOperParam(joinPoint.getArgs()) : null;
             Map<String, Object> jsonResult = operLog.isSaveResponseData() ? Map.of("note", "ai_stream_response_omitted") : null;
 
+            AtomicBoolean logged = new AtomicBoolean(false);
+
             return flux
-                    .onErrorResume(ex -> {
-                        long costMillis = (System.nanoTime() - startNanos) / 1_000_000;
-                        OperLogRecord record = buildRecord(eventId, joinPoint, operLog, exchange, claims, costMillis, ex, operParam, jsonResult);
-                        return Mono.fromCompletionStage(operLogSink.write(record))
-                                .onErrorResume(e -> Mono.empty())
-                                .thenMany(Flux.error(ex));
+                    .doOnEach(signal -> {
+                        if (signal.isOnComplete() || signal.isOnError()) {
+                            if (logged.compareAndSet(false, true)) {
+                                long costMillis = (System.nanoTime() - startNanos) / 1_000_000;
+                                Throwable ex = signal.getThrowable();
+                                OperLogRecord record = buildRecord(eventId, joinPoint, operLog, exchange, claims, costMillis, ex, operParam, jsonResult);
+                                operLogSink.write(record).toCompletableFuture().join();
+                            }
+                        }
                     })
-                    .concatWith(Mono.defer(() -> {
-                        long costMillis = (System.nanoTime() - startNanos) / 1_000_000;
-                        OperLogRecord record = buildRecord(eventId, joinPoint, operLog, exchange, claims, costMillis, null, operParam, jsonResult);
-                        return Mono.fromCompletionStage(operLogSink.write(record)).onErrorResume(e -> Mono.empty());
-                    }).thenMany(Flux.empty()));
+                    .doOnCancel(() -> {
+                        if (logged.compareAndSet(false, true)) {
+                            long costMillis = (System.nanoTime() - startNanos) / 1_000_000;
+                            OperLogRecord record = buildRecord(eventId, joinPoint, operLog, exchange, claims, costMillis, null, operParam, jsonResult);
+                            operLogSink.write(record);
+                        }
+                    });
         });
     }
 
