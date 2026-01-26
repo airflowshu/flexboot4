@@ -136,7 +136,8 @@ public class AiApiKeyServiceImpl extends BaseServiceImpl<AiApiKeyMapper, AiApiKe
             return List.of();
         }
         try {
-            List<String> list = objectMapper.readValue(modelScope, new TypeReference<List<String>>() {});
+            List<String> list = objectMapper.readValue(modelScope, new TypeReference<>() {
+            });
             if (list != null) {
                 return list.stream().filter(s -> s != null && !s.isBlank()).map(String::trim).toList();
             }

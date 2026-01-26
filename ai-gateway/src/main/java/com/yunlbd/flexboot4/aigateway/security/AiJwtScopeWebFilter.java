@@ -31,10 +31,12 @@ public class AiJwtScopeWebFilter implements WebFilter {
 
     private final ObjectMapper objectMapper;
     private final StringRedisTemplate redisTemplate;
+    private final ApiKeySnapshotCache apiKeySnapshotCache;
 
-    public AiJwtScopeWebFilter(ObjectMapper objectMapper, StringRedisTemplate redisTemplate) {
+    public AiJwtScopeWebFilter(ObjectMapper objectMapper, StringRedisTemplate redisTemplate, ApiKeySnapshotCache apiKeySnapshotCache) {
         this.objectMapper = objectMapper;
         this.redisTemplate = redisTemplate;
+        this.apiKeySnapshotCache = apiKeySnapshotCache;
     }
 
     @Value("${jwt.secret:thisIsASecretKeyThatIsLongEnoughForHmacSha256SecurityRequirement}")
@@ -77,7 +79,18 @@ public class AiJwtScopeWebFilter implements WebFilter {
         if (!hasAiScope(scope)) {
             return writeErrorResponse(exchange, HttpStatus.FORBIDDEN, "无AI接口访问权限");
         }
-        return chain.filter(exchange).contextWrite(ctx -> ctx.put(Claims.class, claims).put(ServerWebExchange.class, exchange));
+
+        String userId = claims.getSubject();
+        // 校验是否已分配有效的 API Key
+        return apiKeySnapshotCache.activeRulesForUser(userId)
+                .flatMap(rules -> {
+                    if (rules.isEmpty()) {
+                        return writeErrorResponse(exchange, HttpStatus.FORBIDDEN, "未开通AI服务或服务已禁用");
+                    }
+                    return chain.filter(exchange)
+                            .contextWrite(ctx -> ctx.put(Claims.class, claims)
+                                    .put(ServerWebExchange.class, exchange));
+                });
     }
 
     private boolean hasAiScope(Object scope) {
@@ -106,17 +119,22 @@ public class AiJwtScopeWebFilter implements WebFilter {
     }
 
     private Mono<Void> writeErrorResponse(ServerWebExchange exchange, HttpStatus status, String message) {
-        ApiResult<Void> error = ApiResult.error(status.value(), message);
+        // 统一使用 ApiResult.error 构建响应体
+        ApiResult<Void> errorResult = ApiResult.error(status.value(), message);
+        
         exchange.getResponse().setStatusCode(status);
         exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
-        String json;
+        
+        byte[] bytes;
         try {
-            json = objectMapper.writeValueAsString(error);
+            bytes = objectMapper.writeValueAsBytes(errorResult);
         } catch (JsonProcessingException e) {
-            json = "{\"code\":" + status.value() + ",\"message\":\"" + message + "\"}";
+            String fallback = String.format("{\"code\":%d,\"message\":\"%s\",\"error\":\"error\"}", status.value(), message);
+            bytes = fallback.getBytes(StandardCharsets.UTF_8);
         }
+        
         return exchange.getResponse().writeWith(Mono.just(exchange.getResponse()
-                .bufferFactory().wrap(json.getBytes(StandardCharsets.UTF_8))));
+                .bufferFactory().wrap(bytes)));
     }
 
     private String extractCookieValue(String cookieHeader) {
