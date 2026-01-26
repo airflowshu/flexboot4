@@ -33,18 +33,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = jwtUtil.resolveToken(request);
 
         if (token != null) {
-            String uri = request.getRequestURI();
-            if (!uri.startsWith("/api/auth") && !jwtUtil.hasScope(token, JwtScopes.ADMIN)) {
-                response.setStatus(403);
-                return;
-            }
-            // Check blacklist
-            if (Boolean.TRUE.equals(redisTemplate.hasKey(BLACKLIST_KEY_PREFIX + token))) {
-                filterChain.doFilter(request, response);
-                return;
-            }
-
             try {
+                String uri = request.getRequestURI();
+                if (!uri.startsWith("/api/auth") && !jwtUtil.hasScope(token, JwtScopes.ADMIN)) {
+                    response.setStatus(403);
+                    return;
+                }
+                // Check blacklist
+                if (Boolean.TRUE.equals(redisTemplate.hasKey(BLACKLIST_KEY_PREFIX + token))) {
+                    filterChain.doFilter(request, response);
+                    return;
+                }
+
                 String username = jwtUtil.extractUsername(token);
                 if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                     UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
@@ -59,7 +59,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     }
                 }
             } catch (Exception e) {
-                // Log error, invalid token
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"code\":401,\"message\":\"未认证或令牌无效/过期\"}");
+                return;
             }
         }
         filterChain.doFilter(request, response);

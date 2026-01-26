@@ -19,4 +19,9 @@ mybatis-flex:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
   inject-sql-session-on-mapper-scan: true
   global-config:
-    print-banner: false
+    print-banner: true
+
+
+logging:
+  level:
+    nl.basjes: info   #Yauaa版本信息打印

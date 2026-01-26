@@ -41,13 +41,16 @@ mybatis-flex:
       password: flexboot4
   configuration:
     map-underscore-to-camel-case: true
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
   inject-sql-session-on-mapper-scan: true
   global-config:
     print-banner: false
 
-# 自定义邮件配置
+logging:
+  level:
+    nl.basjes: off   #关闭Yauaa版本信息打印
 
+# 自定义邮件配置
 mail:
   sender-name: ${spring.application.name}       # 发件人显示名称
   reset-url: http://localhost:5666/auth/reset-password  # 前端重置密码页面
