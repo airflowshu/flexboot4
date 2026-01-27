@@ -31,19 +31,10 @@ public class AuthController {
 
     private static final long TOKEN_VALIDITY_HOURS = 2;
 
-    @Operation(summary = "Get User Permission Codes", description = "Fetch permission codes for the current user.")
-    @GetMapping("/codes")
-    @OperLog(title = "获取权限码", businessType = BusinessType.OTHER)
-    public ApiResult<List<String>> getCodes(HttpServletRequest request) {
-        List<String> codes = authService.getPermissionCodes(request);
-        if (codes == null || codes.isEmpty()) {
-            return ApiResult.success(List.of());
-            // return ApiResult.error(401, "Unauthorized");
-        }
-        return ApiResult.success(codes);
-    }
-
-    @Operation(summary = "User Login", description = "Authenticate user and return JWT token. Sets HTTP-only cookie.")
+    @Operation(summary = "User Login",
+            description = "Authenticate user and return JWT token. Sets HTTP-only cookie.",
+            tags = {"1. 用户登录"}
+    )
     @OperLog(title = "用户登录", businessType = BusinessType.LOGIN)
     @PostMapping("/login")
     public ApiResult<LoginResp> login(@Valid @RequestBody LoginReq req, HttpServletRequest request, HttpServletResponse response) {
@@ -63,7 +54,7 @@ public class AuthController {
         return ApiResult.success(loginResp);
     }
 
-    @Operation(summary = "User Logout", description = "Invalidate JWT token and clear cookie.")
+    @Operation(summary = "User Logout", description = "Invalidate JWT token and clear cookie.", tags = {"2. 用户登出"})
     @OperLog(title = "用户登出", businessType = BusinessType.LOGOUT, isSaveRequestData = false, isSaveResponseData = false)
     @PostMapping("/logout")
     public ApiResult<String> logout(HttpServletRequest request, HttpServletResponse response) {
@@ -79,7 +70,7 @@ public class AuthController {
         return ApiResult.success("Logged out successfully");
     }
 
-    @Operation(summary = "Refresh Token", description = "Refresh the current JWT token.")
+    @Operation(summary = "Refresh Token", description = "Refresh the current JWT token.", tags = {"3. 刷新token"})
     @PostMapping("/refresh")
     public ApiResult<String> refresh(HttpServletRequest request, HttpServletResponse response) {
         String newToken = authService.refreshToken(request);
@@ -96,24 +87,44 @@ public class AuthController {
         return ApiResult.success(newToken);
     }
 
-    @Operation(summary = "Forget Password", description = "Send password reset email to the registered email address.")
+    @Operation(summary = "Forget Password",
+            description = "Send password reset email to the registered email address.",
+            tags = {"4. 忘记密码"}
+    )
     @PostMapping("/forget-password")
     public ApiResult<String> forgetPassword(@Valid @RequestBody ForgetPasswordReq req) {
         String result = authService.forgetPassword(req);
         return ApiResult.success(result);
     }
 
-    @Operation(summary = "Reset Password", description = "Reset password using token received via email.")
+    @Operation(summary = "Reset Password", description = "Reset password using token received via email.",tags = {"5. 重置密码"})
     @PostMapping("/reset-password")
     public ApiResult<String> resetPassword(@Valid @RequestBody ResetPasswordReq req) {
         String result = authService.resetPassword(req);
         return ApiResult.success(result);
     }
 
-    @Operation(summary = "Super/Admin Reset User Password", description = "Super/Admin can reset any user's password by user ID.")
+    @Operation(summary = "Super/Admin Reset User Password",
+            description = "Super/Admin can reset any user's password by user ID.",
+            tags = {"6. 管理员重置密码"}
+    )
     @PostMapping("/admin/reset-password")
     public ApiResult<String> adminResetPassword(@Valid @RequestBody AdminResetPasswordReq req) {
         String result = authService.adminResetPassword(req);
         return ApiResult.success(result);
+    }
+
+    @Operation(summary = "Get User Permission Codes",
+            description = "Fetch permission codes for the current user.",
+            tags = {"7. 获取权限码"}
+    )
+    @GetMapping("/codes")
+    @OperLog(title = "获取权限码", businessType = BusinessType.OTHER)
+    public ApiResult<List<String>> getCodes(HttpServletRequest request) {
+        List<String> codes = authService.getPermissionCodes(request);
+        if (codes == null || codes.isEmpty()) {
+            return ApiResult.success(List.of());
+        }
+        return ApiResult.success(codes);
     }
 }

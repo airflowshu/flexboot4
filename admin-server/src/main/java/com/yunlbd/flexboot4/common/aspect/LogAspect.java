@@ -115,7 +115,9 @@ public class LogAspect {
 
             if (e != null) {
                 operLog.setStatus(SysConstant.SYS_ENUM_ERROR);
-                operLog.setErrorMsg(StringUtils.substring(e.getMessage(), 0, 2000));
+                // 添加 [历史异常] 标记，方便在日志查询时区分当前程序错误与历史错误记录
+                String errorMsg = StringUtils.substring(e.getMessage(), 0, 2000);
+                operLog.setErrorMsg("[历史异常] " + errorMsg);
             }
 
             // 设置方法名称

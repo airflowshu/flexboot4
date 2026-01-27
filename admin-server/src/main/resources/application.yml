@@ -81,3 +81,12 @@ operlog:
     group: ${OPERLOG_STREAM_GROUP:operlog-group}
     consumer: ${OPERLOG_STREAM_CONSUMER:${spring.application.name}-1}
     dedup-ttl-days: ${OPERLOG_STREAM_DEDUP_TTL_DAYS:7}
+
+minio:
+  endpoint: http://192.168.11.104:9000
+  access-key: ${MINIO_ACCESS_KEY:minioadmin}
+  secret-key: ${MINIO_SECRET_KEY:minioadmin}
+  bucket: ${MINIO_BUCKET:flexboot4-files}
+  public-bucket: ${MINIO_PUBLIC_BUCKET:flexboot4-public}
+  public-endpoint: ${MINIO_PUBLIC_ENDPOINT:http://192.168.11.104:9000}
+  secure: false

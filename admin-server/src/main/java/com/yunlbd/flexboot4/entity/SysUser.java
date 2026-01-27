@@ -2,10 +2,7 @@ package com.yunlbd.flexboot4.entity;
 
 import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
-import com.mybatisflex.annotation.Column;
-import com.mybatisflex.annotation.RelationManyToMany;
-import com.mybatisflex.annotation.RelationManyToOne;
-import com.mybatisflex.annotation.Table;
+import com.mybatisflex.annotation.*;
 import com.yunlbd.flexboot4.common.annotation.DictEnum;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -34,8 +31,10 @@ public class SysUser extends BaseEntity {
     @ExcelProperty("用户名")
     private String realName;
 
-    @ExcelProperty("头像")
-    private String avatar;
+    @ExcelIgnore
+    @Schema(description = "头像文件ID，对应 sys_file.id")
+    @Column("profile_file_id")
+    private String profileFileId;
 
     @ExcelProperty("邮箱")
     private String email;
@@ -72,4 +71,7 @@ public class SysUser extends BaseEntity {
             targetField = "id", joinTargetColumn = "role_id"
     )
     private List<SysRole> roles;
+
+    @RelationOneToOne(selfField = "profileFileId", targetField = "id")
+    private SysFile profileFile;
 }

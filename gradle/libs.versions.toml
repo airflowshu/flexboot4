@@ -5,6 +5,7 @@ mybatisFlex = "1.11.5"
 mybatisFlexReactor = "0.2.2"
 jjwt = "0.13.0"
 springdocScalar = "3.0.1"
+openapiAnnotations = "2.7.0"
 postgresqlJdbc = "42.7.4"
 r2dbcPostgresql = "1.1.1.RELEASE"
 hikari = "4.0.3"
@@ -12,6 +13,7 @@ easyexcel = "4.0.3"
 ip2region = "2.7.0"
 yauaa = "8.0.0"
 lombok = "1.18.42"
+minio = "8.6.0"
 
 [libraries]
 mybatisFlexStarter = { module = "com.mybatis-flex:mybatis-flex-spring-boot4-starter", version.ref = "mybatisFlex" }
@@ -33,6 +35,7 @@ easyexcel = { module = "com.alibaba:easyexcel", version.ref = "easyexcel" }
 ip2region = { module = "org.lionsoul:ip2region", version.ref = "ip2region" }
 yauaa = { module = "nl.basjes.parse.useragent:yauaa", version.ref = "yauaa" }
 lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
+minio = { module = "io.minio:minio", version.ref = "minio" }
 
 [plugins]
 springBoot = { id = "org.springframework.boot", version.ref = "springBoot" }

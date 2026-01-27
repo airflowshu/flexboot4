@@ -3,6 +3,8 @@ package com.yunlbd.flexboot4.controller.sys;
 import com.yunlbd.flexboot4.common.ApiResult;
 import com.yunlbd.flexboot4.common.annotation.OperLog;
 import com.yunlbd.flexboot4.common.enums.BusinessType;
+import com.yunlbd.flexboot4.config.MinioProperties;
+import com.yunlbd.flexboot4.entity.SysFile;
 import com.yunlbd.flexboot4.entity.SysRole;
 import com.yunlbd.flexboot4.entity.SysUser;
 import com.yunlbd.flexboot4.service.SysUserService;
@@ -30,6 +32,7 @@ public class SysUserController extends BaseController<SysUserService, SysUser, S
     }
 
     private final PasswordEncoder passwordEncoder;
+    private final MinioProperties minioProperties;
 
     @Override
     @Operation(summary = "Create", description = "Create entity.")
@@ -54,7 +57,16 @@ public class SysUserController extends BaseController<SysUserService, SysUser, S
         info.put("id", user.getId());
         info.put("username", user.getUsername());
         info.put("realName", user.getRealName());
-        info.put("avatar", user.getAvatar());
+        // info.put("avatar", user.getAvatar());
+        // 头像URL（优先取 avatar_file_id 对应的公有URL）
+        if (user.getProfileFileId() != null && !user.getProfileFileId().isBlank()) {
+            SysFile f = user.getProfileFile();
+            if (f != null && f.getBucketName() != null && f.getObjectKey() != null) {
+                String endpoint = minioProperties.publicEndpoint() != null ? minioProperties.publicEndpoint() : minioProperties.endpoint();
+                String avatarUrl = endpoint + "/" + f.getBucketName() + "/" + f.getObjectKey();
+                info.put("avatar", avatarUrl);
+            }
+        }
         info.put("roles", user.getRoles() != null
                 ? user.getRoles().stream().map(SysRole::getRoleValue).collect(Collectors.toList())
                 : new ArrayList<>());

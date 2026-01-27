@@ -35,7 +35,8 @@ public class OpenApiConfig {
                         "name","运维管理",
                         "tags",List.of(
                                 "操作日志",
-                                "apiKey管理"
+                                "apiKey管理",
+                                "文件管理"
                         )
                 )
         ));

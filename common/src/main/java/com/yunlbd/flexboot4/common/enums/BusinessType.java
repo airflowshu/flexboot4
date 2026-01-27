@@ -10,6 +10,7 @@ public enum BusinessType {
     IMPORT,
     QUERY,
     LOGIN,
-    LOGOUT
+    LOGOUT,
+    UPLOAD
 }
 
