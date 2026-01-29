@@ -6,6 +6,11 @@ server:
 spring:
   application:
     name: flexboot4
+  servlet:
+    multipart:
+      max-file-size: 100MB  # 单文件最大 100MB
+      max-request-size: 1GB  # 请求总最大 1GB
+      enabled: true  # Whether to enable support of multipart uploads.
   data:
     redis:
       host: localhost

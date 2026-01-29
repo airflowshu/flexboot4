@@ -286,6 +286,9 @@ public class LogAspect {
      * @return 如果是需要过滤的对象，则返回true；否则返回false。
      */
     public boolean isFilterObject(final Object o) {
+        if (o == null) {
+            return true;
+        }
         Class<?> clazz = o.getClass();
         if (clazz.isArray()) {
             return clazz.getComponentType().isAssignableFrom(MultipartFile.class);

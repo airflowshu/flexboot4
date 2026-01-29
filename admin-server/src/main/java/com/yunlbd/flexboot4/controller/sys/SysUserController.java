@@ -57,7 +57,6 @@ public class SysUserController extends BaseController<SysUserService, SysUser, S
         info.put("id", user.getId());
         info.put("username", user.getUsername());
         info.put("realName", user.getRealName());
-        // info.put("avatar", user.getAvatar());
         // 头像URL（优先取 avatar_file_id 对应的公有URL）
         if (user.getProfileFileId() != null && !user.getProfileFileId().isBlank()) {
             SysFile f = user.getProfileFile();

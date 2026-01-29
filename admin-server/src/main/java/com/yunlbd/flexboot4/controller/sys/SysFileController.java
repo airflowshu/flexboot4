@@ -18,6 +18,8 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Collection;
+
 @RestController
 @RequestMapping("/api/admin/file")
 @Tag(name = "文件管理", description = "SysFile - 文件管理")
@@ -31,13 +33,39 @@ public class SysFileController extends BaseController<SysFileService, SysFile, S
         return SysFile.class;
     }
 
-    @Operation(summary = "上传文件", description = "上传单个文件并保存到对象存储")
-    @OperLog(title = "上传文件", businessType = BusinessType.UPLOAD)
+    /**
+     * 重写单删除：先清除缓存和文件，再删除数据库记录
+     */
+    @Override
+    @Operation(summary = "删除文件", description = "删除文件并清除相关缓存")
+    @OperLog(title = "删除文件", businessType = BusinessType.DELETE)
+    @RequirePermission("sys:file:delete")
+    @DeleteMapping("/{id}")
+    public ApiResult<Boolean> remove(@PathVariable String id) {
+        fileManagerService.delete(id);
+        return ApiResult.success(service.removeById(id));
+    }
+
+    /**
+     * 重写批量删除：先清除缓存和文件，再删除数据库记录
+     */
+    @Override
+    @Operation(summary = "批量删除文件", description = "批量删除文件并清除相关缓存")
+    @OperLog(title = "批量删除文件", businessType = BusinessType.DELETE)
+    @RequirePermission("sys:file:delete")
+    @DeleteMapping
+    public ApiResult<Boolean> removeBatch(@RequestBody Collection<String> ids) {
+        ids.forEach(fileManagerService::delete);
+        return ApiResult.success(service.removeByIds(ids));
+    }
+
+    @Operation(summary = "上传单文件", description = "上传单个文件并保存到对象存储")
+    @OperLog(title = "上传单文件", businessType = BusinessType.UPLOAD)
     @RequirePermission("sys:file:upload")
-    @PostMapping(value = "/upload",produces = MediaType.APPLICATION_JSON_VALUE)
-    public ApiResult<FileObject> upload(
+    @PostMapping(value = "/upload-single",produces = MediaType.APPLICATION_JSON_VALUE)
+    public ApiResult<FileObject> uploadSingle(
             @Parameter(description = "要上传的文件", required = true, schema = @Schema(type = "string", format = "binary"))
-            @RequestPart("file") MultipartFile file,
+            @RequestParam("file") MultipartFile file,
             @Parameter(description = "租户ID") @RequestParam(value = "tenantId", defaultValue = "1") String tenantId,
             @Parameter(description = "项目ID") @RequestParam(value = "projectId", required = false) String projectId,
             @Parameter(description = "业务类型，传入 `sys_user_avatar` 时文件会上传到公有库，其他值存入私有库")

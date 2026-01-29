@@ -35,6 +35,8 @@ public class CacheConfig {
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(config)
                 .transactionAware()
+                .withCacheConfiguration("fileAccess",
+                        config.entryTtl(Duration.ofMinutes(30))) // 文件访问链接缓存 半小时
                 .build();
     }
 

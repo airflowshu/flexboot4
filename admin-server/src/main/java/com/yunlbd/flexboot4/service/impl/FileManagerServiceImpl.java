@@ -1,10 +1,14 @@
 package com.yunlbd.flexboot4.service.impl;
 
 import com.mybatisflex.core.query.QueryWrapper;
+import com.yunlbd.flexboot4.config.MinioProperties;
 import com.yunlbd.flexboot4.entity.SysFile;
 import com.yunlbd.flexboot4.file.*;
 import com.yunlbd.flexboot4.service.FileManagerService;
 import com.yunlbd.flexboot4.service.SysFileService;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -17,14 +21,17 @@ import java.util.HexFormat;
 import java.util.UUID;
 
 @Service
+@CacheConfig(cacheNames = "fileAccess")
 public class FileManagerServiceImpl implements FileManagerService {
 
     private final FileStorage fileStorage;
     private final SysFileService sysFileService;
+    private final MinioProperties minioProperties;
 
-    public FileManagerServiceImpl(FileStorage fileStorage, SysFileService sysFileService) {
+    public FileManagerServiceImpl(FileStorage fileStorage, SysFileService sysFileService, MinioProperties minioProperties) {
         this.fileStorage = fileStorage;
         this.sysFileService = sysFileService;
+        this.minioProperties = minioProperties;
     }
 
     @Override
@@ -114,6 +121,7 @@ public class FileManagerServiceImpl implements FileManagerService {
     }
 
     @Override
+    @Cacheable(key = "#fileId + ':' + #attachment", unless = "#result == null")
     public FileAccessDescriptor access(String fileId, long ttlSeconds, boolean attachment) {
         SysFile entity = sysFileService.getById(fileId);
         if (entity == null || entity.getDelFlag() != null && entity.getDelFlag() != 0) {
@@ -130,20 +138,21 @@ public class FileManagerServiceImpl implements FileManagerService {
     }
 
     @Override
+    @CacheEvict(cacheNames = "fileAccess", allEntries = true)
     public void delete(String fileId) {
-        SysFile entity = sysFileService.getById(fileId);
-        if (entity == null) {
-            return;
-        }
-        FileLocation location = new FileLocation(
-                StorageType.valueOf(entity.getStorageType()),
-                entity.getBucketName(),
-                entity.getObjectKey(),
-                null,
-                null
-        );
-        fileStorage.delete(location);
-        sysFileService.removeById(fileId);
+        // 这里先注释掉,暂不真物理删除minIO中的文件
+        // SysFile entity = sysFileService.getById(fileId);
+        // if (entity == null) {
+        //     return;
+        // }
+        // FileLocation location = new FileLocation(
+        //         StorageType.valueOf(entity.getStorageType()),
+        //         entity.getBucketName(),
+        //         entity.getObjectKey(),
+        //         null,
+        //         null
+        // );
+        // fileStorage.delete(location);
     }
 
     private HashResult sha256AndCount(InputStream in) throws IOException {
@@ -167,12 +176,18 @@ public class FileManagerServiceImpl implements FileManagerService {
     }
 
     private FileObject toFileObject(SysFile f) {
+        // 根据 bucket 名称选择使用 publicEndpoint 还是 endpoint
+        String endpoint = minioProperties.publicBucket() != null
+                && minioProperties.publicBucket().equals(f.getBucketName())
+                ? minioProperties.publicEndpoint()
+                : minioProperties.endpoint();
+
         FileLocation location = new FileLocation(
                 StorageType.valueOf(f.getStorageType()),
                 f.getBucketName(),
                 f.getObjectKey(),
                 null,
-                null
+                endpoint
         );
         return new FileObject(
                 f.getId(),

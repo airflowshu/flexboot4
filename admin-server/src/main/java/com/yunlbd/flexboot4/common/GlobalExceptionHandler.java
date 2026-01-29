@@ -16,7 +16,7 @@ public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    @ExceptionHandler(AuthenticationException.class)
+    @ExceptionHandler({AuthenticationException.class,SecurityException.class})
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ApiResult<String> handleAuthenticationException(AuthenticationException e) {
         log.warn("Authentication failed: {}", e.getMessage());
