@@ -28,6 +28,7 @@ dependencies {
     implementation(libs.mybatisFlexReactorSpring)
     implementation(libs.hikariCp)
     implementation(libs.easyexcel)
+    implementation("org.apache.pdfbox:pdfbox:3.0.6")
 
     constraints {
         implementation("org.apache.commons:commons-compress:1.28.0") {
@@ -54,4 +55,3 @@ dependencies {
 
     implementation(project(":common"))
 }
-

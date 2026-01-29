@@ -17,7 +17,15 @@ class MinioFileStorageSmokeTest {
     @Test
     @Disabled("仅用于本地联通性验证")
     void storeAndGenerateUrl() {
-        MinioProperties properties = new MinioProperties("http://192.168.11.104:9000", "minioadmin", "minioadmin", "flexboot4-files", false);
+        MinioProperties properties = new MinioProperties(
+                "http://192.168.11.104:9000",
+                "minioadmin",
+                "minioadmin",
+                "flexboot4-files",
+                false,
+                "flexboot4-public",
+                "http://192.168.11.104:9000"
+        );
         MinioClient client = MinioClient.builder()
                 .endpoint(properties.endpoint())
                 .credentials(properties.accessKey(), properties.secretKey())
@@ -30,4 +38,3 @@ class MinioFileStorageSmokeTest {
         assert descriptor.url() != null;
     }
 }
-

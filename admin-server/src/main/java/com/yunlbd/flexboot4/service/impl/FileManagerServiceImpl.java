@@ -1,14 +1,20 @@
 package com.yunlbd.flexboot4.service.impl;
 
-import com.mybatisflex.core.query.QueryWrapper;
 import com.yunlbd.flexboot4.config.MinioProperties;
 import com.yunlbd.flexboot4.entity.SysFile;
+import com.yunlbd.flexboot4.event.SysFileUploadedEvent;
 import com.yunlbd.flexboot4.file.*;
+import com.yunlbd.flexboot4.file.ai.AiParseStatus;
+import com.yunlbd.flexboot4.mapper.SysFileMapper;
 import com.yunlbd.flexboot4.service.FileManagerService;
 import com.yunlbd.flexboot4.service.SysFileService;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -26,98 +32,191 @@ public class FileManagerServiceImpl implements FileManagerService {
 
     private final FileStorage fileStorage;
     private final SysFileService sysFileService;
+    private final SysFileMapper sysFileMapper;
     private final MinioProperties minioProperties;
+    private final ApplicationEventPublisher applicationEventPublisher;
+    private final CacheManager cacheManager;
 
-    public FileManagerServiceImpl(FileStorage fileStorage, SysFileService sysFileService, MinioProperties minioProperties) {
+    public FileManagerServiceImpl(FileStorage fileStorage, SysFileService sysFileService, SysFileMapper sysFileMapper, MinioProperties minioProperties, ApplicationEventPublisher applicationEventPublisher, CacheManager cacheManager) {
         this.fileStorage = fileStorage;
         this.sysFileService = sysFileService;
+        this.sysFileMapper = sysFileMapper;
         this.minioProperties = minioProperties;
+        this.applicationEventPublisher = applicationEventPublisher;
+        this.cacheManager = cacheManager;
     }
 
     @Override
-    public FileObject upload(MultipartFile file, String tenantId, String projectId, String bizType, String bizId) {
-        try {
-            if (file == null || file.isEmpty()) {
-                throw new IllegalArgumentException("上传文件为空");
-            }
-            String id = UUID.randomUUID().toString();
-            String fileName = file.getOriginalFilename();
-            if (fileName == null || fileName.isBlank()) {
-                fileName = "file-" + id;
-            }
-            String contentType = file.getContentType();
-            if (contentType == null || contentType.isBlank() || "application/octet-stream".equalsIgnoreCase(contentType)) {
-                String guessed = URLConnection.guessContentTypeFromName(fileName);
-                if (guessed != null && !guessed.isBlank()) {
-                    contentType = guessed;
-                }
-            }
-            long declaredSize = file.getSize();
-            HashResult hr;
-            try (InputStream hashIn = file.getInputStream()) {
-                hr = sha256AndCount(hashIn);
-            }
-            long size = declaredSize > 0 ? declaredSize : hr.size;
-            if (size <= 0) {
-                throw new IllegalArgumentException("上传文件为空");
-            }
-            String hash = hr.hash;
+    public FileObject upload(MultipartFile file, String tenantId, String projectId, String bizType, String bizId){
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("上传文件为空");
+        }
 
-            SysFile existing = sysFileService.getOne(QueryWrapper.create()
-                    .from(SysFile.class)
-                    .where(SysFile::getFileHash).eq(hash)
-                    .and(SysFile::getDelFlag).eq(0));
-            if (existing != null) {
-                return toFileObject(existing);
-            }
-
-            FileLocation location = new FileLocation(StorageType.MINIO, null, null, null, null);
-            FileObject meta = new FileObject(
-                    id,
-                    tenantId,
-                    projectId,
-                    bizType,
-                    bizId,
-                    fileName,
-                    null,
-                    contentType,
-                    size,
-                    hash,
-                    location,
-                    "UPLOADED",
-                    0,
-                    null,
-                    null
-            );
-            FileObject stored;
-            try (InputStream uploadIn = file.getInputStream()) {
-                stored = fileStorage.store(uploadIn, size, fileName, contentType, meta);
-            }
-
-            SysFile entity = new SysFile();
-            entity.setId(stored.id());
-            entity.setTenantId(stored.tenantId());
-            entity.setProjectId(stored.projectId());
-            entity.setBizType(stored.bizType());
-            entity.setBizId(stored.bizId());
-            entity.setFileName(stored.fileName());
-            entity.setFileExt(stored.fileExt());
-            entity.setMimeType(stored.mimeType());
-            entity.setFileSize(stored.fileSize());
-            entity.setFileHash(stored.fileHash());
-            entity.setStorageType(stored.location().storageType().name());
-            entity.setBucketName(stored.location().bucket());
-            entity.setObjectKey(stored.location().objectKey());
-            entity.setAiStatus(stored.aiStatus());
-            entity.setChunkCount(stored.chunkCount());
-            entity.setTokenEstimate(stored.tokenEstimate());
-            entity.setEmbeddingModel(stored.embeddingModel());
-            sysFileService.save(entity);
-
-            return stored;
-        } catch (Exception e) {
+        // 1. 计算文件 hash
+        HashResult hr;
+        try (InputStream hashIn = file.getInputStream()) {
+            hr = sha256AndCount(hashIn);
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        long size = Math.max(file.getSize(), hr.size);
+        if (size <= 0) {
+            throw new IllegalArgumentException("上传文件为空");
+        }
+        String hash = hr.hash;
+
+        // 2. 查询是否已存在
+        SysFile existing = findByHash(hash);
+        if (existing != null) {
+            return handleExistingFile(existing, tenantId, projectId, bizType, bizId);
+        }
+
+        // 3. 准备文件元数据
+        String id = UUID.randomUUID().toString();
+        String fileName = getFileName(file, id);
+        String contentType = getContentType(file, fileName);
+
+        FileLocation location = new FileLocation(StorageType.MINIO, null, null, null, null);
+        FileObject meta = new FileObject(
+                id, tenantId, projectId, bizType, bizId,
+                fileName, null, contentType, size, hash,
+                location, "UPLOADED", 0, null, null
+        );
+
+        // 4. 上传到存储
+        FileObject stored;
+        try (InputStream uploadIn = file.getInputStream()) {
+            stored = fileStorage.store(uploadIn, size, fileName, contentType, meta);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        // 5. 保存数据库记录
+        SysFile entity = buildSysFileEntity(stored);
+        try {
+            sysFileService.save(entity);
+        } catch (DuplicateKeyException e) {
+            // 并发插入时，唯一键冲突，重新查询
+            SysFile dup = findByHash(hash);
+            if (dup != null) {
+                return handleExistingFile(dup, tenantId, projectId, bizType, bizId);
+            }
+            throw e;
+        }
+
+        // 6. 触发 AI 解析事件
+        applicationEventPublisher.publishEvent(new SysFileUploadedEvent(entity.getId()));
+        return stored;
+    }
+
+    /**
+     * 处理已存在的文件（去重逻辑）
+     */
+    private FileObject handleExistingFile(SysFile existing, String tenantId, String projectId, String bizType, String bizId) {
+        boolean changed = false;
+
+        // 恢复已删除的文件（使用原生 SQL 绕过 TableLogic）
+        if (existing.getDelFlag() != null && existing.getDelFlag() != 0) {
+            existing.setDelFlag(0);
+            changed = true;
+        }
+        // 更新空字段
+        changed = updateIfBlank(existing::getBizType, existing::setBizType, bizType) || changed;
+        changed = updateIfBlank(existing::getBizId, existing::setBizId, bizId) || changed;
+        changed = updateIfBlank(existing::getProjectId, existing::setProjectId, projectId) || changed;
+        changed = updateIfBlank(existing::getTenantId, existing::setTenantId, tenantId) || changed;
+
+        if (changed) {
+            // 使用 Mapper 更新其他字段
+            sysFileMapper.restoreById(existing.getId());
+            // 清除缓存
+            clearFileCaches(existing.getId());
+        }
+
+        // 触发重新解析（如果解析失败或未解析）
+        String ps = existing.getAiParseStatus();
+        if (ps == null || ps.isBlank() || AiParseStatus.FAILED.name().equals(ps) || AiParseStatus.PENDING.name().equals(ps)) {
+            applicationEventPublisher.publishEvent(new SysFileUploadedEvent(existing.getId()));
+        }
+
+        return toFileObject(existing);
+    }
+
+    /**
+     * 如果目标值为空，则更新为新值
+     */
+    private <T> boolean updateIfBlank(java.util.function.Supplier<T> getter, java.util.function.Consumer<T> setter, T newValue) {
+        if (newValue == null) {
+            return false;
+        }
+        if (newValue instanceof String s && (s.isBlank())) {
+            return false;
+        }
+        T current = getter.get();
+        if (current == null || (current instanceof String cs && cs.isBlank())) {
+            setter.accept(newValue);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 根据 hash 查询文件（绕过 TableLogic 软删除过滤）
+     */
+    private SysFile findByHash(String hash) {
+        if (hash == null || hash.isBlank()) {
+            return null;
+        }
+        // 使用自定义 Mapper 方法，绕过 TableLogic 自动添加 del_flag 条件
+        return sysFileMapper.selectByHash(hash);
+    }
+
+    /**
+     * 构建数据库实体
+     */
+    private SysFile buildSysFileEntity(FileObject stored) {
+        SysFile entity = new SysFile();
+        entity.setId(stored.id());
+        entity.setTenantId(stored.tenantId());
+        entity.setProjectId(stored.projectId());
+        entity.setBizType(stored.bizType());
+        entity.setBizId(stored.bizId());
+        entity.setFileName(stored.fileName());
+        entity.setFileExt(stored.fileExt());
+        entity.setMimeType(stored.mimeType());
+        entity.setFileSize(stored.fileSize());
+        entity.setFileHash(stored.fileHash());
+        entity.setStorageType(stored.location().storageType().name());
+        entity.setBucketName(stored.location().bucket());
+        entity.setObjectKey(stored.location().objectKey());
+        entity.setAiStatus(stored.aiStatus());
+        entity.setAiParseStatus(AiParseStatus.PENDING.name());
+        entity.setChunkCount(stored.chunkCount());
+        entity.setTokenEstimate(stored.tokenEstimate());
+        entity.setEmbeddingModel(stored.embeddingModel());
+        return entity;
+    }
+
+    /**
+     * 获取文件名
+     */
+    private String getFileName(MultipartFile file, String id) {
+        String name = file.getOriginalFilename();
+        return (name == null || name.isBlank()) ? "file-" + id : name;
+    }
+
+    /**
+     * 获取 Content-Type
+     */
+    private String getContentType(MultipartFile file, String fileName) {
+        String type = file.getContentType();
+        if (type == null || type.isBlank() || "application/octet-stream".equalsIgnoreCase(type)) {
+            String guessed = URLConnection.guessContentTypeFromName(fileName);
+            if (guessed != null && !guessed.isBlank()) {
+                return guessed;
+            }
+        }
+        return type;
     }
 
     @Override
@@ -176,9 +275,9 @@ public class FileManagerServiceImpl implements FileManagerService {
     }
 
     private FileObject toFileObject(SysFile f) {
-        // 根据 bucket 名称选择使用 publicEndpoint 还是 endpoint
-        String endpoint = minioProperties.publicBucket() != null
-                && minioProperties.publicBucket().equals(f.getBucketName())
+        boolean isPublic = minioProperties.publicBucket() != null
+                && minioProperties.publicBucket().equals(f.getBucketName());
+        String endpoint = isPublic && minioProperties.publicEndpoint() != null && !minioProperties.publicEndpoint().isBlank()
                 ? minioProperties.publicEndpoint()
                 : minioProperties.endpoint();
 
@@ -206,5 +305,22 @@ public class FileManagerServiceImpl implements FileManagerService {
                 f.getTokenEstimate(),
                 f.getEmbeddingModel()
         );
+    }
+
+    /**
+     * 清除文件相关缓存
+     */
+    private void clearFileCaches(String fileId) {
+        // 清除 fileAccess 缓存
+        Cache fileAccessCache = cacheManager.getCache("fileAccess");
+        if (fileAccessCache != null) {
+            fileAccessCache.evict(fileId + ":false");
+            fileAccessCache.evict(fileId + ":true");
+        }
+        // 清除 sysFile 缓存
+        Cache sysFileCache = cacheManager.getCache("sysFile");
+        if (sysFileCache != null) {
+            sysFileCache.evict(fileId);
+        }
     }
 }

@@ -95,3 +95,16 @@ minio:
   public-bucket: ${MINIO_PUBLIC_BUCKET:flexboot4-public}
   public-endpoint: ${MINIO_PUBLIC_ENDPOINT:http://192.168.11.104:9000}
   secure: false
+
+file:
+  parse:
+    chunk-tokens: ${FILE_PARSE_CHUNK_TOKENS:700}
+    overlap-tokens: ${FILE_PARSE_OVERLAP_TOKENS:80}
+    max-chunks: ${FILE_PARSE_MAX_CHUNKS:2000}
+
+  embedding:
+    stream:
+      key: ${FILE_EMBEDDING_STREAM_KEY:file:embedding:stream}
+      group: ${FILE_EMBEDDING_STREAM_GROUP:file-embedding-group}
+      consumer: ${FILE_EMBEDDING_STREAM_CONSUMER:${spring.application.name}-1}
+      dedup-ttl-days: ${FILE_EMBEDDING_STREAM_DEDUP_TTL_DAYS:7}

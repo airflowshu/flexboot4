@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
+import java.io.IOException;
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -40,6 +42,13 @@ public class GlobalExceptionHandler {
     public ApiResult<String> handleAccessDeniedException(AccessDeniedException e) {
         log.warn("Access Denied: {}", e.getMessage());
         return ApiResult.error(403, "无权访问此资源");
+    }
+
+    @ExceptionHandler(IOException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ApiResult<String> handleIOException(IOException e) {
+        log.error("IO Error", e);
+        return ApiResult.error("文件操作失败: " + e.getMessage());
     }
 
     @ExceptionHandler(Exception.class)
