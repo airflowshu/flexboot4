@@ -5,7 +5,6 @@ import com.yunlbd.flexboot4.entity.SysFileChunk;
 import com.yunlbd.flexboot4.service.FileEmbeddingPublisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.connection.stream.MapRecord;
 import org.springframework.data.redis.connection.stream.StreamRecords;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -15,15 +14,15 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-@Primary
-public class RedisStreamFileEmbeddingPublisher implements FileEmbeddingPublisher {
+public class FileEmbeddingPublisherImpl implements FileEmbeddingPublisher {
 
-    private static final Logger log = LoggerFactory.getLogger(RedisStreamFileEmbeddingPublisher.class);
+    private static final Logger log = LoggerFactory.getLogger(FileEmbeddingPublisherImpl.class);
 
     private final StringRedisTemplate redisTemplate;
     private final FileEmbeddingStreamProperties properties;
 
-    public RedisStreamFileEmbeddingPublisher(StringRedisTemplate redisTemplate, FileEmbeddingStreamProperties properties) {
+    public FileEmbeddingPublisherImpl(StringRedisTemplate redisTemplate,
+                                      FileEmbeddingStreamProperties properties) {
         this.redisTemplate = redisTemplate;
         this.properties = properties;
     }
@@ -34,20 +33,15 @@ public class RedisStreamFileEmbeddingPublisher implements FileEmbeddingPublisher
             return;
         }
         try {
-            String key = properties.key();
-            if (key == null || key.isBlank()) {
-                return;
-            }
-            String model = chunk.getEmbeddingModel() != null ? chunk.getEmbeddingModel() : "bge-m3";
-            String fileId = chunk.getFileId() != null ? chunk.getFileId() : "";
             MapRecord<String, String, String> record = StreamRecords.newRecord()
                     .ofMap(Map.of(
                             "chunkId", chunk.getId(),
-                            "fileId", fileId,
-                            "model", model,
+                            "fileId", chunk.getFileId(),
+                            "model", chunk.getEmbeddingModel() != null ? chunk.getEmbeddingModel() : "bge-m3",
                             "retryCount", "0"
                     ))
-                    .withStreamKey(key);
+                    .withStreamKey(properties.key());
+
             redisTemplate.opsForStream().add(record);
             log.debug("Published embedding task for chunk: {}", chunk.getId());
         } catch (Exception e) {
@@ -65,4 +59,3 @@ public class RedisStreamFileEmbeddingPublisher implements FileEmbeddingPublisher
         }
     }
 }
-

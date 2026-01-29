@@ -92,7 +92,8 @@ public class FileChunkingServiceImpl implements FileChunkingService {
         file.setAiStatus(AiStatus.CHUNKED.name());
         file.setAiEmbedStatus(AiEmbedStatus.EMBEDDING_PENDING.name());
         sysFileService.updateById(file, true);
-        embeddingPublisher.publish(fileId, entities.size(), file.getEmbeddingModel());
+        // 发布所有 chunk 的 embedding 任务到 Redis Stream
+        embeddingPublisher.publishChunks(entities);
     }
 
     private String sha256Hex(String s) {

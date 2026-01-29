@@ -11,12 +11,18 @@ spring:
       port: ${REDIS_PORT:6379}
       timeout: 3s
   r2dbc:
-    url: r2dbc:postgresql://192.168.11.104:5434/flexboot4ai
-    username: flexboot4ai
-    password: flexboot4ai
-    pool:
-      initial-size: 10
-      max-size: 20
+    admin:
+      host: 192.168.11.104
+      port: 5433
+      database: flexboot4
+      username: ai_gateway_ro
+      password: ai_gateway_ro_123
+    vector:
+      host: 192.168.11.104
+      port: 5434
+      database: flexboot4ai
+      username: flexboot4ai
+      password: flexboot4ai
 
 jwt:
   secret: ${JWT_SECRET:thisIsASecretKeyThatIsLongEnoughForHmacSha256SecurityRequirement}
@@ -25,3 +31,14 @@ jwt:
 operlog:
   stream:
     key: ${OPERLOG_STREAM_KEY:operlog:stream}
+
+embedding:
+  stream:
+    key: ${FILE_EMBEDDING_STREAM_KEY:file-embedding:stream}
+    dlq-key: ${FILE_EMBEDDING_STREAM_DLQ_KEY:file-embedding:stream:dlq}
+    group: ${FILE_EMBEDDING_STREAM_GROUP:file-embedding-group}
+    consumer: ${FILE_EMBEDDING_STREAM_CONSUMER:ai-gateway-1}
+
+embedding-http:
+  url: ${EMBEDDING_HTTP_URL:http://192.168.11.104:11434}
+  timeout: 30s

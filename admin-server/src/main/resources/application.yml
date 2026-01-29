@@ -104,7 +104,5 @@ file:
 
   embedding:
     stream:
-      key: ${FILE_EMBEDDING_STREAM_KEY:file:embedding:stream}
-      group: ${FILE_EMBEDDING_STREAM_GROUP:file-embedding-group}
-      consumer: ${FILE_EMBEDDING_STREAM_CONSUMER:${spring.application.name}-1}
-      dedup-ttl-days: ${FILE_EMBEDDING_STREAM_DEDUP_TTL_DAYS:7}
+      key: ${FILE_EMBEDDING_STREAM_KEY:file-embedding:stream}
+      dlq-key: ${FILE_EMBEDDING_STREAM_DLQ_KEY:file-embedding:stream:dlq}
