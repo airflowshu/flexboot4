@@ -4,7 +4,7 @@ plugins {
     java
 }
 
-description = "AI Gateway (Springboot4 WebFlux)"
+description = "flexboot4 - AI Gateway (Springboot4 WebFlux)"
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-webflux")

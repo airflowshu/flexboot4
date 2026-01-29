@@ -2,7 +2,7 @@ plugins {
     `java-library`
 }
 
-description = "Common pure shared library"
+description = "flexboot4 - Common pure shared library"
 
 dependencies {
     compileOnly(libs.lombok)

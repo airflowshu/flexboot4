@@ -4,7 +4,7 @@ plugins {
     java
 }
 
-description = "Admin Server (Spring MVC)"
+description = "flexboot4 - Admin Server (Spring MVC)"
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")

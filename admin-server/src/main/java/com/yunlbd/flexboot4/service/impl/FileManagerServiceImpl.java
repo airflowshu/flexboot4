@@ -1,5 +1,6 @@
 package com.yunlbd.flexboot4.service.impl;
 
+import com.yunlbd.flexboot4.cache.TableVersions;
 import com.yunlbd.flexboot4.config.MinioProperties;
 import com.yunlbd.flexboot4.entity.SysFile;
 import com.yunlbd.flexboot4.event.SysFileUploadedEvent;
@@ -23,6 +24,7 @@ import java.io.InputStream;
 import java.net.URLConnection;
 import java.security.MessageDigest;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.HexFormat;
 import java.util.UUID;
 
@@ -118,6 +120,7 @@ public class FileManagerServiceImpl implements FileManagerService {
         // 恢复已删除的文件（使用原生 SQL 绕过 TableLogic）
         if (existing.getDelFlag() != null && existing.getDelFlag() != 0) {
             existing.setDelFlag(0);
+            existing.setLastModifyTime(LocalDateTime.now());
             changed = true;
         }
         // 更新空字段
@@ -311,16 +314,13 @@ public class FileManagerServiceImpl implements FileManagerService {
      * 清除文件相关缓存
      */
     private void clearFileCaches(String fileId) {
-        // 清除 fileAccess 缓存
+        // 清除 fileAccess 缓存（访问链接缓存）
         Cache fileAccessCache = cacheManager.getCache("fileAccess");
         if (fileAccessCache != null) {
             fileAccessCache.evict(fileId + ":false");
             fileAccessCache.evict(fileId + ":true");
         }
-        // 清除 sysFile 缓存
-        Cache sysFileCache = cacheManager.getCache("sysFile");
-        if (sysFileCache != null) {
-            sysFileCache.evict(fileId);
-        }
+        // 通过 bumpVersion 让 sysFile 表的版本化缓存失效（与 BaseServiceImpl 保持一致）
+        TableVersions.bumpVersion("sys_file");
     }
 }
