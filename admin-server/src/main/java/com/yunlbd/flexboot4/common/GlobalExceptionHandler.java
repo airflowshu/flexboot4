@@ -18,10 +18,20 @@ public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    @ExceptionHandler({AuthenticationException.class,SecurityException.class})
+    @ExceptionHandler(AuthenticationException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ApiResult<String> handleAuthenticationException(AuthenticationException e) {
         log.warn("Authentication failed: {}", e.getMessage());
+        return ApiResult.error(401, "未认证或令牌无效/过期");
+    }
+
+    //@ExceptionHandler({AuthenticationException.class,SecurityException.class})
+    //SecurityException（Java 基础类的 java.lang.SecurityException）不是 AuthenticationException 的子类，所以这种多异常声明不会生效。
+    //得拆开写才可以
+    @ExceptionHandler(SecurityException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ApiResult<String> handleSecurityException(SecurityException e) {
+        log.warn("Security exception: {}", e.getMessage());
         return ApiResult.error(401, "未认证或令牌无效/过期");
     }
 
@@ -63,5 +73,4 @@ public class GlobalExceptionHandler {
         // 这样就不会在控制台打印大段的 ERROR 堆栈信息了
         log.debug("Resource not found: {}", e.getResourcePath());
     }
-    // Add more specific handlers as needed
 }

@@ -12,9 +12,11 @@ import com.yunlbd.flexboot4.file.ai.AiStatus;
 import com.yunlbd.flexboot4.file.parse.FileParser;
 import com.yunlbd.flexboot4.file.parse.ParsedDocument;
 import com.yunlbd.flexboot4.file.parse.TokenEstimator;
+import com.yunlbd.flexboot4.service.SysConfigService;
 import com.yunlbd.flexboot4.service.SysFileParsedService;
 import com.yunlbd.flexboot4.service.SysFileService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -26,6 +28,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 import java.io.InputStream;
 import java.util.List;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class SysFileParseListener {
@@ -35,6 +38,7 @@ public class SysFileParseListener {
     private final FileStorage fileStorage;
     private final List<FileParser> parsers;
     private final ApplicationEventPublisher eventPublisher;
+    private final SysConfigService sysConfigService;
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
@@ -47,6 +51,15 @@ public class SysFileParseListener {
 
         SysFile file = sysFileService.getById(fileId);
         if (file == null) {
+            return;
+        }
+
+        // 检查文件类型是否支持 RAG 解析
+        if (!isRagSupportedFileType(file)) {
+            log.debug("文件类型不支持 RAG 解析: fileId={}, fileName={}", fileId, file.getFileName());
+            file.setAiParseStatus(AiParseStatus.SKIPPED.name());
+            file.setAiStatus(AiStatus.UPLOADED.name());
+            sysFileService.updateById(file, true);
             return;
         }
 
@@ -106,5 +119,36 @@ public class SysFileParseListener {
             }
         }
         throw new IllegalArgumentException("unsupported contentType/fileName: " + contentType + "/" + fileName);
+    }
+
+    /**
+     * 检查文件类型是否支持 RAG 解析
+     *
+     * @param file 文件信息
+     * @return true-支持, false-不支持
+     */
+    private boolean isRagSupportedFileType(SysFile file) {
+        // 获取支持的文件类型列表，默认包含常见文档类型
+        List<String> supportedTypes = sysConfigService.getConfigValueAs("rag.file.type", "ARRAY");
+
+        if (supportedTypes == null || supportedTypes.isEmpty()) {
+            return false;
+        }
+
+        // 从文件名获取扩展名
+        String fileName = file.getFileName();
+        if (fileName == null || fileName.isBlank()) {
+            return false;
+        }
+
+        int lastDot = fileName.lastIndexOf('.');
+        if (lastDot < 0 || lastDot >= fileName.length() - 1) {
+            return false;
+        }
+
+        String ext = fileName.substring(lastDot + 1).toLowerCase();
+        return supportedTypes.stream()
+                .map(String::toLowerCase)
+                .anyMatch(supported -> supported.equals(ext));
     }
 }
