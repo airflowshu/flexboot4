@@ -30,23 +30,28 @@ public class RagRetrievalService {
         return vectorSearchService.searchTopK(queryVector, embeddingModel, fileIds, topK)
                 .collectList()
                 .flatMapMany(hits -> {
-                    // 过滤掉距离过大的结果（相关性太低）
                     List<VectorSearchHitDto> filteredHits = hits.stream()
                             .filter(hit -> hit.getDistance() != null && hit.getDistance() < DISTANCE_THRESHOLD)
                             .toList();
 
-                    if (filteredHits.isEmpty()) {
+                    List<VectorSearchHitDto> finalHits = !filteredHits.isEmpty()
+                            ? filteredHits
+                            : hits.stream()
+                            .filter(hit -> hit.getDistance() != null)
+                            .toList();
+
+                    if (finalHits.isEmpty()) {
                         return Flux.empty();
                     }
 
-                    List<String> chunkIds = filteredHits.stream()
+                    List<String> chunkIds = finalHits.stream()
                             .map(VectorSearchHitDto::getChunkId)
                             .filter(Objects::nonNull)
                             .toList();
 
                     return fileChunkRepository.findByIds(chunkIds)
                             .collectMap(FileChunkDto::getId)
-                            .flatMapMany(chunkMap -> Flux.fromIterable(filteredHits)
+                            .flatMapMany(chunkMap -> Flux.fromIterable(finalHits)
                                     .map(hit -> merge(hit, chunkMap))
                                     .filter(Objects::nonNull));
                 });
