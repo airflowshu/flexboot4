@@ -10,7 +10,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -25,17 +25,14 @@ import java.util.Collection;
 import java.util.List;
 
 @Component
+@Order(0)
 public class AiJwtScopeWebFilter implements WebFilter {
 
-    private static final String AI_API_KEY_MAPPING = "aikey:mapping";
-
     private final ObjectMapper objectMapper;
-    private final StringRedisTemplate redisTemplate;
     private final ApiKeySnapshotCache apiKeySnapshotCache;
 
-    public AiJwtScopeWebFilter(ObjectMapper objectMapper, StringRedisTemplate redisTemplate, ApiKeySnapshotCache apiKeySnapshotCache) {
+    public AiJwtScopeWebFilter(ObjectMapper objectMapper, ApiKeySnapshotCache apiKeySnapshotCache) {
         this.objectMapper = objectMapper;
-        this.redisTemplate = redisTemplate;
         this.apiKeySnapshotCache = apiKeySnapshotCache;
     }
 
@@ -87,6 +84,7 @@ public class AiJwtScopeWebFilter implements WebFilter {
                     if (rules.isEmpty()) {
                         return writeErrorResponse(exchange, HttpStatus.FORBIDDEN, "未开通AI服务或服务已禁用");
                     }
+                    exchange.getAttributes().put(Claims.class.getName(), claims);
                     return chain.filter(exchange)
                             .contextWrite(ctx -> ctx.put(Claims.class, claims)
                                     .put(ServerWebExchange.class, exchange));

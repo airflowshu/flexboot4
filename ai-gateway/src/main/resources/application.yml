@@ -42,3 +42,23 @@ embedding:
 embedding-http:
   url: ${EMBEDDING_HTTP_URL:http://192.168.11.104:11434}
   timeout: 30s
+
+llm-proxy:
+  url: ${LLM_PROXY_URL:http://192.168.11.104:11434}
+#  url: ${LLM_PROXY_URL:http://127.0.0.1:9080}       #配置APISIX服务
+  chat-path: ${LLM_PROXY_CHAT_PATH:/v1/chat/completions}
+  timeout: 120s
+
+rag:
+  default-embedding-model: ${RAG_EMBEDDING_MODEL:bge-m3}
+  default-top-k: ${RAG_TOP_K:5}
+  max-context-chars: ${RAG_MAX_CONTEXT_CHARS:8000}
+  default-system-prompt: ${RAG_SYSTEM_PROMPT:你是智能 AI 助手。请优先依据给定的知识库片段回答；若片段不足以支持结论，请明确说明不确定。}
+
+ai-routing:
+  primary-model: ${AI_PRIMARY_MODEL:qwen2.5:1.5b}
+  fallback-model: ${AI_FALLBACK_MODEL:qwen2.5:1.5b}
+
+logging:
+  level:
+    com.yunlbd.flexboot4.aigateway: debug

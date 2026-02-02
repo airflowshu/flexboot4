@@ -10,7 +10,10 @@ import org.springframework.context.annotation.Configuration;
 @EnableConfigurationProperties({
         EmbeddingStreamProperties.class,
         EmbeddingHttpProperties.class,
-        R2dbcProperties.class
+        R2dbcProperties.class,
+        LlmProxyProperties.class,
+        RagProperties.class,
+        AiRoutingProperties.class
 })
 public class EmbeddingStreamConfig {
 }

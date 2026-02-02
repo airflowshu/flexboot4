@@ -6,7 +6,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.stereotype.Repository;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
+import java.util.StringJoiner;
 
 /**
  * 文件分片 Repository 实现 (使用 admin 数据源，只读)
@@ -45,5 +49,39 @@ public class FileChunkRepositoryImpl {
                         row.get("embed_status", String.class)
                 ))
                 .one();
+    }
+
+    public Flux<FileChunkDto> findByIds(List<String> chunkIds) {
+        if (chunkIds == null || chunkIds.isEmpty()) {
+            return Flux.empty();
+        }
+
+        StringJoiner joiner = new StringJoiner(", ");
+        for (int i = 0; i < chunkIds.size(); i++) {
+            joiner.add("$" + (i + 1));
+        }
+
+        String sql = """
+            SELECT id, file_id, chunk_index, content, content_hash, embedding_model, token_count, embed_status
+            FROM sys_file_chunk
+            WHERE id IN (""" + joiner + ")"
+            + " ORDER BY chunk_index ASC";
+
+        var spec = adminTemplate.getDatabaseClient().sql(sql);
+        for (int i = 0; i < chunkIds.size(); i++) {
+            spec = spec.bind(i, chunkIds.get(i));
+        }
+
+        return spec.map((row, metadata) -> new FileChunkDto(
+                        row.get("id", String.class),
+                        row.get("file_id", String.class),
+                        row.get("chunk_index", Integer.class),
+                        row.get("content", String.class),
+                        row.get("content_hash", String.class),
+                        row.get("embedding_model", String.class),
+                        row.get("token_count", Integer.class),
+                        row.get("embed_status", String.class)
+                ))
+                .all();
     }
 }

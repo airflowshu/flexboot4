@@ -1,5 +1,5 @@
 [versions]
-springBoot = "4.0.1"
+springBoot = "4.0.2"
 springDependencyManagement = "1.1.7"
 mybatisFlex = "1.11.5"
 mybatisFlexReactor = "0.2.2"

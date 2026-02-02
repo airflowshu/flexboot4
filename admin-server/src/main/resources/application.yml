@@ -101,7 +101,6 @@ file:
     chunk-tokens: ${FILE_PARSE_CHUNK_TOKENS:700}
     overlap-tokens: ${FILE_PARSE_OVERLAP_TOKENS:80}
     max-chunks: ${FILE_PARSE_MAX_CHUNKS:2000}
-
   embedding:
     stream:
       key: ${FILE_EMBEDDING_STREAM_KEY:file-embedding:stream}

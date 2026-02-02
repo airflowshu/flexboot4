@@ -33,7 +33,7 @@ public class IpUtils {
      * @return 地址信息 (国家|区域|省份|城市|ISP)
      */
     public static String getRegion(String ip) {
-        if (searcher == null || StringUtils.isBlank(ip) || "127.0.0.1".equals(ip) || "localhost".equals(ip)) {
+        if (searcher == null || StringUtils.isBlank(ip) || isInternalIp(ip)) {
             return "内网IP";
         }
         try {
@@ -48,6 +48,28 @@ public class IpUtils {
         } catch (Exception e) {
             log.warn("Failed to search IP region for {}: {}", ip, e.getMessage());
             return "未知";
+        }
+    }
+
+    private static boolean isInternalIp(String ip) {
+        if ("127.0.0.1".equals(ip) || "localhost".equals(ip) || "0:0:0:0:0:0:0:1".equals(ip)) {
+            return true;
+        }
+        // 简单正则匹配私有 IP 地址范围
+        // 10.0.0.0 - 10.255.255.255
+        // 172.16.0.0 - 172.31.255.255
+        // 192.168.0.0 - 192.168.255.255
+        return ip.startsWith("10.") ||
+                ip.startsWith("192.168.") ||
+                (ip.startsWith("172.") && isBetween(ip.split("\\.")[1], 16, 31));
+    }
+
+    private static boolean isBetween(String s, int min, int max) {
+        try {
+            int val = Integer.parseInt(s);
+            return val >= min && val <= max;
+        } catch (NumberFormatException e) {
+            return false;
         }
     }
 }

@@ -3,10 +3,8 @@ package com.yunlbd.flexboot4.entity;
 import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.mybatisflex.annotation.Column;
-import com.mybatisflex.annotation.ColumnMask;
 import com.mybatisflex.annotation.RelationOneToOne;
 import com.mybatisflex.annotation.Table;
-import com.mybatisflex.core.mask.Masks;
 import com.yunlbd.flexboot4.common.annotation.DictEnum;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -41,7 +39,7 @@ public class AiApiKey extends BaseEntity{
     /**
      * e.g yl-xxxx
      */
-    @ColumnMask(Masks.ID_CARD_NUMBER)
+    // @ColumnMask(Masks.ID_CARD_NUMBER)
     @Schema(accessMode = Schema.AccessMode.READ_ONLY, title = "ai访问密钥") //只在入参中隐藏（响应中可见）
     private String apiKey;
 

@@ -2,6 +2,7 @@ package com.yunlbd.flexboot4.aigateway.log;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yunlbd.flexboot4.auth.jwt.JwtClaimKeys;
+import com.yunlbd.flexboot4.common.ApiResult;
 import com.yunlbd.flexboot4.common.annotation.OperLog;
 import com.yunlbd.flexboot4.operlog.OperLogRecord;
 import com.yunlbd.flexboot4.operlog.OperLogSink;
@@ -20,6 +21,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Aspect
 @Component
@@ -61,22 +63,26 @@ public class AiOperLogAspect {
             Map<String, Object> jsonResult = operLog.isSaveResponseData() ? Map.of("note", "ai_response_omitted") : null;
 
             AtomicBoolean logged = new AtomicBoolean(false);
+            AtomicReference<Object> lastValue = new AtomicReference<>(null);
 
             return mono
                     .doOnEach(signal -> {
+                        if (signal.isOnNext()) {
+                            lastValue.set(signal.get());
+                        }
                         if (signal.isOnComplete() || signal.isOnError()) {
                             if (logged.compareAndSet(false, true)) {
                                 long costMillis = (System.nanoTime() - startNanos) / 1_000_000;
                                 Throwable ex = signal.getThrowable();
-                                OperLogRecord record = buildRecord(eventId, joinPoint, operLog, exchange, claims, costMillis, ex, operParam, jsonResult);
-                                operLogSink.write(record).toCompletableFuture().join();
+                                OperLogRecord record = buildRecord(eventId, joinPoint, operLog, exchange, claims, costMillis, ex, operParam, jsonResult, lastValue.get());
+                                operLogSink.write(record);
                             }
                         }
                     })
                     .doOnCancel(() -> {
                         if (logged.compareAndSet(false, true)) {
                             long costMillis = (System.nanoTime() - startNanos) / 1_000_000;
-                            OperLogRecord record = buildRecord(eventId, joinPoint, operLog, exchange, claims, costMillis, null, operParam, jsonResult);
+                            OperLogRecord record = buildRecord(eventId, joinPoint, operLog, exchange, claims, costMillis, null, operParam, jsonResult, lastValue.get());
                             operLogSink.write(record);
                         }
                     });
@@ -100,15 +106,15 @@ public class AiOperLogAspect {
                             if (logged.compareAndSet(false, true)) {
                                 long costMillis = (System.nanoTime() - startNanos) / 1_000_000;
                                 Throwable ex = signal.getThrowable();
-                                OperLogRecord record = buildRecord(eventId, joinPoint, operLog, exchange, claims, costMillis, ex, operParam, jsonResult);
-                                operLogSink.write(record).toCompletableFuture().join();
+                                OperLogRecord record = buildRecord(eventId, joinPoint, operLog, exchange, claims, costMillis, ex, operParam, jsonResult, null);
+                                operLogSink.write(record);
                             }
                         }
                     })
                     .doOnCancel(() -> {
                         if (logged.compareAndSet(false, true)) {
                             long costMillis = (System.nanoTime() - startNanos) / 1_000_000;
-                            OperLogRecord record = buildRecord(eventId, joinPoint, operLog, exchange, claims, costMillis, null, operParam, jsonResult);
+                            OperLogRecord record = buildRecord(eventId, joinPoint, operLog, exchange, claims, costMillis, null, operParam, jsonResult, null);
                             operLogSink.write(record);
                         }
                     });
@@ -123,7 +129,8 @@ public class AiOperLogAspect {
                                      long costMillis,
                                      Throwable error,
                                      Map<String, Object> operParam,
-                                     Map<String, Object> jsonResult) {
+                                     Map<String, Object> jsonResult,
+                                     Object responseValue) {
         String title = operLog.title();
         if (title == null || title.isBlank()) {
             title = joinPoint.getTarget().getClass().getSimpleName();
@@ -153,7 +160,7 @@ public class AiOperLogAspect {
         int status = error == null ? 0 : 1;
         String errorMsg = error == null ? "" : truncate(String.valueOf(error.getMessage()), 2000);
 
-        Map<String, Object> extParams = buildExtParams(operParam, costMillis);
+        Map<String, Object> extParams = buildExtParams(operParam, costMillis, responseValue);
 
         return new OperLogRecord(
                 eventId,
@@ -191,6 +198,10 @@ public class AiOperLogAspect {
     }
 
     private Map<String, Object> buildExtParams(Map<String, Object> operParam, long costMillis) {
+        return buildExtParams(operParam, costMillis, null);
+    }
+
+    private Map<String, Object> buildExtParams(Map<String, Object> operParam, long costMillis, Object responseValue) {
         Map<String, Object> ext = new LinkedHashMap<>();
         ext.put("latencyMs", costMillis);
         if (operParam != null) {
@@ -251,7 +262,59 @@ public class AiOperLogAspect {
                 }
             }
         }
+        Map<String, Object> respUsage = extractTokenUsageFromResponse(responseValue);
+        if (respUsage != null && !respUsage.isEmpty()) {
+            Object existing = ext.get("tokenUsage");
+            if (existing instanceof Map<?, ?> m) {
+                Map<String, Object> merged = new LinkedHashMap<>();
+                for (Map.Entry<?, ?> e : m.entrySet()) {
+                    merged.put(String.valueOf(e.getKey()), e.getValue());
+                }
+                merged.putAll(respUsage);
+                ext.put("tokenUsage", merged);
+            } else {
+                ext.put("tokenUsage", respUsage);
+            }
+        }
         return ext;
+    }
+
+    private Map<String, Object> extractTokenUsageFromResponse(Object responseValue) {
+        if (responseValue == null) {
+            return Map.of();
+        }
+        Object val = responseValue;
+        if (val instanceof ApiResult<?> ar) {
+            val = ar.getData();
+        }
+        if (val instanceof Map<?, ?> m) {
+            Object usage = m.get("usage");
+            if (usage instanceof Map<?, ?> um) {
+                Map<String, Object> out = new LinkedHashMap<>();
+                for (Map.Entry<?, ?> e : um.entrySet()) {
+                    out.put(String.valueOf(e.getKey()), e.getValue());
+                }
+                return out;
+            }
+            return Map.of();
+        }
+        try {
+            if (val instanceof com.fasterxml.jackson.databind.JsonNode node) {
+                com.fasterxml.jackson.databind.JsonNode usage = node.get("usage");
+                if (usage != null && usage.isObject()) {
+                    Map<String, Object> out = new LinkedHashMap<>();
+                    com.fasterxml.jackson.databind.JsonNode pt = usage.get("prompt_tokens");
+                    com.fasterxml.jackson.databind.JsonNode ct = usage.get("completion_tokens");
+                    com.fasterxml.jackson.databind.JsonNode tt = usage.get("total_tokens");
+                    if (pt != null && pt.isNumber()) out.put("prompt_tokens", pt.asLong());
+                    if (ct != null && ct.isNumber()) out.put("completion_tokens", ct.asLong());
+                    if (tt != null && tt.isNumber()) out.put("total_tokens", tt.asLong());
+                    return out;
+                }
+            }
+        } catch (Exception ignore) {
+        }
+        return Map.of();
     }
 
     private Object findFirstByKeyHints(Object root, String... keyHints) {
@@ -317,11 +380,10 @@ public class AiOperLogAspect {
     private Integer detectNonEmptyCount(Object root, String... keyHints) {
         Object v = findFirstByKeyHints(root, keyHints);
         return switch (v) {
-            case null -> null;
             case Collection<?> c -> c.size();
             case Object[] arr -> arr.length;
             case Map<?, ?> m -> m.size();
-            default -> null;
+            case null, default -> null;
         };
     }
 

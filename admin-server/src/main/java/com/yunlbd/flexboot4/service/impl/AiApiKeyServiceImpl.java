@@ -18,6 +18,7 @@ import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.Duration;
@@ -81,8 +82,22 @@ public class AiApiKeyServiceImpl extends BaseServiceImpl<AiApiKeyMapper, AiApiKe
     }
 
     @Override
-    public boolean removeById(String id) {
-        AiApiKey entity = super.getById(id);
+    public boolean updateById(AiApiKey entity, boolean ignoreNulls) {
+        String id = entity == null ? null : entity.getId();
+        AiApiKey before = id == null ? null : super.getById(id);
+
+        boolean result = super.updateById(entity, ignoreNulls);
+        if (result) {
+            AiApiKey after = id == null ? null : super.getById(id);
+            refreshCacheOnChange(before, after);
+            rebuildSnapshot();
+        }
+        return result;
+    }
+
+    @Override
+    public boolean removeById(Serializable id) {
+        AiApiKey entity = id == null ? null : super.getById(id);
         boolean result = super.removeById(id);
         if (result && entity != null && entity.getApiKey() != null) {
             removeApiKeyFromCache(entity.getApiKey(), entity.getUserId());
@@ -93,15 +108,23 @@ public class AiApiKeyServiceImpl extends BaseServiceImpl<AiApiKeyMapper, AiApiKe
         return result;
     }
 
+    @Override
+    public boolean removeById(String id) {
+        return removeById((Serializable) id);
+    }
+
     public void rebuildSnapshot() {
         long version = TableVersions.getVersion("ai_api_key");
         String snapshotKey = AI_API_KEY_SNAPSHOT_PREFIX + version;
+        List<AiApiKey> all = getMapper().selectListByQuery(QueryWrapper.create());
+        refreshUserApiKeyCache(all);
+        refreshApiKeyMappingCache(all);
+
         if (Boolean.TRUE.equals(redisTemplate.hasKey(snapshotKey))) {
             redisTemplate.opsForValue().set(AI_API_KEY_SNAPSHOT_LATEST, String.valueOf(version), SNAPSHOT_TTL);
             return;
         }
 
-        List<AiApiKey> all = getMapper().selectListByQuery(QueryWrapper.create());
         List<ApiKeyRule> rules = new ArrayList<>();
         for (AiApiKey k : all) {
             String apiKey = k.getApiKey();
@@ -128,6 +151,106 @@ public class AiApiKeyServiceImpl extends BaseServiceImpl<AiApiKeyMapper, AiApiKe
             redisTemplate.opsForValue().set(snapshotKey, json, SNAPSHOT_TTL);
             redisTemplate.opsForValue().set(AI_API_KEY_SNAPSHOT_LATEST, String.valueOf(version), SNAPSHOT_TTL);
         } catch (Exception ignore) {
+        }
+    }
+
+    private void refreshCacheOnChange(AiApiKey before, AiApiKey after) {
+        String beforeKey = before == null ? null : before.getApiKey();
+        String afterKey = after == null ? null : after.getApiKey();
+
+        if (beforeKey != null && !beforeKey.isBlank() && (afterKey == null || !beforeKey.equals(afterKey))) {
+            removeApiKeyFromCache(beforeKey, before == null ? null : before.getUserId());
+        }
+
+        if (after == null || afterKey == null || afterKey.isBlank()) {
+            return;
+        }
+
+        Integer status = after.getStatus();
+        if (status != null && status == 1) {
+            cacheApiKey(after);
+        } else {
+            removeApiKeyFromCache(afterKey, after.getUserId());
+        }
+    }
+
+    private void refreshApiKeyMappingCache(List<AiApiKey> all) {
+        redisTemplate.delete(AI_API_KEY_MAPPING);
+        if (all == null || all.isEmpty()) {
+            return;
+        }
+        for (AiApiKey k : all) {
+            if (k == null) {
+                continue;
+            }
+            String apiKey = k.getApiKey();
+            String userId = k.getUserId();
+            if (apiKey == null || apiKey.isBlank() || userId == null || userId.isBlank()) {
+                continue;
+            }
+            int status = k.getStatus() == null ? 0 : k.getStatus();
+            redisTemplate.opsForHash().put(AI_API_KEY_MAPPING, apiKey, userId + ":" + status);
+        }
+    }
+
+    private void refreshUserApiKeyCache(List<AiApiKey> all) {
+        if (all == null || all.isEmpty()) {
+            return;
+        }
+
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        java.util.Map<String, AiApiKey> latestActive = new java.util.HashMap<>();
+        java.util.Set<String> seenUserIds = new java.util.HashSet<>();
+
+        for (AiApiKey k : all) {
+            if (k == null) {
+                continue;
+            }
+            String userId = k.getUserId();
+            if (userId == null || userId.isBlank()) {
+                continue;
+            }
+            seenUserIds.add(userId);
+
+            String apiKey = k.getApiKey();
+            if (apiKey == null || apiKey.isBlank()) {
+                continue;
+            }
+            if (k.getStatus() == null || k.getStatus() != 1) {
+                continue;
+            }
+            if (k.getExpiresAt() != null && k.getExpiresAt().isBefore(now)) {
+                continue;
+            }
+
+            AiApiKey prev = latestActive.get(userId);
+            if (prev == null) {
+                latestActive.put(userId, k);
+                continue;
+            }
+
+            java.time.LocalDateTime prevTime = prev.getLastModifyTime() != null ? prev.getLastModifyTime() : prev.getCreateTime();
+            java.time.LocalDateTime currTime = k.getLastModifyTime() != null ? k.getLastModifyTime() : k.getCreateTime();
+            if (prevTime == null) {
+                latestActive.put(userId, k);
+                continue;
+            }
+            if (currTime != null && currTime.isAfter(prevTime)) {
+                latestActive.put(userId, k);
+            }
+        }
+
+        for (java.util.Map.Entry<String, AiApiKey> e : latestActive.entrySet()) {
+            String userId = e.getKey();
+            AiApiKey k = e.getValue();
+            if (k != null && k.getApiKey() != null && !k.getApiKey().isBlank()) {
+                redisTemplate.opsForValue().set(AI_API_KEY_USER + userId, k.getApiKey(), API_KEY_TTL);
+            }
+        }
+        for (String userId : seenUserIds) {
+            if (!latestActive.containsKey(userId)) {
+                redisTemplate.delete(AI_API_KEY_USER + userId);
+            }
         }
     }
 
@@ -175,6 +298,9 @@ public class AiApiKeyServiceImpl extends BaseServiceImpl<AiApiKeyMapper, AiApiKe
         String value = entity.getUserId() + ":" + (entity.getStatus() != null ? entity.getStatus() : 0);
         // 存储 apiKey -> userId:status 的映射
         redisTemplate.opsForHash().put(AI_API_KEY_MAPPING, entity.getApiKey(), value);
+        if (entity.getUserId() != null && !entity.getUserId().isBlank()) {
+            redisTemplate.opsForValue().set(AI_API_KEY_USER + entity.getUserId(), entity.getApiKey(), API_KEY_TTL);
+        }
     }
 
     /**
@@ -182,7 +308,9 @@ public class AiApiKeyServiceImpl extends BaseServiceImpl<AiApiKeyMapper, AiApiKe
      */
     private void removeApiKeyFromCache(String apiKey, String userId) {
         redisTemplate.opsForHash().delete(AI_API_KEY_MAPPING, apiKey);
-        redisTemplate.delete(AI_API_KEY_USER + userId);
+        if (userId != null && !userId.isBlank()) {
+            redisTemplate.delete(AI_API_KEY_USER + userId);
+        }
     }
 
     @Override

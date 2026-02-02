@@ -13,12 +13,12 @@ allprojects {
 
 subprojects {
     plugins.withId("java") {
-        the<org.gradle.api.plugins.JavaPluginExtension>().toolchain {
+        the<JavaPluginExtension>().toolchain {
             languageVersion = JavaLanguageVersion.of(25)
         }
     }
     plugins.withId("java-library") {
-        the<org.gradle.api.plugins.JavaPluginExtension>().toolchain {
+        the<JavaPluginExtension>().toolchain {
             languageVersion = JavaLanguageVersion.of(25)
         }
     }

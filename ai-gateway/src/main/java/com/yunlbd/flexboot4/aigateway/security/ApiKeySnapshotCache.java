@@ -43,7 +43,10 @@ public class ApiKeySnapshotCache {
         if (userId == null || userId.isBlank()) {
             return Mono.just(List.of());
         }
-        return ensureReady()
+        return ensureLatest()
+                .doOnSubscribe(sub -> System.out.println("=== [DEBUG] ApiKeySnapshotCache.activeRulesForUser subscribing for userId=" + userId))
+                .doOnSuccess(state -> System.out.println("=== [DEBUG] ApiKeySnapshotCache.activeRulesForUser completed, version=" + state.version + ", rulesCount=" + state.byUserId.getOrDefault(userId, List.of()).size()))
+                .doOnError(e -> System.out.println("=== [DEBUG] ApiKeySnapshotCache.activeRulesForUser error: " + e.getClass().getName() + ": " + e.getMessage()))
                 .map(state -> {
                     List<ApiKeyRule> rules = state.byUserId.getOrDefault(userId, List.of());
                     if (rules.isEmpty()) {
@@ -71,6 +74,12 @@ public class ApiKeySnapshotCache {
             return Mono.just(st);
         }
         return refresh().then(Mono.fromSupplier(stateRef::get));
+    }
+
+    private Mono<State> ensureLatest() {
+        return readVersion()
+                .flatMap(v -> loadSnapshotByVersion(v).then(Mono.fromSupplier(stateRef::get)))
+                .onErrorResume(e -> ensureReady());
     }
 
     private Mono<Long> readVersion() {
@@ -153,4 +162,3 @@ public class ApiKeySnapshotCache {
         }
     }
 }
-

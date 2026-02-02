@@ -11,6 +11,8 @@ import reactor.core.publisher.Mono;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static com.yunlbd.flexboot4.aigateway.util.PgVectorUtils.toPgVectorString;
+
 /**
  * 向量写入服务
  */
@@ -34,7 +36,7 @@ public class VectorWriteService {
     public Mono<Boolean> saveVector(String chunkId, String fileId, String model,
                                      List<Float> vector, Integer tokens) {
         // pgvector 需要字符串格式 '[0.1, 0.2, 0.3]'
-        String vectorStr = vectorToPgString(vector);
+        String vectorStr = toPgVectorString(vector);
 
         // 使用 ON CONFLICT 实现幂等插入
         String sql = """
@@ -59,21 +61,5 @@ public class VectorWriteService {
                 .map(rows -> rows > 0)
                 .doOnSuccess(r -> log.debug("Saved vector for chunk: {}", chunkId))
                 .doOnError(e -> log.error("Failed to save vector for chunk: {}", chunkId, e));
-    }
-
-    /**
-     * 将 List<Float> 转换为 pgvector 字符串格式 '[0.1, 0.2, 0.3]'
-     */
-    private String vectorToPgString(List<Float> vector) {
-        if (vector == null || vector.isEmpty()) {
-            return "[]";
-        }
-        StringBuilder sb = new StringBuilder("[");
-        for (int i = 0; i < vector.size(); i++) {
-            if (i > 0) sb.append(", ");
-            sb.append(vector.get(i));
-        }
-        sb.append("]");
-        return sb.toString();
     }
 }
