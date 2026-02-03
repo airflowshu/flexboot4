@@ -14,8 +14,6 @@ dependencies {
     implementation("org.aspectj:aspectjweaver")
     implementation("com.fasterxml.jackson.core:jackson-databind")
 
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
-
     implementation(libs.jjwtApi)
     runtimeOnly(libs.jjwtImpl)
     runtimeOnly(libs.jjwtJackson)
