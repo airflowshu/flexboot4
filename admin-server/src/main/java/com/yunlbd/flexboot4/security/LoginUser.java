@@ -2,7 +2,7 @@ package com.yunlbd.flexboot4.security;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.yunlbd.flexboot4.common.constant.SysConstant;
-import com.yunlbd.flexboot4.entity.SysUser;
+import com.yunlbd.flexboot4.entity.sys.SysUser;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

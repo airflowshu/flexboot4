@@ -7,6 +7,7 @@ public class RagChatRequest {
     private String query;
     private String model;
     private Boolean stream;
+    private String kbId;
     private String embeddingModel;
     private Integer topK;
     private List<String> fileIds;
@@ -37,6 +38,14 @@ public class RagChatRequest {
 
     public void setStream(Boolean stream) {
         this.stream = stream;
+    }
+
+    public String getKbId() {
+        return kbId;
+    }
+
+    public void setKbId(String kbId) {
+        this.kbId = kbId;
     }
 
     public String getEmbeddingModel() {

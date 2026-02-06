@@ -16,6 +16,9 @@ public class AiVectorChunk {
     @Id
     private String id;
 
+    @Column("kb_id")
+    private String kbId;
+
     @Column("chunk_id")
     private String chunkId;
 
@@ -37,7 +40,8 @@ public class AiVectorChunk {
     public AiVectorChunk() {
     }
 
-    public AiVectorChunk(String chunkId, String fileId, String embeddingModel, List<Float> vector, Integer tokens) {
+    public AiVectorChunk(String kbId, String chunkId, String fileId, String embeddingModel, List<Float> vector, Integer tokens) {
+        this.kbId = kbId;
         this.chunkId = chunkId;
         this.fileId = fileId;
         this.embeddingModel = embeddingModel;
@@ -53,6 +57,14 @@ public class AiVectorChunk {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getKbId() {
+        return kbId;
+    }
+
+    public void setKbId(String kbId) {
+        this.kbId = kbId;
     }
 
     public String getChunkId() {

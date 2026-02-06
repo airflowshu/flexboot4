@@ -91,14 +91,15 @@ public class RagChatService {
         );
 
         String model = firstNonBlank(request == null ? null : request.getModel(), "default");
+        String kbId = request == null ? null : request.getKbId();
         List<String> fileIds = request == null ? null : request.getFileIds();
 
-        System.out.println("=== [DEBUG] prepareChatBody: query=" + query + ", embeddingModel=" + embeddingModel + ", topK=" + topK);
+        System.out.println("=== [DEBUG] prepareChatBody: query=" + query + ", kbId=" + kbId + ", embeddingModel=" + embeddingModel + ", topK=" + topK);
 
         return embeddingHttpClient.embedOne(query, embeddingModel)
                 .doOnSuccess(vec -> System.out.println("=== [DEBUG] embedding completed, vector size=" + (vec == null ? 0 : vec.size())))
                 .doOnError(e -> System.out.println("=== [DEBUG] embedding error: " + e.getClass().getName() + ": " + e.getMessage()))
-                .flatMap(queryVector -> ragRetrievalService.retrieve(queryVector, embeddingModel, fileIds, topK).collectList())
+                .flatMap(queryVector -> ragRetrievalService.retrieve(queryVector, kbId, embeddingModel, fileIds, topK).collectList())
                 .doOnSuccess(chunks -> System.out.println("=== [DEBUG] retrieval completed, chunks=" + (chunks == null ? 0 : chunks.size())))
                 .doOnError(e -> System.out.println("=== [DEBUG] retrieval error: " + e.getClass().getName() + ": " + e.getMessage()))
                 .map(chunks -> buildChatBody(model, stream, systemPrompt, query, chunks, maxContextChars));

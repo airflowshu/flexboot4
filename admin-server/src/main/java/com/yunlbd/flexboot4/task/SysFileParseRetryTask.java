@@ -1,11 +1,12 @@
 package com.yunlbd.flexboot4.task;
 
 import com.mybatisflex.core.query.QueryWrapper;
-import com.yunlbd.flexboot4.entity.SysFile;
+import com.yunlbd.flexboot4.entity.sys.SysFile;
 import com.yunlbd.flexboot4.event.SysFileUploadedEvent;
 import com.yunlbd.flexboot4.file.ai.AiParseStatus;
-import com.yunlbd.flexboot4.service.SysFileService;
+import com.yunlbd.flexboot4.service.sys.SysFileService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @Component
+@ConditionalOnProperty(prefix = "rag", name = "parse-retry-enabled", havingValue = "true")
 @RequiredArgsConstructor
 public class SysFileParseRetryTask {
 

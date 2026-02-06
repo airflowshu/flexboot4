@@ -105,3 +105,4 @@ file:
     stream:
       key: ${FILE_EMBEDDING_STREAM_KEY:file-embedding:stream}
       dlq-key: ${FILE_EMBEDDING_STREAM_DLQ_KEY:file-embedding:stream:dlq}
+      group: ${FILE_EMBEDDING_STREAM_GROUP:file-embedding-group}

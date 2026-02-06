@@ -17,7 +17,8 @@
       "WebFetch(domain:mybatis-flex.com)",
       "Bash(tree -L 3 -I 'build|target|.gradle|.idea|.git|node_modules' .)",
       "Bash(./gradlew projects --console=plain)",
-      "Bash(./gradlew:*)"
+      "Bash(./gradlew:*)",
+      "WebSearch"
     ]
   }
 }

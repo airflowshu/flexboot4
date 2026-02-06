@@ -5,7 +5,7 @@ import com.yunlbd.flexboot4.common.annotation.OperLog;
 import com.yunlbd.flexboot4.common.enums.BusinessType;
 import com.yunlbd.flexboot4.dto.*;
 import com.yunlbd.flexboot4.security.JwtUtil;
-import com.yunlbd.flexboot4.service.IAuthService;
+import com.yunlbd.flexboot4.service.sys.IAuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;

@@ -43,12 +43,13 @@ public class EmbeddingConsumerService {
         String chunkId = message.getValue().get("chunkId");
         String fileId = message.getValue().get("fileId");
         String model = message.getValue().get("model");
+        String kbId = message.getValue().get("kbId");
         int retryCount = Integer.parseInt(message.getValue().getOrDefault("retryCount", "0"));
         String messageId = message.getId() != null ? message.getId().getValue() : null;
 
-        log.info("Processing embedding task: chunkId={}, fileId={}, model={}", chunkId, fileId, model);
+        log.info("Processing embedding task: kbId={}, chunkId={}, fileId={}, model={}", kbId, chunkId, fileId, model);
 
-        processEmbedding(chunkId, fileId, model, retryCount, messageId)
+        processEmbedding(kbId, chunkId, fileId, model, retryCount, messageId)
                 .subscribe(
                         success -> {
                             if (success) {
@@ -59,7 +60,7 @@ public class EmbeddingConsumerService {
                 );
     }
 
-    private Mono<Boolean> processEmbedding(String chunkId, String fileId, String model,
+    private Mono<Boolean> processEmbedding(String kbId, String chunkId, String fileId, String model,
                                             int retryCount, String messageId) {
         // 1. 查询 chunk 内容（只读）
         return chunkRepository.findById(chunkId)
@@ -70,13 +71,14 @@ public class EmbeddingConsumerService {
                             .flatMap(vector -> {
                                 // 3. 写入向量数据库（幂等写入）
                                 return vectorWriteService.saveVector(
+                                                kbId,
                                                 chunkId,
                                                 fileId,
                                                 model,
                                                 vector,
                                                 chunk.getTokenCount()
                                         )
-                                        .thenReturn(true);
+                                        .flatMap(saved -> publishResult(kbId, chunkId, fileId, model, true, null).thenReturn(true));
                             });
                 })
                 .onErrorResume(error -> {
@@ -84,10 +86,11 @@ public class EmbeddingConsumerService {
 
                     if (retryCount < MAX_RETRY) {
                         // 重试：增加重试计数并写回消息
-                        return retryMessage(chunkId, fileId, model, retryCount + 1, messageId);
+                        return retryMessage(kbId, chunkId, fileId, model, retryCount + 1, messageId);
                     } else {
                         // 超过重试次数：写入 DLQ
-                        return writeToDlq(chunkId, fileId, model, retryCount, error.getMessage())
+                        return writeToDlq(kbId, chunkId, fileId, model, retryCount, error.getMessage())
+                                .then(publishResult(kbId, chunkId, fileId, model, false, error.getMessage()))
                                 .thenReturn(false);
                     }
                 });
@@ -96,10 +99,11 @@ public class EmbeddingConsumerService {
     /**
      * 重试消息
      */
-    private Mono<Boolean> retryMessage(String chunkId, String fileId, String model,
+    private Mono<Boolean> retryMessage(String kbId, String chunkId, String fileId, String model,
                                         int retryCount, String messageId) {
         MapRecord<String, String, String> newMessage = org.springframework.data.redis.connection.stream.StreamRecords.newRecord()
                 .ofMap(Map.of(
+                        "kbId", kbId == null ? "" : kbId,
                         "chunkId", chunkId,
                         "fileId", fileId,
                         "model", model,
@@ -115,10 +119,11 @@ public class EmbeddingConsumerService {
     /**
      * 写入 DLQ
      */
-    private Mono<Void> writeToDlq(String chunkId, String fileId, String model,
+    private Mono<Void> writeToDlq(String kbId, String chunkId, String fileId, String model,
                                    int retryCount, String errorMsg) {
         MapRecord<String, String, String> dlqMessage = org.springframework.data.redis.connection.stream.StreamRecords.newRecord()
                 .ofMap(Map.of(
+                        "kbId", kbId == null ? "" : kbId,
                         "chunkId", chunkId,
                         "fileId", fileId,
                         "model", model,
@@ -128,5 +133,20 @@ public class EmbeddingConsumerService {
                 .withStreamKey(streamProperties.dlqKey());
 
         return redisTemplate.opsForStream().add(dlqMessage).then();
+    }
+
+    private Mono<Void> publishResult(String kbId, String chunkId, String fileId, String model, boolean success, String errorMsg) {
+        String resultKey = streamProperties.key() + ":result";
+        MapRecord<String, String, String> result = org.springframework.data.redis.connection.stream.StreamRecords.newRecord()
+                .ofMap(Map.of(
+                        "kbId", kbId == null ? "" : kbId,
+                        "chunkId", chunkId == null ? "" : chunkId,
+                        "fileId", fileId == null ? "" : fileId,
+                        "model", model == null ? "" : model,
+                        "success", success ? "1" : "0",
+                        "error", errorMsg == null ? "" : errorMsg
+                ))
+                .withStreamKey(resultKey);
+        return redisTemplate.opsForStream().add(result).then();
     }
 }

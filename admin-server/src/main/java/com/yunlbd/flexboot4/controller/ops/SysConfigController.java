@@ -2,8 +2,8 @@ package com.yunlbd.flexboot4.controller.ops;
 
 import com.yunlbd.flexboot4.common.ApiResult;
 import com.yunlbd.flexboot4.controller.sys.BaseController;
-import com.yunlbd.flexboot4.entity.SysConfig;
-import com.yunlbd.flexboot4.service.SysConfigService;
+import com.yunlbd.flexboot4.entity.ops.SysConfig;
+import com.yunlbd.flexboot4.service.ops.SysConfigService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

@@ -26,8 +26,8 @@ public class RagRetrievalService {
         this.fileChunkRepository = fileChunkRepository;
     }
 
-    public Flux<RagRetrievedChunkDto> retrieve(List<Float> queryVector, String embeddingModel, List<String> fileIds, int topK) {
-        return vectorSearchService.searchTopK(queryVector, embeddingModel, fileIds, topK)
+    public Flux<RagRetrievedChunkDto> retrieve(List<Float> queryVector, String kbId, String embeddingModel, List<String> fileIds, int topK) {
+        return vectorSearchService.searchTopK(queryVector, kbId, embeddingModel, fileIds, topK)
                 .collectList()
                 .flatMapMany(hits -> {
                     List<VectorSearchHitDto> filteredHits = hits.stream()

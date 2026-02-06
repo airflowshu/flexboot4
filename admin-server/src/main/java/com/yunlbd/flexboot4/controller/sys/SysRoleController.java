@@ -1,7 +1,7 @@
 package com.yunlbd.flexboot4.controller.sys;
 
-import com.yunlbd.flexboot4.entity.SysRole;
-import com.yunlbd.flexboot4.service.SysRoleService;
+import com.yunlbd.flexboot4.entity.sys.SysRole;
+import com.yunlbd.flexboot4.service.sys.SysRoleService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RequestMapping;

@@ -4,7 +4,7 @@ import com.mybatisflex.codegen.Generator;
 import com.mybatisflex.codegen.config.GlobalConfig;
 import com.mybatisflex.codegen.template.impl.EnjoyTemplate;
 import com.mybatisflex.core.BaseMapper;
-import com.yunlbd.flexboot4.entity.BaseEntity;
+import com.yunlbd.flexboot4.entity.sys.BaseEntity;
 import com.zaxxer.hikari.HikariDataSource;
 
 public class Codegen {

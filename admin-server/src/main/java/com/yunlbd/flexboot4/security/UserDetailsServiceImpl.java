@@ -1,9 +1,9 @@
 package com.yunlbd.flexboot4.security;
 
 import com.mybatisflex.core.query.QueryWrapper;
-import com.yunlbd.flexboot4.entity.SysUser;
-import com.yunlbd.flexboot4.service.SysMenuService;
-import com.yunlbd.flexboot4.service.SysUserService;
+import com.yunlbd.flexboot4.entity.sys.SysUser;
+import com.yunlbd.flexboot4.service.sys.SysMenuService;
+import com.yunlbd.flexboot4.service.sys.SysUserService;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.cache.annotation.CacheEvict;

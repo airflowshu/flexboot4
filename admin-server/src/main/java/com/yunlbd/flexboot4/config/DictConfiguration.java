@@ -1,13 +1,13 @@
 package com.yunlbd.flexboot4.config;
 
 import com.mybatisflex.core.query.QueryWrapper;
-import com.yunlbd.flexboot4.entity.SysDictItem;
-import com.yunlbd.flexboot4.entity.SysDictType;
-import com.yunlbd.flexboot4.entity.table.SysDictItemTableDef;
-import com.yunlbd.flexboot4.entity.table.SysDictTypeTableDef;
+import com.yunlbd.flexboot4.entity.ops.SysDictItem;
+import com.yunlbd.flexboot4.entity.ops.SysDictType;
+import com.yunlbd.flexboot4.entity.ops.table.SysDictItemTableDef;
+import com.yunlbd.flexboot4.entity.ops.table.SysDictTypeTableDef;
 import com.yunlbd.flexboot4.excel.DictTextResolver;
-import com.yunlbd.flexboot4.service.SysDictItemService;
-import com.yunlbd.flexboot4.service.SysDictTypeService;
+import com.yunlbd.flexboot4.service.ops.SysDictItemService;
+import com.yunlbd.flexboot4.service.ops.SysDictTypeService;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration

@@ -33,16 +33,16 @@ public class VectorWriteService {
     /**
      * 保存向量数据
      */
-    public Mono<Boolean> saveVector(String chunkId, String fileId, String model,
+    public Mono<Boolean> saveVector(String kbId, String chunkId, String fileId, String model,
                                      List<Float> vector, Integer tokens) {
         // pgvector 需要字符串格式 '[0.1, 0.2, 0.3]'
         String vectorStr = toPgVectorString(vector);
 
         // 使用 ON CONFLICT 实现幂等插入
         String sql = """
-            INSERT INTO ai_vector_chunk (chunk_id, file_id, embedding_model, vector, tokens, created_at)
-            VALUES ($1, $2, $3, $4::vector, $5, $6)
-            ON CONFLICT (chunk_id, embedding_model) DO UPDATE SET
+            INSERT INTO ai_vector_chunk (kb_id, chunk_id, file_id, embedding_model, vector, tokens, created_at)
+            VALUES ($1, $2, $3, $4, $5::vector, $6, $7)
+            ON CONFLICT (kb_id, chunk_id, embedding_model) DO UPDATE SET
                 vector = EXCLUDED.vector,
                 tokens = EXCLUDED.tokens,
                 created_at = EXCLUDED.created_at
@@ -50,12 +50,13 @@ public class VectorWriteService {
 
         return r2dbcTemplate.getDatabaseClient()
                 .sql(sql)
-                .bind(0, chunkId)
-                .bind(1, fileId)
-                .bind(2, model)
-                .bind(3, vectorStr)
-                .bind(4, tokens)
-                .bind(5, LocalDateTime.now())
+                .bind(0, kbId == null ? "" : kbId)
+                .bind(1, chunkId)
+                .bind(2, fileId)
+                .bind(3, model)
+                .bind(4, vectorStr)
+                .bind(5, tokens)
+                .bind(6, LocalDateTime.now())
                 .fetch()
                 .rowsUpdated()
                 .map(rows -> rows > 0)

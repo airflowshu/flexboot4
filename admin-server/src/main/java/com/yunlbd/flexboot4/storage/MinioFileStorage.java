@@ -59,7 +59,6 @@ public class MinioFileStorage implements FileStorage {
         return new FileObject(
                 meta.id(),
                 meta.tenantId(),
-                meta.projectId(),
                 meta.bizType(),
                 meta.bizId(),
                 fileName,
@@ -84,9 +83,6 @@ public class MinioFileStorage implements FileStorage {
         // 基础元数据 - 使用 x-amz-meta- 前缀（S3/MinIO 兼容）
         if (meta.tenantId() != null && !meta.tenantId().isBlank()) {
             metadata.put("x-amz-meta-tenantId", meta.tenantId());
-        }
-        if (meta.projectId() != null && !meta.projectId().isBlank()) {
-            metadata.put("x-amz-meta-projectId", meta.projectId());
         }
         if (meta.bizType() != null && !meta.bizType().isBlank()) {
             metadata.put("x-amz-meta-bizType", meta.bizType());

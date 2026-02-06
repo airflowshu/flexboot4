@@ -1,6 +1,6 @@
 package com.yunlbd.flexboot4.event;
 
-import com.yunlbd.flexboot4.entity.SysOperLog;
+import com.yunlbd.flexboot4.entity.ops.SysOperLog;
 import org.springframework.context.ApplicationEvent;
 
 public class SysOperLogEvent extends ApplicationEvent {

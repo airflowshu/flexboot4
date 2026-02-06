@@ -1,7 +1,7 @@
 package com.yunlbd.flexboot4.listener;
 
-import com.yunlbd.flexboot4.entity.SysFile;
-import com.yunlbd.flexboot4.entity.SysFileParsed;
+import com.yunlbd.flexboot4.entity.kb.SysFileParsed;
+import com.yunlbd.flexboot4.entity.sys.SysFile;
 import com.yunlbd.flexboot4.event.SysFileParsedEvent;
 import com.yunlbd.flexboot4.event.SysFileUploadedEvent;
 import com.yunlbd.flexboot4.file.FileLocation;
@@ -12,9 +12,9 @@ import com.yunlbd.flexboot4.file.ai.AiStatus;
 import com.yunlbd.flexboot4.file.parse.FileParser;
 import com.yunlbd.flexboot4.file.parse.ParsedDocument;
 import com.yunlbd.flexboot4.file.parse.TokenEstimator;
-import com.yunlbd.flexboot4.service.SysConfigService;
-import com.yunlbd.flexboot4.service.SysFileParsedService;
-import com.yunlbd.flexboot4.service.SysFileService;
+import com.yunlbd.flexboot4.service.kb.SysFileParsedService;
+import com.yunlbd.flexboot4.service.ops.SysConfigService;
+import com.yunlbd.flexboot4.service.sys.SysFileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;

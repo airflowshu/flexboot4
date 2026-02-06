@@ -1,7 +1,7 @@
 package com.yunlbd.flexboot4.mapper;
 
 import com.mybatisflex.core.BaseMapper;
-import com.yunlbd.flexboot4.entity.SysFile;
+import com.yunlbd.flexboot4.entity.sys.SysFile;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;

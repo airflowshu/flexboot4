@@ -4,11 +4,11 @@ import com.yunlbd.flexboot4.common.ApiResult;
 import com.yunlbd.flexboot4.common.annotation.OperLog;
 import com.yunlbd.flexboot4.common.annotation.RequirePermission;
 import com.yunlbd.flexboot4.common.enums.BusinessType;
-import com.yunlbd.flexboot4.entity.SysFile;
+import com.yunlbd.flexboot4.entity.sys.SysFile;
 import com.yunlbd.flexboot4.file.FileAccessDescriptor;
 import com.yunlbd.flexboot4.file.FileObject;
-import com.yunlbd.flexboot4.service.FileManagerService;
-import com.yunlbd.flexboot4.service.SysFileService;
+import com.yunlbd.flexboot4.service.sys.FileManagerService;
+import com.yunlbd.flexboot4.service.sys.SysFileService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -67,11 +67,10 @@ public class SysFileController extends BaseController<SysFileService, SysFile, S
             @Parameter(description = "要上传的文件", required = true, schema = @Schema(type = "string", format = "binary"))
             @RequestParam("file") MultipartFile file,
             @Parameter(description = "租户ID") @RequestParam(value = "tenantId", defaultValue = "1") String tenantId,
-            @Parameter(description = "项目ID") @RequestParam(value = "projectId", required = false) String projectId,
             @Parameter(description = "业务类型，传入 `sys_user_avatar` 时文件会上传到公有库，其他值存入私有库")
             @RequestParam(value = "bizType", required = false) String bizType,
             @Parameter(description = "业务ID") @RequestParam(value = "bizId", required = false) String bizId) {
-        FileObject obj = fileManagerService.upload(file, tenantId, projectId, bizType, bizId);
+        FileObject obj = fileManagerService.upload(file, tenantId, bizType, bizId);
         return ApiResult.success(obj);
     }
 

@@ -25,7 +25,7 @@ public class RagChatServiceTest {
         LlmProxyClient llmProxyClient = mock(LlmProxyClient.class);
 
         when(embeddingHttpClient.embedOne(any(), any())).thenReturn(Mono.just(List.of(0.1f, 0.2f)));
-        when(ragRetrievalService.retrieve(any(), any(), any(), anyInt())).thenReturn(Flux.empty());
+        when(ragRetrievalService.retrieve(any(), any(), any(), any(), anyInt())).thenReturn(Flux.empty());
         when(llmProxyClient.chatStreamRaw(any(), anyMap())).thenReturn(Flux.just(
                 "data: {\"id\":\"1\"}\n\n",
                 "data: [DONE]\n\n"
@@ -36,7 +36,7 @@ public class RagChatServiceTest {
                 ragRetrievalService,
                 llmProxyClient,
                 new ObjectMapper(),
-                new RagProperties("bge-m3", 5, 8000, "sys")
+                new RagProperties()
         );
 
         RagChatRequest req = new RagChatRequest();
@@ -45,7 +45,6 @@ public class RagChatServiceTest {
 
         StepVerifier.create(service.chatStreamData(req, Map.of()).timeout(Duration.ofSeconds(2)))
                 .expectNext("{\"id\":\"1\"}")
-                .expectNext("[DONE]")
                 .verifyComplete();
     }
 }

@@ -38,6 +38,11 @@ public class OpenApiConfig {
                                 "apiKey管理",
                                 "文件管理"
                         )
+                ),Map.of(
+                        "name","知识库",
+                        "tags",List.of(
+                                "知识库管理"
+                        )
                 )
         ));
         return openAPI;

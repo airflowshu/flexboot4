@@ -1,8 +1,8 @@
 package com.yunlbd.flexboot4.listener;
 
-import com.yunlbd.flexboot4.entity.SysOperLog;
+import com.yunlbd.flexboot4.entity.ops.SysOperLog;
 import com.yunlbd.flexboot4.event.SysOperLogEvent;
-import com.yunlbd.flexboot4.service.SysOperLogService;
+import com.yunlbd.flexboot4.service.ops.SysOperLogService;
 import com.yunlbd.flexboot4.util.LogDesensitizationUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

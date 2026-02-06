@@ -14,5 +14,5 @@ public interface VectorR2dbcRepository extends R2dbcRepository<AiVectorChunk, St
     /**
      * 检查指定 chunk 和模型是否已存在向量
      */
-    Mono<Boolean> existsByChunkIdAndEmbeddingModel(String chunkId, String embeddingModel);
+    Mono<Boolean> existsByKbIdAndChunkIdAndEmbeddingModel(String kbId, String chunkId, String embeddingModel);
 }

@@ -1,6 +1,6 @@
 package com.yunlbd.flexboot4.util;
 
-import com.yunlbd.flexboot4.entity.SysUser;
+import com.yunlbd.flexboot4.entity.sys.SysUser;
 import com.yunlbd.flexboot4.security.LoginUser;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;

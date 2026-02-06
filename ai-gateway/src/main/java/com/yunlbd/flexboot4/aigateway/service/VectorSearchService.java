@@ -20,7 +20,7 @@ public class VectorSearchService {
         this.vectorTemplate = vectorTemplate;
     }
 
-    public Flux<VectorSearchHitDto> searchTopK(List<Float> queryVector, String embeddingModel, List<String> fileIds, int topK) {
+    public Flux<VectorSearchHitDto> searchTopK(List<Float> queryVector, String kbId, String embeddingModel, List<String> fileIds, int topK) {
         if (topK <= 0) {
             return Flux.empty();
         }
@@ -29,10 +29,11 @@ public class VectorSearchService {
         StringBuilder sql = new StringBuilder("""
             SELECT chunk_id, file_id, tokens, (vector <-> $1::vector) AS distance
             FROM ai_vector_chunk
-            WHERE embedding_model = $2
+            WHERE kb_id = $2
+              AND embedding_model = $3
             """);
 
-        int nextPlaceholder = 3;
+        int nextPlaceholder = 4;
         if (fileIds != null && !fileIds.isEmpty()) {
             StringJoiner joiner = new StringJoiner(", ");
             for (int i = 0; i < fileIds.size(); i++) {
@@ -43,14 +44,15 @@ public class VectorSearchService {
         }
 
         sql.append(" ORDER BY vector <-> $1::vector\n");
-        sql.append(" LIMIT $").append(nextPlaceholder);
+        sql.append(" LIMIT ?");
 
         var spec = vectorTemplate.getDatabaseClient()
                 .sql(sql.toString())
                 .bind(0, vectorStr)
-                .bind(1, embeddingModel);
+                .bind(1, kbId == null ? "" : kbId)
+                .bind(2, embeddingModel);
 
-        int bindIndex = 2;
+        int bindIndex = 3;
         if (fileIds != null && !fileIds.isEmpty()) {
             for (String fileId : fileIds) {
                 spec = spec.bind(bindIndex, fileId);

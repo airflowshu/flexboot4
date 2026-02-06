@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yunlbd.flexboot4.common.annotation.OperLog;
 import com.yunlbd.flexboot4.common.constant.SysConstant;
 import com.yunlbd.flexboot4.controller.sys.BaseController;
-import com.yunlbd.flexboot4.entity.SysOperLog;
+import com.yunlbd.flexboot4.entity.ops.SysOperLog;
 import com.yunlbd.flexboot4.event.SysOperLogEvent;
 import com.yunlbd.flexboot4.util.IpUtils;
 import com.yunlbd.flexboot4.util.SecurityUtils;

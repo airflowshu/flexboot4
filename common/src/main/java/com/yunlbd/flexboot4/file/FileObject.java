@@ -3,7 +3,6 @@ package com.yunlbd.flexboot4.file;
 public record FileObject(
         String id,
         String tenantId,
-        String projectId,
         String bizType,
         String bizId,
         String fileName,
@@ -18,4 +17,3 @@ public record FileObject(
         String embeddingModel
 ) {
 }
-

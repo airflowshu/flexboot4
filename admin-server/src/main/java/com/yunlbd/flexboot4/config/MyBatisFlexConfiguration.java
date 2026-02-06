@@ -2,8 +2,8 @@ package com.yunlbd.flexboot4.config;
 
 import com.mybatisflex.core.FlexGlobalConfig;
 import com.mybatisflex.core.table.TableManager;
-import com.yunlbd.flexboot4.entity.BaseEntity;
-import com.yunlbd.flexboot4.entity.SysOperLog;
+import com.yunlbd.flexboot4.entity.ops.SysOperLog;
+import com.yunlbd.flexboot4.entity.sys.BaseEntity;
 import com.yunlbd.flexboot4.listener.GlobalDictSetListener;
 import com.yunlbd.flexboot4.listener.MybatisInsertListener;
 import com.yunlbd.flexboot4.listener.MybatisUpdateListener;

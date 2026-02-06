@@ -2,9 +2,9 @@ package com.yunlbd.flexboot4.listener;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yunlbd.flexboot4.config.OperLogStreamProperties;
-import com.yunlbd.flexboot4.entity.SysOperLog;
+import com.yunlbd.flexboot4.entity.ops.SysOperLog;
 import com.yunlbd.flexboot4.operlog.OperLogRecord;
-import com.yunlbd.flexboot4.service.SysOperLogService;
+import com.yunlbd.flexboot4.service.ops.SysOperLogService;
 import com.yunlbd.flexboot4.util.IpUtils;
 import com.yunlbd.flexboot4.util.UserAgentService;
 import jakarta.annotation.PostConstruct;

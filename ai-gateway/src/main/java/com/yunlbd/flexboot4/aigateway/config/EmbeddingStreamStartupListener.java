@@ -61,6 +61,13 @@ public class EmbeddingStreamStartupListener {
             return;
         }
 
+        String key = streamProperties.key();
+        // 检查 Stream 是否存在，不存在则跳过
+        Boolean exists = redisTemplate.hasKey(key);
+        if (exists == null || !exists) {
+            return;
+        }
+
         try {
             Consumer consumer = Consumer.from(streamProperties.group(), streamProperties.consumer());
             StreamOffset<String> offset = StreamOffset.create(streamProperties.key(), ReadOffset.lastConsumed());

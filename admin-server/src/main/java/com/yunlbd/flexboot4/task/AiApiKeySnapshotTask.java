@@ -1,6 +1,6 @@
 package com.yunlbd.flexboot4.task;
 
-import com.yunlbd.flexboot4.service.impl.AiApiKeyServiceImpl;
+import com.yunlbd.flexboot4.service.ops.impl.AiApiKeyServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;

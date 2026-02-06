@@ -1,7 +1,7 @@
 package com.yunlbd.flexboot4.listener;
 
 import com.yunlbd.flexboot4.event.SysFileParsedEvent;
-import com.yunlbd.flexboot4.service.FileChunkingService;
+import com.yunlbd.flexboot4.service.kb.FileChunkingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;

@@ -1,8 +1,8 @@
 package com.yunlbd.flexboot4;
 
 import com.yunlbd.flexboot4.dto.SearchDto;
-import com.yunlbd.flexboot4.entity.SysDictItem;
-import com.yunlbd.flexboot4.entity.SysDictType;
+import com.yunlbd.flexboot4.entity.ops.SysDictItem;
+import com.yunlbd.flexboot4.entity.ops.SysDictType;
 import com.yunlbd.flexboot4.query.SearchDtoUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
