@@ -28,16 +28,16 @@ dependencies {
     implementation(libs.mybatisFlexReactorSpring)
     implementation(libs.hikariCp)
     implementation(libs.easyexcel)
-    implementation("org.apache.pdfbox:pdfbox:3.0.6")
+    implementation(libs.pdfbox)
 
     constraints {
-        implementation("org.apache.commons:commons-compress:1.28.0") {
+        implementation(libs.commonsCompress) {
             because("fix CVE-2024-25710 and CVE-2024-26308")
         }
-        implementation("org.apache.poi:poi:5.5.1") {
+        implementation(libs.poi) {
             because("fix CVE-2025-31672")
         }
-        implementation("org.apache.poi:poi-ooxml:5.5.1")
+        implementation(libs.poiOoxml)
     }
 
     implementation(libs.jjwtApi)

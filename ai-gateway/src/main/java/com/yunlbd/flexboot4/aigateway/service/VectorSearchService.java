@@ -44,7 +44,7 @@ public class VectorSearchService {
         }
 
         sql.append(" ORDER BY vector <-> $1::vector\n");
-        sql.append(" LIMIT ?");
+        sql.append(" LIMIT $").append(nextPlaceholder);
 
         var spec = vectorTemplate.getDatabaseClient()
                 .sql(sql.toString())
