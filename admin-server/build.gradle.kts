@@ -49,6 +49,7 @@ dependencies {
     implementation(libs.ip2region)
     implementation(libs.yauaa)
     implementation(libs.minio)
+    implementation(libs.oshiCore)
 
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.springframework.boot:spring-boot-starter-test")

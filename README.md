@@ -3,10 +3,10 @@
 <div align="center">
 
 ![FlexBoot4 Logo](https://img.shields.io/badge/FlexBoot-4.0-blue?style=for-the-badge&logo=springboot)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0.1-green?style=flat-square&logo=springboot)](https://spring.io/projects/spring-boot)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0.2-green?style=flat-square&logo=springboot)](https://spring.io/projects/spring-boot)
 [![Java](https://img.shields.io/badge/Java-25-orange?style=flat-square&logo=openjdk)](https://openjdk.org/)
-[![MyBatis-Flex](https://img.shields.io/badge/MyBatis--Flex-1.11.5-red?style=flat-square)](https://mybatis-flex.com/)
-[![Gradle](https://img.shields.io/badge/Gradle-8.x-02303A?style=flat-square&logo=gradle)](https://gradle.org/)
+[![MyBatis-Flex](https://img.shields.io/badge/MyBatis--Flex-1.11.6-red?style=flat-square)](https://mybatis-flex.com/)
+[![Gradle](https://img.shields.io/badge/Gradle-9.x-02303A?style=flat-square&logo=gradle)](https://gradle.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16+-336791?style=flat-square&logo=postgresql)](https://www.postgresql.org/)
 [![Redis](https://img.shields.io/badge/Redis-7.x-DC382D?style=flat-square&logo=redis)](https://redis.io/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=flat-square)](./LICENSE)
@@ -45,15 +45,15 @@
 
 ## 🛠 技术栈
 
-| 类别 | 技术框架 | 说明 |
-| --- | --- | --- |
-| **Core** | Spring Boot 4.0.1 | 核心框架 (Java 25) |
-| **ORM** | MyBatis-Flex 1.11.5 | 灵活的持久层框架 |
-| **Database** | PostgreSQL + R2DBC | 关系型数据库 (Admin: JDBC, AI: R2DBC) |
-| **Cache/MQ** | Redis 7.x | 缓存、限流与 Redis Stream 消息队列 |
-| **Auth** | Spring Security + JJWT | 认证与授权 |
-| **Build** | Gradle (Kotlin DSL) | 构建工具，使用 Version Catalog |
-| **Docs** | SpringDoc + Scalar | API 文档与调试 UI |
+| 类别 | 技术框架                     | 说明 |
+| --- |--------------------------| --- |
+| **Core** | Spring Boot 4.0.2        | 核心框架 (Java 25) |
+| **ORM** | MyBatis-Flex 1.11.6      | 灵活的持久层框架 |
+| **Database** | PostgreSQL + R2DBC       | 关系型数据库 (Admin: JDBC, AI: R2DBC) |
+| **Cache/MQ** | Redis 7.x                | 缓存、限流与 Redis Stream 消息队列 |
+| **Auth** | Spring Security + JJWT   | 认证与授权 |
+| **Build** | Gradle (Kotlin DSL)      | 构建工具，使用 Version Catalog |
+| **Docs** | SpringDoc + Scalar       | API 文档与调试 UI |
 | **Tooling** | Lombok, EasyExcel, YAUAA | 开发效率工具 |
 
 ## 📂 项目结构
