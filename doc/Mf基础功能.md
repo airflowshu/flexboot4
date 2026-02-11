@@ -151,3 +151,30 @@ mail:
     注意： Gmail 和 QQ 邮箱需要使用应用专用密码，而不是登录密码。
 
 
+如何运行
+
+- 启动后台管理（MVC）： .\gradlew.bat :admin-server:bootRun
+- 启动 AI 中台（WebFlux）： .\gradlew.bat :ai-gateway:bootRun
+- 全量测试（根目录）： .\gradlew.bat test （已验证通过）
+
+
+---
+文件上传-----数据流
+
+【解析阶段】admin-server
+FileChunkingServiceImpl.chunk() 保存 chunk
+→ publishChunks(entities) 批量发布
+→ FileEmbeddingPublisherImpl 写入 Redis Stream
+→ 每条消息: {chunkId, fileId, model, retryCount}
+
+【向量阶段】ai-gateway
+EmbeddingStreamStartupListener 启动消费者
+→ XREADGROUP 消费消息
+→ 查询 sys_file_chunk (embed_status=PENDING)
+→ 更新状态 PROCESSING
+→ 调用本地 Embedding HTTP 服务
+→ 写入 ai_vector_chunk (ON CONFLICT DO UPDATE)
+→ 更新状态 EMBEDDED / FAILED
+→ 超过重试次数 → 写入 DLQ
+
+---

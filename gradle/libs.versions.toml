@@ -1,0 +1,48 @@
+[versions]
+springBoot = "4.0.2"
+springDependencyManagement = "1.1.7"
+mybatisFlex = "1.11.6"
+mybatisFlexReactor = "0.2.2"
+jjwt = "0.13.0"
+springdocScalar = "3.0.1"
+postgresqlJdbc = "42.7.7"
+r2dbcPostgresql = "1.1.1.RELEASE"
+hikari = "4.0.3"
+easyexcel = "4.0.3"
+ip2region = "2.7.0"
+yauaa = "8.0.0"
+lombok = "1.18.42"
+minio = "8.6.0"
+pdfbox = "3.0.6"
+commonsCompress = "1.28.0"
+poi = "5.5.1"
+
+[libraries]
+mybatisFlexStarter = { module = "com.mybatis-flex:mybatis-flex-spring-boot4-starter", version.ref = "mybatisFlex" }
+mybatisFlexCodegen = { module = "com.mybatis-flex:mybatis-flex-codegen", version.ref = "mybatisFlex" }
+mybatisFlexProcessor = { module = "com.mybatis-flex:mybatis-flex-processor", version.ref = "mybatisFlex" }
+mybatisFlexReactorSpring = { module = "com.juxest:mybatis-flex-reactor-spring", version.ref = "mybatisFlexReactor" }
+
+jjwtApi = { module = "io.jsonwebtoken:jjwt-api", version.ref = "jjwt" }
+jjwtImpl = { module = "io.jsonwebtoken:jjwt-impl", version.ref = "jjwt" }
+jjwtJackson = { module = "io.jsonwebtoken:jjwt-jackson", version.ref = "jjwt" }
+
+springdocScalarWebmvc = { module = "org.springdoc:springdoc-openapi-starter-webmvc-scalar", version.ref = "springdocScalar" }
+
+postgresqlJdbc = { module = "org.postgresql:postgresql", version.ref = "postgresqlJdbc" }
+r2dbcPostgresql = { module = "org.postgresql:r2dbc-postgresql", version.ref = "r2dbcPostgresql" }
+
+hikariCp = { module = "com.zaxxer:HikariCP", version.ref = "hikari" }
+easyexcel = { module = "com.alibaba:easyexcel", version.ref = "easyexcel" }
+ip2region = { module = "org.lionsoul:ip2region", version.ref = "ip2region" }
+yauaa = { module = "nl.basjes.parse.useragent:yauaa", version.ref = "yauaa" }
+lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
+minio = { module = "io.minio:minio", version.ref = "minio" }
+pdfbox = { module = "org.apache.pdfbox:pdfbox", version.ref = "pdfbox" }
+commonsCompress = { module = "org.apache.commons:commons-compress", version.ref = "commonsCompress" }
+poi = { module = "org.apache.poi:poi", version.ref = "poi" }
+poiOoxml = { module = "org.apache.poi:poi-ooxml", version.ref = "poi" }
+
+[plugins]
+springBoot = { id = "org.springframework.boot", version.ref = "springBoot" }
+springDependencyManagement = { id = "io.spring.dependency-management", version.ref = "springDependencyManagement" }

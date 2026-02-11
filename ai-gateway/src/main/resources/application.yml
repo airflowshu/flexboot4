@@ -1,0 +1,95 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: ai-gateway
+  data:
+    redis:
+      client-type: lettuce
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 3s
+  r2dbc:
+    admin:
+      host: 192.168.11.104
+      port: 5433
+      database: flexboot4
+      username: ai_gateway_ro
+      password: ai_gateway_ro_123
+    vector:
+      host: 192.168.11.104
+      port: 5434
+      database: flexboot4ai
+      username: flexboot4ai
+      password: flexboot4ai
+
+jwt:
+  secret: ${JWT_SECRET:thisIsASecretKeyThatIsLongEnoughForHmacSha256SecurityRequirement}
+  expiration: ${JWT_EXPIRATION:7200000}
+
+operlog:
+  stream:
+    key: ${OPERLOG_STREAM_KEY:operlog:stream}
+
+embedding:
+  stream:
+    key: ${FILE_EMBEDDING_STREAM_KEY:file-embedding:stream}
+    dlq-key: ${FILE_EMBEDDING_STREAM_DLQ_KEY:file-embedding:stream:dlq}
+    group: ${FILE_EMBEDDING_STREAM_GROUP:file-embedding-group}
+    consumer: ${FILE_EMBEDDING_STREAM_CONSUMER:ai-gateway-1}
+
+embedding-http:
+  url: ${EMBEDDING_HTTP_URL:http://192.168.11.104:11434}
+  timeout: 30s
+
+llm-proxy:
+  url: ${LLM_PROXY_URL:http://192.168.11.104:11434}
+#  url: ${LLM_PROXY_URL:http://127.0.0.1:9080}       #配置APISIX服务
+  chat-path: ${LLM_PROXY_CHAT_PATH:/v1/chat/completions}
+  timeout: 120s
+
+rag:
+  default-embedding-model: ${RAG_EMBEDDING_MODEL:bge-m3}
+  default-top-k: ${RAG_TOP_K:5}
+  max-context-chars: ${RAG_MAX_CONTEXT_CHARS:8000}
+  default-system-prompt: ${RAG_SYSTEM_PROMPT:你是智能 AI 助手。请优先依据给定的知识库片段回答；若片段不足以支持结论，请明确说明不确定。}
+  distance-threshold: ${RAG_DISTANCE_THRESHOLD:0.8}
+
+  # 按文档类型配置不同的 embedding 模型
+  strategy:
+    mappings:
+      - type: TEXT
+        model: bge-m3
+        url: http://192.168.11.104:11434
+        dimension: 1024
+      - type: CODE
+        model: codegemma
+        url: http://192.168.11.104:11434
+        dimension: 2048
+      - type: TABLE
+        model: bge-m3
+        url: http://192.168.11.104:11434
+        dimension: 1024
+      - type: MARKDOWN
+        model: bge-m3
+        url: http://192.168.11.104:11434
+        dimension: 1024
+      - type: PDF
+        model: bge-m3
+        url: http://192.168.11.104:11434
+        dimension: 1024
+
+  # 检索配置
+  retrieval:
+    default-top-k: 5
+    max-context-chars: 8000
+    distance-threshold: 0.8
+
+ai-routing:
+  primary-model: ${AI_PRIMARY_MODEL:qwen2.5:1.5b}
+  fallback-model: ${AI_FALLBACK_MODEL:qwen2.5:1.5b}
+
+logging:
+  level:
+    com.yunlbd.flexboot4.aigateway: debug
