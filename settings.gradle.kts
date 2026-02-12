@@ -10,4 +10,5 @@ dependencyResolutionManagement {
     }
 }
 
-include(":admin-server", ":ai-gateway", ":common")
+include(":flexboot4-core", ":flexboot4-admin", ":flexboot4-bootstrap", ":flexboot4-ai"
+    , ":flexboot4-kb", ":flexboot4-media")

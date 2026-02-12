@@ -1,5 +1,5 @@
 项目使用的主要技术栈包括：
-- 后端：Springboot4、Java25、Spring Security、JWT、MyBatis-Flex（v1.11.5）、gradle、kotlin、Spring Cache
+- 后端：Springboot4、Java25、Spring Security、JWT、MyBatis-Flex（v1.11.6）、gradle、kotlin、Spring Cache
 - 数据库：PostgreSQL/MySQL、Redis
 
 项目采用Restful风格的API接口，集成OPENAPI3，API接口格式能适配开源项目：https://github.com/vbenjs/vue-vben-admin
