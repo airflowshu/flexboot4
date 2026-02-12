@@ -40,16 +40,30 @@ public class EmbeddingConsumerService {
     }
 
     public void onMessage(MapRecord<String, String, String> message) {
-        String chunkId = message.getValue().get("chunkId");
-        String fileId = message.getValue().get("fileId");
-        String model = message.getValue().get("model");
-        String kbId = message.getValue().get("kbId");
-        int retryCount = Integer.parseInt(message.getValue().getOrDefault("retryCount", "0"));
+        Map<String, String> v = message.getValue();
+        String chunkId = v.get("chunkId");
+        String fileId = v.get("fileId");
+        String model = v.get("model");
+        String kbId = v.get("kbId");
+        int retryCount = Integer.parseInt(v.getOrDefault("retryCount", "0"));
         String messageId = message.getId() != null ? message.getId().getValue() : null;
+
+        if (messageId == null || messageId.isBlank()) {
+            log.warn("Skip embedding message with empty id");
+            return;
+        }
+
+        if (chunkId == null || chunkId.isBlank() || model == null || model.isBlank()) {
+            log.warn("Skip embedding message {} due to missing required fields: kbId={}, chunkId={}, fileId={}, model={}",
+                    messageId, kbId, chunkId, fileId, model);
+            ackAndDelete(messageId).subscribe();
+            return;
+        }
 
         log.info("Processing embedding task: kbId={}, chunkId={}, fileId={}, model={}", kbId, chunkId, fileId, model);
 
         processEmbedding(kbId, chunkId, fileId, model, retryCount, messageId)
+                .flatMap(success -> ackAndDelete(messageId).thenReturn(success))
                 .subscribe(
                         success -> {
                             if (success) {
@@ -112,7 +126,7 @@ public class EmbeddingConsumerService {
                 .withStreamKey(streamProperties.key());
 
         return redisTemplate.opsForStream().add(newMessage)
-                .then(redisTemplate.opsForStream().delete(streamProperties.key(), messageId))
+                .then(ackAndDelete(messageId))
                 .thenReturn(true);
     }
 
@@ -148,5 +162,12 @@ public class EmbeddingConsumerService {
                 ))
                 .withStreamKey(resultKey);
         return redisTemplate.opsForStream().add(result).then();
+    }
+
+    private Mono<Void> ackAndDelete(String messageId) {
+        return redisTemplate.opsForStream()
+                .acknowledge(streamProperties.key(), streamProperties.group(), messageId)
+                .then(redisTemplate.opsForStream().delete(streamProperties.key(), messageId))
+                .then();
     }
 }

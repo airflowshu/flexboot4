@@ -41,11 +41,11 @@ public class DefaultQueryWrapperBuilder extends AbstractQueryWrapperBuilder {
             ctx.rootTable = tableName;
             ctx.pathToTable.put("", tableName);
         }
-        log.info("=== Debug QueryWrapper Build ===");
-        log.info("entityClass: {}", entityClass.getSimpleName());
-        log.info("rootTable: {}", ctx.rootTable);
-        log.info("pathToTable: {}", ctx.pathToTable);
-        log.info("hasRelationPaths: {}", SearchDtoUtils.hasRelationPaths(dto));
+        // log.info("=== Debug QueryWrapper Build ===");
+        // log.info("entityClass: {}", entityClass.getSimpleName());
+        // log.info("rootTable: {}", ctx.rootTable);
+        // log.info("pathToTable: {}", ctx.pathToTable);
+        // log.info("hasRelationPaths: {}", SearchDtoUtils.hasRelationPaths(dto));
 
         RelationQueryBuilder.buildJoins(qw, ctx);
         List<SearchDto.SearchItem> items = dto.getItems() == null ? Collections.emptyList() : dto.getItems();

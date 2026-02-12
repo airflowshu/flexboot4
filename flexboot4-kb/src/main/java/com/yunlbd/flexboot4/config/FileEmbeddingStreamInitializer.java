@@ -6,6 +6,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.DataType;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -48,18 +49,14 @@ public class FileEmbeddingStreamInitializer {
         RedisConnectionFactory cf = Objects.requireNonNull(redisTemplate.getConnectionFactory());
         try (RedisConnection conn = cf.getConnection()) {
             byte[] keyBytes = redisTemplate.getStringSerializer().serialize(key);
+            if (keyBytes == null) {
+                throw new IllegalStateException("Redis key serialization returned null for key: " + key);
+            }
 
-            // 发送一个空消息来创建 Stream（使用 XADD，ID为 * 让 Redis 自动生成）
-            try {
-                byte[][] args = new byte[][]{
-                        redisTemplate.getStringSerializer().serialize("*"),
-                        redisTemplate.getStringSerializer().serialize("init"),
-                        redisTemplate.getStringSerializer().serialize("stream-init")
-                };
-                conn.execute("XADD", args);
-                log.info("Created file embedding stream: {}", key);
-            } catch (Exception e) {
-                log.debug("Stream may already exist or error creating: {}", key);
+            DataType type = conn.keyCommands().type(keyBytes);
+            if (type != DataType.NONE && type != DataType.STREAM) {
+                log.error("Redis key '{}' is type {}, expected stream. Skip stream initialization.", key, type);
+                return;
             }
 
             // 创建 Consumer Group
@@ -75,7 +72,8 @@ public class FileEmbeddingStreamInitializer {
                     if (msg != null && (msg.contains("BUSYGROUP") || msg.contains("already exists"))) {
                         log.info("Consumer group '{}' already exists for stream: {}", group, key);
                     } else {
-                        log.warn("Failed to create consumer group for stream {}: {}", key, msg);
+                        log.warn("Failed to create consumer group for stream {}: {} ({})", key, msg, e.getClass().getSimpleName());
+                        log.debug("Consumer group creation error detail for stream {}", key, e);
                     }
                 }
             }
