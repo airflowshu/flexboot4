@@ -28,7 +28,8 @@ public class OpenApiConfig {
                                 "角色管理",
                                 "菜单管理",
                                 "字典管理",
-                                "权限管理"
+                                "权限管理",
+                                "版本日志"
                         )
                 )
                 ,Map.of(
