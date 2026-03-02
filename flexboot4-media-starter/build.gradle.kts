@@ -17,7 +17,6 @@ publishing {
     publications {
         create<MavenPublication>("maven") {
             from(components["java"])
-            groupId = "com.yunlbd"
             artifactId = "flexboot4-media-starter"
         }
     }

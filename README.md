@@ -3,7 +3,7 @@
 <div align="center">
 
 ![FlexBoot4 Logo](https://img.shields.io/badge/FlexBoot-4.0-blue?style=for-the-badge&logo=springboot)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0.2-green?style=flat-square&logo=springboot)](https://spring.io/projects/spring-boot)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0.3-green?style=flat-square&logo=springboot)](https://spring.io/projects/spring-boot)
 [![Java](https://img.shields.io/badge/Java-25-orange?style=flat-square&logo=openjdk)](https://openjdk.org/)
 [![MyBatis-Flex](https://img.shields.io/badge/MyBatis--Flex-1.11.6-red?style=flat-square)](https://mybatis-flex.com/)
 [![Gradle](https://img.shields.io/badge/Gradle-9.3.1-02303A?style=flat-square&logo=gradle)](https://gradle.org/)
@@ -46,7 +46,7 @@
 
 | 类别 | 技术框架                   | 说明 |
 | --- |------------------------| --- |
-| **Core** | Spring Boot 4.0.2      | 核心框架 (Java 25) |
+| **Core** | Spring Boot 4.0.3      | 核心框架 (Java 25) |
 | **ORM** | MyBatis-Flex 1.11.6    | 灵活的持久层框架 |
 | **Database** | PostgreSQL + R2DBC     | 关系型数据库 (Admin: JDBC, AI: R2DBC) |
 | **Cache/MQ** | Redis 7.x              | 缓存、限流与 Redis Stream 消息队列 |

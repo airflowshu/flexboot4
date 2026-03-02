@@ -18,7 +18,6 @@ publishing {
     publications {
         create<MavenPublication>("bom") {
             from(components["javaPlatform"])
-            groupId = "com.yunlbd"
             artifactId = "flexboot4-bom"
         }
     }

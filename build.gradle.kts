@@ -17,6 +17,9 @@ allprojects {
 }
 
 subprojects {
+    group = rootProject.group
+    version = rootProject.version
+
     plugins.withId("java") {
         the<JavaPluginExtension>().toolchain {
             languageVersion = JavaLanguageVersion.of(25)
@@ -37,6 +40,7 @@ subprojects {
             }
         }
     }
+
 
     tasks.withType<Test>().configureEach {
         useJUnitPlatform()

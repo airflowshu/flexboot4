@@ -7,11 +7,13 @@ import com.yunlbd.flexboot4.entity.sys.BaseEntity;
 import com.yunlbd.flexboot4.listener.GlobalDictSetListener;
 import com.yunlbd.flexboot4.listener.MybatisInsertListener;
 import com.yunlbd.flexboot4.listener.MybatisUpdateListener;
+import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.context.annotation.Configuration;
 
 import java.time.LocalDate;
 
 @Configuration
+@MapperScan("com.yunlbd.flexboot4.mapper")
 public class MyBatisFlexConfiguration {
 
     public MyBatisFlexConfiguration() {

@@ -38,6 +38,12 @@ dependencies {
             because("fix CVE-2025-31672")
         }
         implementation(libs.poiOoxml)
+        implementation(libs.jacksonCore) {
+            because("fix CVE-2024-50379 - Jackson async parser DoS")
+        }
+        implementation(libs.jacksonCore) {
+            because("fix CVE-2024-50379 - Jackson async parser DoS")
+        }
     }
 
     api(libs.jjwtApi)
@@ -58,7 +64,6 @@ publishing {
     publications {
         create<MavenPublication>("maven") {
             from(components["java"])
-            groupId = "com.yunlbd"
             artifactId = "flexboot4-admin-starter"
         }
     }

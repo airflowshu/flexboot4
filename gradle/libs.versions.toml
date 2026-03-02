@@ -2,11 +2,12 @@
 # FlexBoot4 项目版本由根项目的 build.gradle.kts 统一管理
 # 注意：FlexBoot4 内部模块（core、admin-starter、kb-starter 等）的版本
 # 由根项目的 build.gradle.kts 统一管理，不在此处声明
-springBoot = "4.0.2"
+springBoot = "4.0.3"
 springDependencyManagement = "1.1.7"
 mybatisFlex = "1.11.6"
 mybatisFlexReactor = "0.2.2"
 jjwt = "0.13.0"
+jacksonCore = "3.1.0"
 springdocScalar = "3.0.1"
 postgresqlJdbc = "42.7.7"
 r2dbcPostgresql = "1.1.1.RELEASE"
@@ -46,6 +47,7 @@ pdfbox = { module = "org.apache.pdfbox:pdfbox", version.ref = "pdfbox" }
 commonsCompress = { module = "org.apache.commons:commons-compress", version.ref = "commonsCompress" }
 poi = { module = "org.apache.poi:poi", version.ref = "poi" }
 poiOoxml = { module = "org.apache.poi:poi-ooxml", version.ref = "poi" }
+jacksonCore = { module = "tools.jackson.core:jackson-core", version.ref = "jacksonCore" }
 oshiCore = { module = "com.github.oshi:oshi-core-java25", version.ref = "oshi" }
 
 [plugins]
