@@ -41,10 +41,10 @@ jobs:
         uses: actions/configure-pages@v4
 
       - name: Install dependencies
-        run: cd doc && pnpm install --frozen-lockfile
+        run: cd docs && pnpm install --frozen-lockfile
 
       - name: Build with VitePress
-        run: cd doc && pnpm docs:build
+        run: cd docs && pnpm docs:build
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
