@@ -1,0 +1,6 @@
+# Flexboot4 Media Starter 默认配置
+# 本文件提供媒体处理模块的默认配置，外部项目引入 media-starter 后自动生效
+
+media:
+  enabled: true
+

@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir:*)",
+      "Bash(findstr:*)",
+      "Bash(test:*)",
+      "Bash(./gradlew build:*)",
+      "Bash(./gradlew clean build:*)",
+      "Bash(./gradlew.bat compileJava:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(./gradlew clean test:*)",
+      "Bash(./gradlew test:*)",
+      "Bash(./gradlew compileJava --no-daemon)",
+      "Bash(git push:*)",
+      "Bash(./gradlew compileJava:*)",
+      "WebFetch(domain:mybatis-flex.com)",
+      "Bash(tree -L 3 -I 'build|target|.gradle|.idea|.git|node_modules' .)",
+      "Bash(./gradlew projects --console=plain)",
+      "Bash(./gradlew:*)",
+      "WebSearch"
+    ]
+  }
+}

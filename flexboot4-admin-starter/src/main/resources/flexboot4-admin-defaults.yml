@@ -1,0 +1,45 @@
+# Flexboot4 Admin Starter 默认配置
+# 本文件提供框架级别的默认配置，外部项目无需重复定义
+
+spring:
+  jackson:
+    time-zone: Asia/Shanghai
+    default-property-inclusion: non_null
+
+security:
+  ignore:
+    urls:
+      - /resources/**
+      - /static/**
+      - /api/admin/auth/**
+      - /v3/api-docs/**
+      - /scalar/**
+      - /error
+
+operlog:
+  stream:
+    key: ${OPERLOG_STREAM_KEY:operlog:stream}
+    group: ${OPERLOG_STREAM_GROUP:operlog-group}
+    consumer: ${OPERLOG_STREAM_CONSUMER:${spring.application.name}-1}
+    dedup-ttl-days: ${OPERLOG_STREAM_DEDUP_TTL_DAYS:7}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+
+scalar:
+  enabled: true
+  path: /scalar
+
+# MyBatis-Flex 标准配置
+# 外部项目只需配置数据源连接信息 (url、username、password)
+# 其他通用配置已在此默认定义，无需重复配置
+mybatis-flex:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+  inject-sql-session-on-mapper-scan: true
+  global-config:
+    print-banner: false
+
+

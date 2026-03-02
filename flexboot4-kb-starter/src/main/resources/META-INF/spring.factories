@@ -1,0 +1,2 @@
+org.springframework.context.ApplicationListener=com.yunlbd.flexboot4.config.FlexBoot4KbEnvironmentListener
+

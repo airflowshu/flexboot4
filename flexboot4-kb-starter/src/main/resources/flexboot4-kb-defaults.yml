@@ -1,0 +1,14 @@
+# Flexboot4 KB Starter 默认配置
+# 本文件提供知识库模块的默认配置，外部项目引入 kb-starter 后自动生效
+
+file:
+  parse:
+    chunk-tokens: ${FILE_PARSE_CHUNK_TOKENS:700}
+    overlap-tokens: ${FILE_PARSE_OVERLAP_TOKENS:80}
+    max-chunks: ${FILE_PARSE_MAX_CHUNKS:2000}
+  embedding:
+    stream:
+      key: ${FILE_EMBEDDING_STREAM_KEY:file-embedding:stream}
+      group: ${FILE_EMBEDDING_STREAM_GROUP:file-embedding-group}
+      consumer: ${FILE_EMBEDDING_STREAM_CONSUMER:${spring.application.name}-1}
+      dedup-ttl-days: ${FILE_EMBEDDING_STREAM_DEDUP_TTL_DAYS:7}
