@@ -22,7 +22,7 @@ public class Sms4jConfigServiceImpl extends BaseServiceImpl<Sms4jConfigMapper, S
 
     @Override
     public List<Sms4jConfig> listEnabledConfigs() {
-        return list(QueryWrapper.create()
+        return super.list(QueryWrapper.create()
                 .where("status = 1"));
     }
 }
