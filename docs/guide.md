@@ -10,11 +10,12 @@
 dependencies {
     // 使用 BOM 统一版本管理
     implementation(platform("com.yunlbd:flexboot4-bom:0.0.1-SNAPSHOT"))
-    
+
     // 选择你需要的 Starter
     implementation("com.yunlbd:flexboot4-admin-starter")
     // implementation("com.yunlbd:flexboot4-kb-starter")      // 可选：知识库
     // implementation("com.yunlbd:flexboot4-media-starter")   // 可选：媒体处理
+    // implementation("com.yunlbd:flexboot4-sms4j-starter")   // 可选：短信能力
 }
 ```
 
@@ -78,7 +79,8 @@ spring:
 | **仅需用户管理 + RBAC** | `admin-starter` | 包含用户、角色、菜单、权限管理 |
 | **需要知识库 + RAG** | `kb-starter` | 自动传递 `admin-starter`，支持文档解析与向量化 |
 | **需要媒体处理** | `media-starter` | 自动传递 `admin-starter`，支持视频/音频处理 |
-| **全功能平台** | 所有 Starter | Admin + KB + Media 完整功能 |
+| **需要短信能力** | `sms4j-starter` | 自动传递 `admin-starter`，支持短信厂商配置与动态刷新 |
+| **全功能平台** | 所有 Starter | Admin + KB + Media + SMS 完整功能 |
 
 ### 依赖自动传递
 
@@ -88,7 +90,8 @@ flexboot4-core (纯 Java 基础库)
 flexboot4-admin-starter (RBAC 内核)
     ↓
 ├── flexboot4-kb-starter (依赖 admin-starter)
-└── flexboot4-media-starter (依赖 admin-starter)
+├── flexboot4-media-starter (依赖 admin-starter)
+└── flexboot4-sms4j-starter (依赖 admin-starter)
 ```
 
 ✅ **只需引入最高层的 Starter，低层依赖自动传递**
@@ -284,6 +287,28 @@ curl -X POST http://localhost:8080/api/kb/search \
 - ✅ 流式响应支持（SSE）
 - ✅ 配额管理与限流
 - ✅ 日志汇聚（Redis Stream）
+
+### 7. SMS4J 短信模块（可选）
+
+```gradle
+dependencies {
+    implementation("com.yunlbd:flexboot4-sms4j-starter")
+}
+```
+
+#### 初始化配置表
+
+```bash
+psql -U postgres -d flexboot4 -f docs/sql/sms4j_config_pg.sql
+```
+
+#### 短信厂商配置管理接口
+
+- `POST /api/admin/sms/config`
+- `PUT /api/admin/sms/config/{id}`
+- `POST /api/admin/sms/config/page`
+
+更多见：[SMS4J Starter 接入说明](./SMS4J_STARTER.md)
 
 ---
 

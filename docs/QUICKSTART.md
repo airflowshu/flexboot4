@@ -16,7 +16,7 @@
 ./gradlew :flexboot4-bootstrap:bootRun
 ```
 
-包含：Admin + KB + Media 所有功能
+包含：Admin + KB + Media + SMS4J 所有功能
 
 ### 2. 运行 AI Gateway
 
@@ -49,7 +49,7 @@ dependencies {
 
 ## 外部项目集成
 
-### 方式一：Maven 依赖（推荐生产环境）
+### 实现方式：Maven 依赖
 
 #### 1. 发布 Flexboot4 到本地 Maven
 
@@ -84,6 +84,7 @@ dependencies {
     implementation("com.yunlbd:flexboot4-admin-starter")
     // implementation("com.yunlbd:flexboot4-kb-starter")     // 如需知识库
     // implementation("com.yunlbd:flexboot4-media-starter")  // 如需媒体处理
+    // implementation("com.yunlbd:flexboot4-sms4j-starter")  // 如需短信能力
     
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
@@ -160,44 +161,6 @@ server:
 ./gradlew bootRun
 ```
 
-### 方式二：Composite Build（推荐开发环境）
-
-#### 1. 项目结构
-
-```
-workspace/
-├── flexboot4/          # Flexboot4 源码
-└── your-project/       # 你的项目
-```
-
-#### 2. 配置 Composite Build
-
-在你的项目的 `settings.gradle.kts`:
-
-```kotlin
-rootProject.name = "your-project"
-
-// 引入 flexboot4 作为复合构建
-includeBuild("../flexboot4")
-```
-
-#### 3. 引入依赖
-
-`build.gradle.kts`:
-
-```kotlin
-dependencies {
-    // 直接使用 Maven 坐标，Gradle 会自动从 flexboot4 项目构建
-    implementation("com.yunlbd:flexboot4-admin-starter")
-    implementation("com.yunlbd:flexboot4-kb-starter")
-}
-```
-
-#### 4. 开发体验
-
-- **自动重新构建**：修改 flexboot4 代码后，your-project 会自动重新编译
-- **无需发布**：不需要 `publishToMavenLocal`
-- **快速迭代**：适合同时开发 flexboot4 和业务项目
 
 ---
 
@@ -215,6 +178,7 @@ dependencies {
 - `com.yunlbd:flexboot4-admin-starter:0.0.1-SNAPSHOT`
 - `com.yunlbd:flexboot4-kb-starter:0.0.1-SNAPSHOT`
 - `com.yunlbd:flexboot4-media-starter:0.0.1-SNAPSHOT`
+- `com.yunlbd:flexboot4-sms4j-starter:0.0.1-SNAPSHOT`
 
 ### 2. 远程 Maven 仓库
 
@@ -285,7 +249,7 @@ subprojects {
 **解决**：
 1. 确保 PostgreSQL 已启动
 2. 检查 `application.yml` 中的数据库配置
-3. 执行初始化 SQL（`doc/sql/` 目录）
+3. 执行初始化 SQL（`docs/sql/` 目录）
 
 ### Q4: Redis 连接失败
 
@@ -323,6 +287,7 @@ includeBuild("../flexboot4")  // 相对路径要正确
 ## 下一步
 
 - [查看完整架构文档](STARTER_ARCHITECTURE.md)
+- [SMS4J Starter 接入文档](SMS4J_STARTER.md)
 - [Admin Starter 文档](../flexboot4-admin-starter/README.md)
 
 ---

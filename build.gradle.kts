@@ -44,6 +44,9 @@ subprojects {
 
     tasks.withType<Test>().configureEach {
         useJUnitPlatform()
+        systemProperty("file.encoding", "UTF-8")
+        systemProperty("user.language", "zh")
+        systemProperty("user.country", "CN")
     }
 
     tasks.withType<JavaCompile>().configureEach {

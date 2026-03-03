@@ -14,6 +14,7 @@
 - **flexboot4-admin-starter**: 提供 RBAC、用户管理、权限控制等基础能力
 - **flexboot4-kb-starter**: 提供知识库功能（文档解析、存储等）
 - **flexboot4-media-starter**: 提供媒体处理能力（视频、音频等）
+- **flexboot4-sms4j-starter**: 提供短信发送与厂商配置管理能力（基于 sms4j）
 
 ### 应用模块（可独立运行）
 
@@ -49,6 +50,9 @@ dependencies {
     
     // 如果需要媒体处理功能（可选）
     implementation("com.yunlbd:flexboot4-media-starter")
+
+    // 如果需要短信能力（可选）
+    implementation("com.yunlbd:flexboot4-sms4j-starter")
 }
 ```
 
@@ -64,6 +68,9 @@ dependencies {
     
     // 如果需要媒体处理功能（可选）
     implementation("com.yunlbd:flexboot4-media-starter:0.0.1-SNAPSHOT")
+
+    // 如果需要短信能力（可选）
+    implementation("com.yunlbd:flexboot4-sms4j-starter:0.0.1-SNAPSHOT")
 }
 ```
 
@@ -84,6 +91,7 @@ dependencies {
     implementation("com.yunlbd:flexboot4-admin-starter")
     implementation("com.yunlbd:flexboot4-kb-starter")
     implementation("com.yunlbd:flexboot4-media-starter")
+    implementation("com.yunlbd:flexboot4-sms4j-starter")
 }
 ```
 
@@ -126,6 +134,7 @@ dependencies {
     implementation("com.yunlbd:flexboot4-admin-starter")
     implementation("com.yunlbd:flexboot4-kb-starter")
     implementation("com.yunlbd:flexboot4-media-starter")
+    implementation("com.yunlbd:flexboot4-sms4j-starter")
 }
 ```
 
@@ -177,6 +186,12 @@ flexboot4:
 flexboot4:
   media:
     storage-path: /path/to/media/storage
+
+# 如果使用了 SMS4J 模块，可能需要额外配置（可通过环境变量覆盖默认值）
+sms:
+  account-max: ${SMS_ACCOUNT_MAX_TIMES:10}
+  minute-max: ${SMS_ACCOUNT_RANGE_TIME:1}
+  is-print: false
 ```
 
 ## 发布到 Maven 仓库
@@ -224,6 +239,7 @@ dependencies {
 dependencies {
     implementation(project(":flexboot4-admin-starter"))
     implementation(project(":flexboot4-kb-starter"))
+    implementation(project(":flexboot4-sms4j-starter"))
 }
 ```
 
@@ -236,6 +252,7 @@ flexboot4/
 ├── flexboot4-admin-starter/    # Admin Starter（原 flexboot4-admin 拆分）
 ├── flexboot4-kb-starter/       # KB Starter（原 flexboot4-kb 重命名）
 ├── flexboot4-media-starter/    # Media Starter（原 flexboot4-media 重命名）
+├── flexboot4-sms4j-starter/    # SMS4J Starter（短信厂商配置与发送能力）
 ├── flexboot4-bootstrap/        # 内部开发测试（角色调整）
 └── flexboot4-ai/               # AI 网关（独立模块）
 ```
@@ -243,7 +260,7 @@ flexboot4/
 ## 优势
 
 1. **清晰的职责划分**：Starter 是库，Bootstrap 是内部测试入口
-2. **灵活的模块组合**：按需引入 KB、Media 等扩展
+2. **灵活的模块组合**：按需引入 KB、Media、SMS 等扩展
 3. **统一的版本管理**：通过 BOM 避免版本冲突
 4. **便于发布**：Starter 可发布到 Maven 仓库供外部使用
 5. **降低耦合**：Bootstrap 仅用于内部开发，不对外暴露

@@ -32,10 +32,9 @@ features:
 
   - icon: ⚙️
     title: 模块化 Starter
-    details: Admin、KB、Media 等功能独立封装为 Starter，按需加载，外部项目轻松集成，零配置开箱即用。
+    details: Admin、KB、Media、SMS4J 等功能独立封装为 Starter，按需加载，外部项目轻松集成，零配置开箱即用。
 
   - icon: 🔄
     title: 事件驱动架构
     details: 基于 Spring Event 的异步处理框架，内置操作日志、文件上传、用户注销等全生命周期事件 Hook。
 ---
-

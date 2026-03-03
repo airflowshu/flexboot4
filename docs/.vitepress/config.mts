@@ -15,6 +15,7 @@ export default defineConfig({
         text: '文档',
         items: [
           { text: 'Starter 架构', link: '/STARTER_ARCHITECTURE' },
+          { text: 'SMS4J 模块', link: '/SMS4J_STARTER' },
           { text: '权限控制', link: '/backend_permission_control_design' },
           { text: '用户注销方案', link: '/../plan-userDeaccount.prompt' },
           { text: '快速参考', link: '/QUICKSTART' }
@@ -40,6 +41,7 @@ export default defineConfig({
         text: '核心文档',
         items: [
           { text: 'Starter 架构设计', link: '/STARTER_ARCHITECTURE' },
+          { text: 'SMS4J Starter', link: '/SMS4J_STARTER' },
           { text: '权限控制实现', link: '/backend_permission_control_design' },
           { text: '用户注销完整方案', link: '/../plan-userDeaccount.prompt' },
           { text: '快速开始指南', link: '/QUICKSTART' }

@@ -33,7 +33,7 @@ public class SecurityConfig implements WebMvcConfigurer {
         http
                 .csrf(AbstractHttpConfigurer::disable) // 禁用 CSRF，解决 POST 请求 403 问题
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/resources/**", "/static/**", "/favicon.ico").permitAll()
+                        .requestMatchers("/resources/**", "/static/**", "/static/favicon.ico").permitAll()
                         .requestMatchers(ignoreUrlsConfig.getUrls().toArray(new String[0])).permitAll()
                         .anyRequest().authenticated()
                 )

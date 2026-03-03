@@ -18,6 +18,7 @@ include(
     ":flexboot4-admin-starter",
     ":flexboot4-kb-starter",
     ":flexboot4-media-starter",
+    ":flexboot4-sms4j-starter",
     ":flexboot4-bootstrap",
     ":flexboot4-ai"
 )

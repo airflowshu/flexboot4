@@ -44,7 +44,7 @@ mybatis-flex:
   # - org.apache.ibatis.logging.stdout.StdOutImpl              # 控制台打印 SQL（推荐）
   # - org.apache.ibatis.logging.slf4j.Slf4jImpl                # 使用 SLF4J（需要配置 logging level）
   configuration:
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
 
 minio:
   endpoint: http://192.168.11.104:9000
@@ -55,4 +55,16 @@ minio:
   public-endpoint: ${MINIO_PUBLIC_ENDPOINT:${minio.endpoint}}
   secure: false
 
+# 日志级别配置
+logging:
+  level:
+    # 屏蔽 MyBatis-Flex VFS 扫描和检查类的日志
+    org.mybatisflex.spring.boot.SpringBootVFS: error
+    # 屏蔽 MyBatis Mapper 扫描器日志（包括 Skipping MapperFactoryBean 的警告）
+    org.mybatis.spring.mapper.ClassPathMapperScanner: error
+    # 屏蔽 MyBatis-Flex 核心包的所有日志
+    com.mybatisflex: error
+    # 屏蔽 MyBatis 自动配置和初始化日志
+    org.mybatis.spring.boot.autoconfigure: error
+    org.apache.ibatis: error
 

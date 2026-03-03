@@ -1,0 +1,13 @@
+# Flexboot4 SMS4J Starter 默认配置
+# 本文件提供短信模块的默认配置，外部项目引入 sms4j-starter 后自动生效
+
+# 关闭 sms4j 的 yaml 文件配置方式，改由数据库动态数据源（SmsReadConfig）驱动
+sms:
+  # 限流相关配置
+  # 短信拦截限制单手机号每日最大发送量，只对开启了拦截的配置有效
+  account-max: ${SMS_ACCOUNT_MAX_TIMES:10}
+  # 短信拦截限制单手机号每分钟最大发送，只对开启了拦截的配置有效
+  minute-max: ${SMS_ACCOUNT_RANGE_TIME:1}
+  # 是否打印 sms4j 框架内部的详细日志（仅控制框架日志，不包括 Banner 输出）
+  is-print: false
+

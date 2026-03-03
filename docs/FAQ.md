@@ -17,7 +17,7 @@
 **A:** 根据需求选择不同的运行方式：
 
 ```bash
-# 方式一：运行 Bootstrap（完整功能：Admin + KB + Media）
+# 方式一：运行 Bootstrap（完整功能：Admin + KB + Media + SMS4J）
 ./gradlew :flexboot4-bootstrap:bootRun
 
 # 方式二：运行 AI Gateway（独立服务）
@@ -181,7 +181,7 @@ Unable to connect to database
 
 4. **执行初始化脚本**
    ```bash
-   psql -U postgres -d flexboot4 -f doc/sql/sys_oper_log_pg.sql
+   psql -U postgres -d flexboot4 -f docs/sql/sys_oper_log_pg.sql
    ```
 
 ### Q10: 表不存在错误
@@ -190,10 +190,10 @@ Unable to connect to database
 
 ```bash
 # 找到 SQL 脚本
-ls doc/sql/
+ls docs/sql/
 
 # 执行脚本
-psql -U postgres -d flexboot4 -f doc/sql/init.sql
+psql -U postgres -d flexboot4 -f docs/sql/init.sql
 ```
 
 或者在应用配置中启用自动建表（仅开发环境）：
@@ -292,6 +292,15 @@ dependencies {
 }
 ```
 
+如需短信能力，可额外引入 `sms4j-starter`：
+
+```kotlin
+dependencies {
+    implementation("com.yunlbd:flexboot4-admin-starter:0.0.1-SNAPSHOT")
+    implementation("com.yunlbd:flexboot4-sms4j-starter:0.0.1-SNAPSHOT")
+}
+```
+
 ### Q16: 如何添加自定义模块？
 
 **A:** 
@@ -382,6 +391,7 @@ http://localhost:8080/scalar/index.html
 |------|------|
 | [STARTER_ARCHITECTURE.md](STARTER_ARCHITECTURE.md) | Starter 架构设计 |
 | [QUICKSTART.md](QUICKSTART.md) | 快速开始指南 |
+| [SMS4J_STARTER.md](SMS4J_STARTER.md) | SMS4J Starter 接入说明 |
 | [flexboot4-admin-starter/README.md](../flexboot4-admin-starter/README.md) | Admin Starter 使用说明 |
 
 ---
