@@ -46,5 +46,18 @@ public interface CmsArticleService extends IExtendedService<CmsArticle> {
      * @return 是否成功
      */
     boolean incrementViewCount(String articleId);
-}
 
+    /**
+     * 生成文章预览静态页
+     * @param articleId 文章ID
+     * @return 预览页相对 URL
+     */
+    String renderPreviewPage(String articleId);
+
+    /**
+     * 为已发布文章生成静态页
+     * @param articleId 文章ID
+     * @return 静态页相对 URL
+     */
+    String renderPublishedPage(String articleId);
+}

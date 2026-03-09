@@ -10,15 +10,13 @@ import com.yunlbd.flexboot4.controller.sys.BaseController;
 import com.yunlbd.flexboot4.dto.SearchDto;
 import com.yunlbd.flexboot4.entity.cms.CmsArticle;
 import com.yunlbd.flexboot4.service.cms.CmsArticleService;
-import com.yunlbd.flexboot4.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @RestController
 @RequestMapping("/api/admin/cms/article")
-@RequiredArgsConstructor
 @Tag(name = "文章管理", description = "CmsArticle - CMS文章管理")
 @ApiTagGroup(group = "内容管理")
 public class CmsArticleController extends BaseController<CmsArticleService, CmsArticle, String> {
@@ -73,6 +71,16 @@ public class CmsArticleController extends BaseController<CmsArticleService, CmsA
         return ApiResult.success(service.incrementViewCount(id));
     }
 
-    public record ReviewRequest(String reviewComment) {}
-}
+    @Operation(summary = "生成文章预览页", description = "按模板生成静态 HTML 预览页，返回可直接打开的 URL")
+    @OperLog(title = "生成文章预览页", businessType = BusinessType.OTHER, isSaveResponseData = false)
+    @PostMapping("/{id}/preview")
+    public ApiResult<PreviewPageResponse> previewArticle(@PathVariable String id) {
+        String relativeUrl = service.renderPreviewPage(id);
+        String previewUrl = ServletUriComponentsBuilder.fromCurrentContextPath().path(relativeUrl).toUriString();
+        return ApiResult.success(new PreviewPageResponse(relativeUrl, previewUrl));
+    }
 
+    public record ReviewRequest(String reviewComment) {}
+
+    public record PreviewPageResponse(String relativeUrl, String previewUrl) {}
+}

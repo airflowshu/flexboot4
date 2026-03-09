@@ -55,6 +55,13 @@ minio:
   public-endpoint: ${MINIO_PUBLIC_ENDPOINT:${minio.endpoint}}
   secure: false
 
+cms:
+  render:
+    output-dir: ${CMS_RENDER_OUTPUT_DIR:${user.home}/flexboot4-cms-pages}
+    url-prefix: ${CMS_RENDER_URL_PREFIX:/static/cms-pages}
+    template-name: ${CMS_RENDER_TEMPLATE:cms/article}
+    auto-generate-on-approve: ${CMS_RENDER_AUTO_ON_APPROVE:true}
+
 # 日志级别配置
 logging:
   level:
@@ -68,3 +75,6 @@ logging:
     org.mybatis.spring.boot.autoconfigure: error
     org.apache.ibatis: error
 
+scalar:
+  enabled: true
+  path: /scalar

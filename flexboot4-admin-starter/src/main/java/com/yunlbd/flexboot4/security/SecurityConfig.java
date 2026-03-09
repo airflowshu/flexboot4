@@ -2,6 +2,7 @@ package com.yunlbd.flexboot4.security;
 
 import com.yunlbd.flexboot4.config.IgnoreUrlsConfig;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -28,12 +29,16 @@ public class SecurityConfig implements WebMvcConfigurer {
     private final RestAuthenticationEntryPoint authenticationEntryPoint;
     private final RestAccessDeniedHandler accessDeniedHandler;
 
+    @Value("${cms.render.url-prefix:/static/cms-pages}")
+    private String cmsRenderUrlPrefix;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) {
+        String cmsRenderPattern = normalizeToPattern(cmsRenderUrlPrefix);
         http
                 .csrf(AbstractHttpConfigurer::disable) // 禁用 CSRF，解决 POST 请求 403 问题
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/resources/**", "/static/**", "/static/favicon.ico").permitAll()
+                        .requestMatchers("/resources/**", "/static/**", "/static/favicon.ico", cmsRenderPattern).permitAll()
                         .requestMatchers(ignoreUrlsConfig.getUrls().toArray(new String[0])).permitAll()
                         .anyRequest().authenticated()
                 )
@@ -56,5 +61,16 @@ public class SecurityConfig implements WebMvcConfigurer {
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) {
         return config.getAuthenticationManager();
+    }
+
+    private static String normalizeToPattern(String prefix) {
+        String normalized = (prefix == null || prefix.isBlank()) ? "/static/cms-pages" : prefix.trim();
+        if (!normalized.startsWith("/")) {
+            normalized = "/" + normalized;
+        }
+        if (normalized.endsWith("/")) {
+            normalized = normalized.substring(0, normalized.length() - 1);
+        }
+        return normalized + "/**";
     }
 }

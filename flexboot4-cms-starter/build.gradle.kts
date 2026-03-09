@@ -15,7 +15,11 @@ dependencies {
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
 
+    implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
+    implementation("org.jsoup:jsoup:1.18.3")
+
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 publishing {
@@ -26,4 +30,3 @@ publishing {
         }
     }
 }
-

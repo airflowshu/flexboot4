@@ -2,6 +2,8 @@ package com.yunlbd.flexboot4.service.cms.impl;
 
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
+import com.mybatisflex.core.relation.RelationManager;
+import com.yunlbd.flexboot4.config.CmsRenderProperties;
 import com.yunlbd.flexboot4.dto.SearchDto;
 import com.yunlbd.flexboot4.entity.cms.ArticleStatusEnum;
 import com.yunlbd.flexboot4.entity.cms.CmsArticle;
@@ -9,10 +11,10 @@ import com.yunlbd.flexboot4.mapper.CmsArticleMapper;
 import com.yunlbd.flexboot4.query.DefaultQueryWrapperBuilder;
 import com.yunlbd.flexboot4.query.SearchDtoUtils;
 import com.yunlbd.flexboot4.service.cms.CmsArticleService;
+import com.yunlbd.flexboot4.service.cms.CmsContentSanitizer;
+import com.yunlbd.flexboot4.service.cms.CmsTemplateRenderService;
 import com.yunlbd.flexboot4.service.sys.impl.BaseServiceImpl;
 import com.yunlbd.flexboot4.util.SecurityUtils;
-import com.mybatisflex.core.relation.RelationManager;
-import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -27,9 +29,18 @@ import java.util.Objects;
 public class CmsArticleServiceImpl extends BaseServiceImpl<CmsArticleMapper, CmsArticle> implements CmsArticleService {
 
     private final CmsArticleMapper articleMapper;
+    private final CmsTemplateRenderService templateRenderService;
+    private final CmsContentSanitizer cmsContentSanitizer;
+    private final CmsRenderProperties cmsRenderProperties;
 
-    public CmsArticleServiceImpl(CmsArticleMapper articleMapper) {
+    public CmsArticleServiceImpl(CmsArticleMapper articleMapper,
+                                 CmsTemplateRenderService templateRenderService,
+                                 CmsContentSanitizer cmsContentSanitizer,
+                                 CmsRenderProperties cmsRenderProperties) {
         this.articleMapper = articleMapper;
+        this.templateRenderService = templateRenderService;
+        this.cmsContentSanitizer = cmsContentSanitizer;
+        this.cmsRenderProperties = cmsRenderProperties;
     }
 
     @Override
@@ -105,7 +116,11 @@ public class CmsArticleServiceImpl extends BaseServiceImpl<CmsArticleMapper, Cms
                 .reviewComment(reviewComment)
                 .publishTime(now)
                 .build();
-        return updateById(update, true);
+        boolean updated = updateById(update, true);
+        if (updated && cmsRenderProperties.isAutoGenerateOnApprove()) {
+            renderPublishedPage(articleId);
+        }
+        return updated;
     }
 
     @Override
@@ -136,5 +151,37 @@ public class CmsArticleServiceImpl extends BaseServiceImpl<CmsArticleMapper, Cms
     public boolean incrementViewCount(String articleId) {
         return articleMapper.incrementViewCount(articleId) > 0;
     }
-}
 
+    @Override
+    public boolean save(CmsArticle entity) {
+        cmsContentSanitizer.sanitizeForPersistence(entity);
+        return super.save(entity);
+    }
+
+    @Override
+    public boolean updateById(CmsArticle entity, boolean ignoreNulls) {
+        cmsContentSanitizer.sanitizeForPersistence(entity);
+        return super.updateById(entity, ignoreNulls);
+    }
+
+    @Override
+    public String renderPreviewPage(String articleId) {
+        CmsArticle article = getById(articleId);
+        if (article == null) {
+            throw new IllegalArgumentException("文章不存在");
+        }
+        return templateRenderService.renderArticle(article).relativeUrl();
+    }
+
+    @Override
+    public String renderPublishedPage(String articleId) {
+        CmsArticle article = getById(articleId);
+        if (article == null) {
+            throw new IllegalArgumentException("文章不存在");
+        }
+        if (!ArticleStatusEnum.PUBLISHED.name().equals(article.getStatus())) {
+            throw new IllegalStateException("只有已发布文章可以生成发布页");
+        }
+        return templateRenderService.renderArticle(article).relativeUrl();
+    }
+}
