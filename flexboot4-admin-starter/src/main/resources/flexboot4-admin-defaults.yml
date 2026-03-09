@@ -4,7 +4,9 @@
 spring:
   jackson:
     time-zone: Asia/Shanghai
-    default-property-inclusion: non_null
+    # 让 Jackson 在序列化为 JSON 时，自动忽略值为 null 的字段，比如字段 publishTime 如果没有值就不会出现在返回的 JSON 中
+    # non_null-不返回null的字段  always-返回所有字段（默认）  non_absent-不返回null和Optional.empty的字段  non_default-不返回值为默认值的字段
+    default-property-inclusion: always
   servlet:
     multipart:
       max-file-size: 100MB

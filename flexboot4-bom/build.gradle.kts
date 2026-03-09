@@ -11,6 +11,7 @@ dependencies {
         api(project(":flexboot4-admin-starter"))
         api(project(":flexboot4-kb-starter"))
         api(project(":flexboot4-media-starter"))
+        api(project(":flexboot4-cms-starter"))
     }
 }
 
@@ -22,4 +23,3 @@ publishing {
         }
     }
 }
-

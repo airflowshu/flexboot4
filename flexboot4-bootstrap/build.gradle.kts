@@ -4,7 +4,7 @@ plugins {
     java
 }
 
-description = "flexboot4 - Bootstrap (Internal Assembly: Admin + KB + Media + SMS4J)"
+description = "flexboot4 - Bootstrap (Internal Assembly: Admin + KB + Media + SMS4J + CMS)"
 
 dependencies {
     // 引入各个 starter 模块
@@ -12,6 +12,7 @@ dependencies {
     implementation(project(":flexboot4-kb-starter"))
     implementation(project(":flexboot4-media-starter"))
     implementation(project(":flexboot4-sms4j-starter"))
+    implementation(project(":flexboot4-cms-starter"))
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation(libs.sms4jCore)
