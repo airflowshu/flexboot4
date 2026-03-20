@@ -1,0 +1,37 @@
+{
+  "pageNumber": 1,
+  "pageSize": 10,
+  "logic": "AND",
+  "items": [
+    {
+      "field": "sysUser.status",
+      "op": "eq",
+      "val": 1
+    },
+    {
+      "logic": "OR",
+      "children": [
+        {
+          "field": "sysDept.id",
+          "op": "eq",
+          "val": "xxx"
+        },
+        {
+          "field": "type",
+          "op": "eq",
+          "val": "B"
+        }
+      ]
+    }
+  ],
+  "orders": [
+    {
+      "column": "sysUser.lastModifyTime",
+      "asc": false
+    },
+    {
+      "column": "id",
+      "asc": true
+    }
+  ]
+}

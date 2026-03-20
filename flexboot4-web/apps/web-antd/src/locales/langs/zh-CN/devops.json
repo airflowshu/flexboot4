@@ -1,0 +1,22 @@
+{
+  "title": "运维管理",
+  "log": {
+    "title": "操作日志"
+  },
+  "aikey": {
+    "title": "aiAPI Key管理"
+  },
+  "ai": {
+    "title": "ai聊天",
+    "chat": "ai对话"
+  },
+  "file": {
+    "title": "文件管理"
+  },
+  "config": {
+    "title": "系统配置"
+  },
+  "monitor": {
+    "title": "系统监控"
+  }
+}

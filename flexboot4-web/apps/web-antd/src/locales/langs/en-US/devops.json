@@ -1,0 +1,22 @@
+{
+  "title": "devOps",
+  "log": {
+    "title": "operationLog"
+  },
+  "aikey": {
+    "title": "aiAPI Key Management"
+  },
+  "ai": {
+    "title": "aiChat",
+    "chat": "aiChat"
+  },
+  "file": {
+    "title": "fileManagement"
+  },
+  "config": {
+    "title": "System Config"
+  },
+  "monitor": {
+    "title": "System Monitor"
+  }
+}
