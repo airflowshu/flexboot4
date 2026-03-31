@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { EchartsUIType, ECOption } from '@vben/plugins/echarts';
+import type { EchartsUIType } from '@vben/plugins/echarts';
 
 import { onMounted, onUnmounted, ref } from 'vue';
 
@@ -120,6 +120,7 @@ const jvmChartRef = ref<EchartsUIType>();
 const { renderEcharts: renderCpu } = useEcharts(cpuChartRef);
 const { renderEcharts: renderMem } = useEcharts(memChartRef);
 const { renderEcharts: renderJvm } = useEcharts(jvmChartRef);
+type ChartOption = Parameters<typeof renderCpu>[0];
 
 function getProgressColor(value: number): string {
   if (value >= 80) return '#ef4444';
@@ -174,7 +175,7 @@ function getGaugeOption(
   title: string,
   value: number,
   animation = true,
-): ECOption {
+): ChartOption {
   const color = getStatusColor(value);
   return {
     tooltip: {
@@ -256,7 +257,7 @@ function getGaugeOption(
         },
       },
     ],
-  } as ECOption;
+  } as ChartOption;
 }
 
 // --- 生命周期 ---

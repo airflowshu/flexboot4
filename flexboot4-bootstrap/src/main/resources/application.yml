@@ -61,6 +61,10 @@ cms:
     url-prefix: ${CMS_RENDER_URL_PREFIX:/static/cms-pages}
     template-name: ${CMS_RENDER_TEMPLATE:cms/article}
     auto-generate-on-approve: ${CMS_RENDER_AUTO_ON_APPROVE:true}
+  template:
+    root-dir: ${CMS_TEMPLATE_ROOT_DIR:${user.dir}/webapp/html/web}
+    asset-base-url: ${CMS_TEMPLATE_ASSET_BASE_URL:http://localhost:8080}
+    publish-dir: ${CMS_TEMPLATE_PUBLISH_DIR:${cms.render.output-dir}/site-published}
 
 # 日志级别配置
 logging:

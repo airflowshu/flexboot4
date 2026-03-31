@@ -56,6 +56,11 @@ export interface PageResult<T> {
   records: T[];
 }
 
+export interface DownloadBlobResponse {
+  data: Blob;
+  headers?: Record<string, string>;
+}
+
 /**
  * 获取用户分页列表
  */
@@ -146,9 +151,11 @@ export function resetPasswordApi(data: {
 /**
  * 导出用户列表
  */
-export function exportUsers(params: SearchRequest): Promise<Blob> {
+export function exportUsers(
+  params: SearchRequest,
+): Promise<DownloadBlobResponse> {
   return requestClient.download('/admin/user/export', {
     method: 'POST',
     data: params,
-  });
+  }) as Promise<DownloadBlobResponse>;
 }

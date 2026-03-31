@@ -3,7 +3,7 @@ import type { Recordable } from '@vben/types';
 
 import type { VbenFormSchema } from '@vben-core/form-ui';
 
-import { computed, reactive, ref } from 'vue';
+import { computed, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 
 import { $t } from '@vben/locales';

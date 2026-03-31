@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import type { UserOption } from '#/api/devops/aikey';
-import type { KnowledgeBase } from '#/api/devops/knowledgebase';
+import type { KbMember, KnowledgeBase } from '#/api/devops/knowledgebase';
 
 import { ref, watch } from 'vue';
 
@@ -55,9 +55,9 @@ function handleCollabConfirm(users: UserOption[]) {
 // 监听协作者变化，自动调整类型
 watch(
   () => selectedCollaborators.value.length,
-  (count) => {
+  async (count) => {
     // 获取当前表单的类型值
-    const currentType = formApi.getValues()?.type;
+    const currentType = (await formApi.getValues())?.type;
     // 如果有除自己以外的协作者（简单判断数量大于1），且当前是私有，则自动切换为团队
     // 注意：这里假设初始状态只有自己
     if (count > 1 && currentType === 'private') {
@@ -226,13 +226,13 @@ const [Drawer, drawerApi] = useVbenDrawer({
           const members = await getKnowledgeBaseMembers(
             drawerData.value.record.id,
           );
-          if (members.data) {
-            selectedCollaborators.value = members.data.map((m) => ({
+          if (members.length > 0) {
+            selectedCollaborators.value = members.map((m: KbMember) => ({
               id: m.userId,
               username: m.username,
               realName: m.realName,
             }));
-            originalMembers.value = members.data.map((m) => m.userId);
+            originalMembers.value = members.map((m: KbMember) => m.userId);
           }
         } catch (error) {
           console.error('加载成员失败', error);

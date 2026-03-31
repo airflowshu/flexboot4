@@ -17,6 +17,7 @@ import {
   approveArticle,
   deleteArticle,
   getArticlePage,
+  previewArticlePage,
   rejectArticle,
   submitArticleForReview,
 } from '#/api/cms/article';
@@ -57,7 +58,7 @@ const gridOptions: VxeGridProps<CmsArticle> = {
     {
       field: 'category',
       title: '栏目',
-      minWidth: 80,
+      minWidth: 100,
       formatter: ({ row }) => row.category?.categoryName || '-',
     },
     { field: 'author', title: '作者', width: 120 },
@@ -79,7 +80,7 @@ const gridOptions: VxeGridProps<CmsArticle> = {
       field: 'action',
       title: '操作',
       fixed: 'right',
-      width: 320,
+      width: 420,
       slots: { default: 'action' },
     },
   ],
@@ -144,7 +145,7 @@ async function loadCategories() {
   });
 }
 
-loadCategories();
+void loadCategories();
 
 function handleSearch() {
   gridApi.reload();
@@ -165,10 +166,20 @@ function handleEdit(row: CmsArticle) {
   formDrawerApi.setData({ mode: 'edit', record: row }).open();
 }
 
+async function handlePreview(row: CmsArticle) {
+  try {
+    const result = await previewArticlePage(row.id);
+    window.open(result.previewUrl, '_blank', 'noopener,noreferrer');
+  } catch (error) {
+    console.error(error);
+    message.error('页面预览生成失败');
+  }
+}
+
 function handleDelete(row: CmsArticle) {
   Modal.confirm({
     title: '确认删除',
-    content: `是否删除文章「${row.title}」？`,
+    content: `是否删除文章《${row.title}》？`,
     onOk: async () => {
       await deleteArticle(row.id);
       message.success('删除成功');
@@ -190,7 +201,9 @@ function openReview(action: 'approve' | 'reject', row: CmsArticle) {
 }
 
 async function handleReviewSubmit(comment: string) {
-  if (!reviewArticleId.value) return;
+  if (!reviewArticleId.value) {
+    return;
+  }
 
   try {
     reviewLoading.value = true;
@@ -221,8 +234,7 @@ function canSubmitReview(row: CmsArticle) {
   if (!currentUserId) {
     return false;
   }
-  const creatorId = row.createBy;
-  return row.status === 'DRAFT' && `${creatorId ?? ''}` === `${currentUserId}`;
+  return row.status === 'DRAFT' && `${row.createBy ?? ''}` === `${currentUserId}`;
 }
 
 function canDelete(row: CmsArticle) {
@@ -300,6 +312,9 @@ function statusLabel(status?: CmsArticleStatus) {
       </template>
 
       <template #action="{ row }">
+        <Button type="link" size="small" @click="handlePreview(row)">
+          预览页面
+        </Button>
         <Button type="link" size="small" @click="handleEdit(row)">编辑</Button>
         <Button
           v-if="canSubmitReview(row)"

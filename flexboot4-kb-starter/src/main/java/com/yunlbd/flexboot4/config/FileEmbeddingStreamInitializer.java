@@ -67,12 +67,11 @@ public class FileEmbeddingStreamInitializer {
                             org.springframework.data.redis.connection.stream.ReadOffset.from("0"), true);
                     log.info("Created consumer group '{}' for stream: {}", group, key);
                 } catch (Exception e) {
-                    // Group 可能已存在
-                    String msg = e.getMessage();
-                    if (msg != null && (msg.contains("BUSYGROUP") || msg.contains("already exists"))) {
+                    // Group 可能已存在,检查异常链
+                    if (isGroupAlreadyExistsError(e)) {
                         log.info("Consumer group '{}' already exists for stream: {}", group, key);
                     } else {
-                        log.warn("Failed to create consumer group for stream {}: {} ({})", key, msg, e.getClass().getSimpleName());
+                        log.warn("Failed to create consumer group for stream {}: {}", key, e.getMessage());
                         log.debug("Consumer group creation error detail for stream {}", key, e);
                     }
                 }
@@ -82,5 +81,19 @@ public class FileEmbeddingStreamInitializer {
         } catch (Exception e) {
             log.error("Failed to initialize file embedding stream: {}", key, e);
         }
+    }
+
+    /**
+     * 检查异常链中是否包含消费组已存在的错误
+     */
+    private boolean isGroupAlreadyExistsError(Throwable e) {
+        while (e != null) {
+            String msg = e.getMessage();
+            if (msg != null && (msg.contains("BUSYGROUP") || msg.contains("already exists"))) {
+                return true;
+            }
+            e = e.getCause();
+        }
+        return false;
     }
 }

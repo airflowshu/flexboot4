@@ -91,10 +91,12 @@ const handleFileChange = (event: Event) => {
   const input = event.target as HTMLInputElement;
   const files = input.files;
   if (files && files.length > 0) {
-    const file = files[0];
-    message.success(`已选择文件: ${file.name}`);
-    // TODO: 实现实际上传逻辑
-    console.log('上传文件:', file.name);
+    const file = files.item(0);
+    if (file) {
+      message.success(`Selected file: ${file.name}`);
+      // TODO: implement actual upload logic
+      console.log('Upload file:', file.name);
+    }
   }
   // 清空 input，允许重复选择同一文件
   input.value = '';

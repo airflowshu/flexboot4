@@ -27,8 +27,6 @@ public class BootstrapModuleInfoPrinter {
         boolean mediaPresent = isPresent(classLoader, "com.yunlbd.flexboot4.media.MediaAutoConfiguration");
         boolean sms4jPresent = isPresent(classLoader, "com.yunlbd.flexboot4.config.SmsSupplierConfigDataSource");
 
-        Boolean mediaEnabled = environment.getProperty("media.enabled", Boolean.class);
-
         List<String> modules = new ArrayList<>();
         if (adminPresent) {
             modules.add("admin");
@@ -37,7 +35,7 @@ public class BootstrapModuleInfoPrinter {
             modules.add("kb");
         }
         if (mediaPresent) {
-            modules.add(mediaEnabled == null ? "media" : ("media(enabled=" + mediaEnabled + ")"));
+            modules.add("media");
         }
         if (sms4jPresent) {
             modules.add("sms4j");
@@ -59,19 +57,19 @@ public class BootstrapModuleInfoPrinter {
 
         StringBuilder banner = new StringBuilder();
         banner.append("\n");
-        banner.append(green).append("╔").append("═".repeat(headerLength)).append("╗").append(reset).append("\n");
+        banner.append(green).append("╔").repeat("═", headerLength).append("╗").append(reset).append("\n");
         banner.append(green).append("║ ").append(cyan).append(bold).append("FlexBoot4 Modules Loaded").append(reset).append(green);
         int padding = headerLength - "FlexBoot4 Modules Loaded".length() - 2;
-        banner.append(" ".repeat(padding+1)).append("║").append(reset).append("\n");
-        banner.append(green).append("╠").append("═".repeat(headerLength)).append("╣").append(reset).append("\n");
+        banner.repeat(" ", padding + 1).append("║").append(reset).append("\n");
+        banner.append(green).append("╠").repeat("═", headerLength).append("╣").append(reset).append("\n");
         banner.append(green).append("║ ").append(yellow).append(bold).append(appName).append(reset).append(green);
         padding = headerLength - appName.length() - 2;
-        banner.append(" ".repeat(padding+1)).append("║").append(reset).append("\n");
-        banner.append(green).append("╠").append("═".repeat(headerLength)).append("╣").append(reset).append("\n");
-        banner.append(green).append("║ ").append(cyan).append("  ✓ ").append(modulesStr).append(reset).append(green);
+        banner.repeat(" ", padding + 1).append("║").append(reset).append("\n");
+        banner.append(green).append("╠").repeat("═", headerLength).append("╣").append(reset).append("\n");
+        banner.append(green).append("║ ").append(cyan).append(" Loaded modules: ").append(modulesStr).append(reset).append(green);
         padding = headerLength - modulesStr.length() - 6;
-        banner.append(" ".repeat(Math.max(0, padding+1))).append("║").append(reset).append("\n");
-        banner.append(green).append("╚").append("═".repeat(headerLength)).append("╝").append(reset).append("\n");
+        banner.repeat(" ", Math.max(0, padding + 1)).append("║").append(reset).append("\n");
+        banner.append(green).append("╚").repeat("═", headerLength).append("╝").append(reset).append("\n");
 
         System.out.println(banner);
     }

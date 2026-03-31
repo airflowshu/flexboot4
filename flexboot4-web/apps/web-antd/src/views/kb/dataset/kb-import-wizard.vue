@@ -24,7 +24,6 @@ const props = defineProps<{
 const emit = defineEmits(['close', 'success']);
 
 const currentStep = ref(0);
-const loading = ref(false);
 const uploading = ref(false);
 
 // Step 1: 文件选择
@@ -47,6 +46,7 @@ const config = reactive({
 // Step 3: 数据预览 (暂用模拟数据)
 const previewFiles = ref<UploadFile[]>([]);
 const previewContent = ref('');
+const activePreviewFileId = computed(() => previewFiles.value[0]?.id ?? '');
 
 // Step 4: 确认上传
 const finalFiles = computed(() => selectedFiles.value);
@@ -366,7 +366,7 @@ async function handleStartUpload() {
                 v-for="file in previewFiles"
                 :key="file.id"
                 class="preview-file-item"
-                :class="{ active: file.active }"
+                :class="{ active: file.id === activePreviewFileId }"
               >
                 <IconifyIcon icon="mdi:file-document-outline" class="wizard-primary-icon" />
                 <span class="truncate">{{ file.name }}</span>

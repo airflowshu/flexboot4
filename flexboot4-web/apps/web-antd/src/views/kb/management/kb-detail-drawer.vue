@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type { KnowledgeBase } from '#/api/devops/knowledgebase';
+import type { KbFileRelation, KbMember, KnowledgeBase } from '#/api/devops/knowledgebase';
 
 import { ref } from 'vue';
 
@@ -32,8 +32,8 @@ import KbMemberModal from './kb-member-modal.vue';
 
 const loading = ref(false);
 const kbDetail = ref<KnowledgeBase | null>(null);
-const members = ref<any[]>([]);
-const files = ref<any[]>([]);
+const members = ref<KbMember[]>([]);
+const files = ref<KbFileRelation[]>([]);
 const triggeringIndex = ref(false);
 
 // 模拟模型数据
@@ -73,17 +73,16 @@ const statusLabels: Record<number, string> = {
 async function fetchAll(kbId: string) {
   loading.value = true;
   try {
-    const detailResp = await getKnowledgeBaseById(kbId);
-    kbDetail.value = detailResp.data;
-    selectedModel.value = detailResp.data?.embeddingModel; // 初始化选中的模型
-
-    const membersResp = await getKnowledgeBaseMembers(kbId);
-    members.value = membersResp.data || [];
-    const filesResp = await getKnowledgeBaseFiles(kbId);
-    files.value = filesResp.data || [];
+    const detail = await getKnowledgeBaseById(kbId);
+    kbDetail.value = detail;
+    selectedModel.value = detail?.embeddingModel;
+    const memberList = await getKnowledgeBaseMembers(kbId);
+    members.value = memberList || [];
+    const fileList = await getKnowledgeBaseFiles(kbId);
+    files.value = fileList || [];
   } catch (error) {
-    console.error('加载知识库详情失败:', error);
-    message.error('加载失败');
+    console.error('Failed to load knowledge base detail:', error);
+    message.error('Load failed');
   } finally {
     loading.value = false;
   }
@@ -91,15 +90,16 @@ async function fetchAll(kbId: string) {
 
 // 触发索引
 async function handleTriggerIndex() {
-  if (!props.record?.id) return;
+  const kbId = kbDetail.value?.id;
+  if (!kbId) return;
 
   triggeringIndex.value = true;
   try {
-    await triggerKnowledgeBaseIndex(props.record.id);
-    message.success('索引任务已触发，请稍后查看状态');
+    await triggerKnowledgeBaseIndex(kbId);
+    message.success('Index task triggered');
   } catch (error) {
-    console.error('触发索引失败:', error);
-    message.error('触发失败');
+    console.error('Failed to trigger index:', error);
+    message.error('Trigger failed');
   } finally {
     triggeringIndex.value = false;
   }
@@ -118,13 +118,11 @@ function openMemberModal() {
   }
 }
 
-function handleMemberChange() {
-  if (kbDetail.value?.id) {
-    // 刷新成员列表
-    getKnowledgeBaseMembers(kbDetail.value.id).then((res) => {
-      members.value = res.data || [];
-    });
+async function handleMemberChange() {
+  if (!kbDetail.value?.id) {
+    return;
   }
+  members.value = (await getKnowledgeBaseMembers(kbDetail.value.id)) || [];
 }
 
 const [Drawer, drawerApi] = useVbenDrawer({

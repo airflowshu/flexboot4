@@ -41,7 +41,7 @@ async function loadMembers() {
   loading.value = true;
   try {
     const res = await getKnowledgeBaseMembers(kbId.value);
-    members.value = res.data || [];
+    members.value = res || [];
   } catch (error) {
     console.error('加载成员失败:', error);
     message.error('加载成员失败');

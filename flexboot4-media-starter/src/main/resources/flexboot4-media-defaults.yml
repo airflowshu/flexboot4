@@ -3,4 +3,19 @@
 
 media:
   enabled: true
-
+  callback-base-url: ${MEDIA_CALLBACK_BASE_URL:http://localhost:8080}
+  default-play-protocol: ${MEDIA_DEFAULT_PLAY_PROTOCOL:http-flv}
+  snapshot-biz-type: ${MEDIA_SNAPSHOT_BIZ_TYPE:media_snapshot}
+  gateway-core-threads: ${MEDIA_GATEWAY_CORE_THREADS:2}
+  gateway-max-threads: ${MEDIA_GATEWAY_MAX_THREADS:8}
+  gateway-queue-capacity: ${MEDIA_GATEWAY_QUEUE_CAPACITY:1024}
+  hook-secret-header: ${MEDIA_HOOK_SECRET_HEADER:X-Media-Hook-Signature}
+  hook-timestamp-tolerance-seconds: ${MEDIA_HOOK_TIMESTAMP_TOLERANCE_SECONDS:300}
+  runtime-check-enabled: ${MEDIA_RUNTIME_CHECK_ENABLED:true}
+  runtime-check-initial-delay-millis: ${MEDIA_RUNTIME_CHECK_INITIAL_DELAY_MILLIS:30000}
+  runtime-check-fixed-delay-millis: ${MEDIA_RUNTIME_CHECK_FIXED_DELAY_MILLIS:30000}
+  server-hook-timeout-seconds: ${MEDIA_SERVER_HOOK_TIMEOUT_SECONDS:180}
+  device-keepalive-timeout-seconds: ${MEDIA_DEVICE_KEEPALIVE_TIMEOUT_SECONDS:180}
+  pending-session-timeout-seconds: ${MEDIA_PENDING_SESSION_TIMEOUT_SECONDS:30}
+  streaming-session-timeout-seconds: ${MEDIA_STREAMING_SESSION_TIMEOUT_SECONDS:300}
+  gateway-auto-recover: ${MEDIA_GATEWAY_AUTO_RECOVER:true}

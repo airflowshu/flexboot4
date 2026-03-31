@@ -287,7 +287,7 @@ includeBuild("../flexboot4")  // 相对路径要正确
 ## 下一步
 
 - [查看完整架构文档](STARTER_ARCHITECTURE.md)
-- [SMS4J Starter 接入文档](SMS4J_STARTER.md)
+- [SMS4J Starter 接入文档](../flexboot4-sms4j-starter/SMS4J_STARTER.md)
 - [Admin Starter 文档](../flexboot4-admin-starter/README.md)
 
 ---

@@ -5,12 +5,15 @@ import com.mybatisflex.annotation.Column;
 import com.mybatisflex.annotation.Table;
 import com.yunlbd.flexboot4.common.annotation.DictEnum;
 import com.yunlbd.flexboot4.entity.sys.BaseEntity;
+import com.yunlbd.flexboot4.mybatis.typehandler.JsonbTypeHandler;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+
+import java.util.Map;
 
 /**
  * 短信厂商配置表
@@ -75,7 +78,8 @@ public class Sms4jConfig extends BaseEntity {
     private Integer isDefault;
 
     @Schema(description = "厂商差异化扩展参数，JSON 格式，存储各厂商特有字段")
-    private String extParams;
+    @Column(typeHandler = JsonbTypeHandler.class)
+    private Map<String, Object> extParams;
 
     @ExcelProperty("状态")
     @DictEnum("status")

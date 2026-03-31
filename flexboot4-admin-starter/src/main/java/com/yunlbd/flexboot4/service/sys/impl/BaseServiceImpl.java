@@ -12,6 +12,7 @@ import com.yunlbd.flexboot4.entity.sys.BaseEntity;
 import com.yunlbd.flexboot4.query.DefaultQueryWrapperBuilder;
 import com.yunlbd.flexboot4.query.SearchDtoUtils;
 import com.yunlbd.flexboot4.service.sys.IExtendedService;
+import org.jspecify.annotations.NonNull;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.ResolvableType;
@@ -31,17 +32,17 @@ public class BaseServiceImpl<M extends BaseMapper<T>, T extends BaseEntity> exte
 
     @Override
     @CacheEvict(allEntries = true, cacheResolver = "dynamicCacheResolver")
-    public boolean save(T entity) {
+    public boolean save(@NonNull T entity) {
         boolean ok = super.save(entity);
         if (ok) {
-            bumpVersionsOnWrite(entity != null ? entity.getClass() : resolveEntityClass());
+            bumpVersionsOnWrite(entity.getClass());
         }
         return ok;
     }
 
     @Override
     @CacheEvict(allEntries = true, cacheResolver = "dynamicCacheResolver")
-    public boolean saveBatch(Collection<T> entities) {
+    public boolean saveBatch(@NonNull Collection<T> entities) {
         boolean ok = super.saveBatch(entities);
         if (ok) {
             Class<?> c = firstEntityClass(entities);
@@ -52,7 +53,7 @@ public class BaseServiceImpl<M extends BaseMapper<T>, T extends BaseEntity> exte
 
     @Override
     @CacheEvict(allEntries = true, cacheResolver = "dynamicCacheResolver")
-    public boolean saveOrUpdate(T entity) {
+    public boolean saveOrUpdate(@NonNull T entity) {
         boolean ok = super.saveOrUpdate(entity);
         if (ok) {
             bumpVersionsOnWrite(entity != null ? entity.getClass() : resolveEntityClass());
@@ -62,7 +63,7 @@ public class BaseServiceImpl<M extends BaseMapper<T>, T extends BaseEntity> exte
 
     @Override
     @CacheEvict(allEntries = true, cacheResolver = "dynamicCacheResolver")
-    public boolean remove(QueryWrapper query) {
+    public boolean remove(@NonNull QueryWrapper query) {
         boolean ok = super.remove(query);
         if (ok) {
             bumpVersionsOnWrite(resolveEntityClass());

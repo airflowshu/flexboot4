@@ -186,6 +186,7 @@ export interface KbFileItem {
   parentId?: null | string;
   name?: string;
   fileName?: string;
+  type?: 'FILE' | 'FOLDER';
   isFolder: number;
   fileSize?: number;
   fileExt?: null | string;
@@ -210,6 +211,7 @@ export interface KbFileItem {
   tokenEstimate?: null | string;
   version?: null | string;
   kbId?: string;
+  sysFile?: Partial<KbFileItem>;
 }
 
 /**

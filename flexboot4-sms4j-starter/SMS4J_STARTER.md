@@ -94,10 +94,10 @@ sms:
 ## 接入示例：
 > 以[容联云平台](https://console.yuntongxun.com/)为例，注册进入厂商开发者平台，按照文档获取 `accountSid`、`authToken`、`appId` 等参数，新增一条短信厂商配置后即可使用。
 
-![img.png](images/img.png)
+![img.png](../docs/images/img.png)
 
 - 调用新增厂家配置接口：
-![img_1.png](images/img_1.png)
+![img_1.png](../docs/images/img_1.png)
 
 - 请求示例参数配置：
 ```json
@@ -116,16 +116,16 @@ sms:
 }
 ```
 - IDEA中配置测试用例
-![img_2.png](images/img_2.png)
+![img_2.png](../docs/images/img_2.png)
 
 - 配置完成后运行测试用例，观察日志输出，是否成功接收到测试短信，如有响应错误码，参考官方提供的错误码合集；其他厂商类似配置
 
-![img_3.png](images/img_3.png)
+![img_3.png](../docs/images/img_3.png)
 
 ## 相关文档
 
-- [Starter 架构](./STARTER_ARCHITECTURE.md)
-- [接入指南](./guide.md)
-- [快速开始](./QUICKSTART.md)
-- [常见问题](./FAQ.md)
+- [Starter 架构](../docs/STARTER_ARCHITECTURE.md)
+- [接入指南](../docs/guide.md)
+- [快速开始](../docs/QUICKSTART.md)
+- [常见问题](../docs/FAQ.md)
 

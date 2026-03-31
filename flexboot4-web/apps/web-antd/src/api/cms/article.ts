@@ -36,6 +36,11 @@ export interface ReviewRequest {
   reviewComment?: string;
 }
 
+export interface PreviewPageResponse {
+  previewUrl: string;
+  relativeUrl: string;
+}
+
 export function getArticlePage(params: SearchRequest) {
   return requestClient.post<CmsPageResult<CmsArticle>>(
     '/admin/cms/article/page',
@@ -77,4 +82,8 @@ export function rejectArticle(id: string, data: ReviewRequest) {
 
 export function incrementArticleViewCount(id: string) {
   return requestClient.post<boolean>(`/admin/cms/article/${id}/view`);
+}
+
+export function previewArticlePage(id: string) {
+  return requestClient.post<PreviewPageResponse>(`/admin/cms/article/${id}/preview`);
 }

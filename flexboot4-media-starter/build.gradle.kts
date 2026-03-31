@@ -10,7 +10,18 @@ description = "flexboot4 - Media Starter"
 dependencies {
     api(project(":flexboot4-admin-starter"))
 
+    implementation(libs.mybatisFlexStarter)
+    annotationProcessor(libs.mybatisFlexProcessor)
+
+    compileOnly("org.projectlombok:lombok")
+    annotationProcessor("org.projectlombok:lombok")
+    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
+
+    implementation(libs.jainSipApi)
+    implementation(libs.jainSipRi)
+
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 publishing {

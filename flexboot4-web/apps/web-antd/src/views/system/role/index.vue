@@ -222,7 +222,7 @@ function cleanMenuData(menus: any[]): any[] {
 // 加载菜单树
 const loadMenuTree = async () => {
   try {
-    const menus = await getMenuTree({});
+    const menus = await getMenuTree({ pageNumber: 1, pageSize: 1000 });
     // 先转换为树形结构
     const treeData = toTree(menus);
     // 转换数据格式，添加 key 字段，并清理 parent 引用避免循环
@@ -251,19 +251,6 @@ const loadRoleMenus = async (roleId: string) => {
 };
 
 // 从菜单树中递归提取所有菜单ID
-function extractMenuIds(menus: MenuTreeNode[]): string[] {
-  const ids: string[] = [];
-  const collect = (nodes: MenuTreeNode[]) => {
-    for (const node of nodes) {
-      ids.push(node.key);
-      if (node.children && node.children.length > 0) {
-        collect(node.children);
-      }
-    }
-  };
-  collect(menus);
-  return ids;
-}
 
 // 处理角色行点击
 function handleRoleRowClick(row: RoleRecord) {
@@ -470,7 +457,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
             <div
               class="h-full rounded-[var(--radius)] border border-border bg-card p-4"
             >
-              <Grid @cell-click="({ row }) => handleRoleRowClick(row)">
+              <Grid>
                 <template #toolbar-buttons>
                   <AccessControl :codes="['super', 'admin']" type="role">
                     <Button type="primary" @click="handleAdd">
@@ -480,20 +467,20 @@ const [Drawer, drawerApi] = useVbenDrawer({
                   </AccessControl>
                 </template>
 
-                <template #status="{ row }">
-                  <Tag v-if="row.status === 1" color="success">启用</Tag>
+                <template #status="slotProps">
+                  <Tag v-if="slotProps.row.status === 1" color="success">启用</Tag>
                   <Tag v-else color="error">禁用</Tag>
                 </template>
 
-                <template #action="{ row }">
-                  <Button size="small" type="link" @click="handleEdit(row)">
+                <template #action="slotProps">
+                  <Button size="small" type="link" @click="handleEdit(slotProps.row)">
                     编辑
                   </Button>
                   <Button
                     size="small"
                     type="link"
                     danger
-                    @click="handleDelete(row)"
+                    @click="handleDelete(slotProps.row)"
                   >
                     删除
                   </Button>

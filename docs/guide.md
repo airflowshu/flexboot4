@@ -308,7 +308,7 @@ psql -U postgres -d flexboot4 -f docs/sql/sms4j_config_pg.sql
 - `PUT /api/admin/sms/config/{id}`
 - `POST /api/admin/sms/config/page`
 
-更多见：[SMS4J Starter 接入说明](./SMS4J_STARTER.md)
+更多见：[SMS4J Starter 接入说明](../flexboot4-sms4j-starter/SMS4J_STARTER.md)
 
 ---
 

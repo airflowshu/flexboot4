@@ -366,3 +366,36 @@ mybatis-flex:
 ## 📄 开源协议
 
 本项目采用 [Apache License 2.0](LICENSE) 协议开源.
+
+## CMS 模板管理与静态发布（v1）
+
+`flexboot4-cms-starter` 已补充模板文件管理与静态发布能力，默认模板根目录为 `webapp/html/web`。
+
+### 能力说明
+
+- 递归扫描并管理全部 `.html` 模板文件
+- 后台页面直接编辑源码并实时 iframe 预览
+- 保存时直接回写模板文件系统
+- 发布时原样复制当前模板目录并生成 ZIP 包
+- 记录发布批次、目录、ZIP、状态、操作者与错误信息
+
+### 关键配置
+
+```yaml
+cms:
+  template:
+    root-dir: ${CMS_TEMPLATE_ROOT_DIR:${user.dir}/webapp/html/web}
+    asset-base-url: ${CMS_TEMPLATE_ASSET_BASE_URL:http://localhost:8080}
+    publish-dir: ${CMS_TEMPLATE_PUBLISH_DIR:${cms.render.output-dir}/site-published}
+```
+
+### 管理入口
+
+- 后端接口前缀：`/api/admin/cms/template`
+- 前端页面：`/cms/template/index`
+- 菜单权限：`cms:template:view`、`cms:template:edit`、`cms:template:publish`
+
+### SQL
+
+- 表结构：`docs/sql/cms_pg.sql`
+- 菜单：`docs/sql/cms_menu_init_pg.sql`

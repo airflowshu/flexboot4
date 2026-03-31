@@ -153,11 +153,6 @@ function refreshList() {
 }
 
 // 知识库类型标签颜色
-const typeColors: Record<string, string> = {
-  public: 'blue',
-  team: 'purple',
-  private: 'orange',
-};
 
 // 知识库类型标签文本
 const typeLabels: Record<string, string> = {
@@ -172,10 +167,6 @@ const typeIcons: Record<string, string> = {
 };
 
 // 状态标签颜色
-const statusColors: Record<number, string> = {
-  0: 'error',
-  1: 'success',
-};
 
 // 状态标签文本
 const statusLabels: Record<number, string> = {

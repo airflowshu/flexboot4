@@ -196,3 +196,46 @@ COMMENT ON COLUMN cms_article_tag.remark IS '备注';
 CREATE INDEX IF NOT EXISTS idx_cms_article_tag_article_id ON cms_article_tag(article_id);
 CREATE INDEX IF NOT EXISTS idx_cms_article_tag_tag_id ON cms_article_tag(tag_id);
 
+
+CREATE TABLE IF NOT EXISTS cms_template_publish_record (
+    id VARCHAR(64) PRIMARY KEY,
+    publish_name VARCHAR(200) NOT NULL,
+    template_root_dir VARCHAR(500) NOT NULL,
+    publish_dir VARCHAR(500) NOT NULL,
+    zip_file_path VARCHAR(500),
+    index_relative_url VARCHAR(500),
+    zip_relative_url VARCHAR(500),
+    file_count INTEGER DEFAULT 0,
+    status VARCHAR(20) DEFAULT 'SUCCESS',
+    error_message TEXT,
+    version BIGINT DEFAULT 0,
+    del_flag INTEGER DEFAULT 0,
+    create_time TIMESTAMP DEFAULT now(),
+    last_modify_time TIMESTAMP DEFAULT now(),
+    create_by VARCHAR(64),
+    last_modify_by VARCHAR(64),
+    remark TEXT
+);
+
+COMMENT ON TABLE cms_template_publish_record IS 'CMS 模板发布记录表';
+COMMENT ON COLUMN cms_template_publish_record.id IS '主键ID';
+COMMENT ON COLUMN cms_template_publish_record.publish_name IS '发布名称';
+COMMENT ON COLUMN cms_template_publish_record.template_root_dir IS '模板根目录';
+COMMENT ON COLUMN cms_template_publish_record.publish_dir IS '发布目录';
+COMMENT ON COLUMN cms_template_publish_record.zip_file_path IS '压缩包物理路径';
+COMMENT ON COLUMN cms_template_publish_record.index_relative_url IS '发布首页相对URL';
+COMMENT ON COLUMN cms_template_publish_record.zip_relative_url IS '压缩包相对URL';
+COMMENT ON COLUMN cms_template_publish_record.file_count IS '发布文件数';
+COMMENT ON COLUMN cms_template_publish_record.status IS '发布状态：SUCCESS/FAILED';
+COMMENT ON COLUMN cms_template_publish_record.error_message IS '错误信息';
+COMMENT ON COLUMN cms_template_publish_record.version IS '版本号（乐观锁预留）';
+COMMENT ON COLUMN cms_template_publish_record.del_flag IS '逻辑删除标记：0-未删除，1-已删除';
+COMMENT ON COLUMN cms_template_publish_record.create_time IS '创建时间';
+COMMENT ON COLUMN cms_template_publish_record.last_modify_time IS '最后修改时间';
+COMMENT ON COLUMN cms_template_publish_record.create_by IS '创建人';
+COMMENT ON COLUMN cms_template_publish_record.last_modify_by IS '最后修改人';
+COMMENT ON COLUMN cms_template_publish_record.remark IS '备注';
+
+CREATE INDEX IF NOT EXISTS idx_cms_template_publish_record_status ON cms_template_publish_record(status);
+CREATE INDEX IF NOT EXISTS idx_cms_template_publish_record_create_time ON cms_template_publish_record(create_time);
+

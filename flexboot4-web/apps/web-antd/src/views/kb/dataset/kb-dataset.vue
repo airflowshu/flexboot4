@@ -51,51 +51,6 @@ const props = defineProps<{
 const emit = defineEmits(['back']);
 
 // 文件分类图标配置
-const fileCategories = [
-  {
-    id: 'image',
-    name: '图片',
-    icon: 'lucide:image',
-    exts: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'],
-  },
-  {
-    id: 'document',
-    name: '文档',
-    icon: 'lucide:file-text',
-    exts: [
-      'pdf',
-      'doc',
-      'docx',
-      'xls',
-      'xlsx',
-      'ppt',
-      'pptx',
-      'txt',
-      'md',
-      'csv',
-    ],
-  },
-  {
-    id: 'video',
-    name: '视频',
-    icon: 'lucide:video',
-    exts: ['mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv'],
-  },
-  {
-    id: 'audio',
-    name: '音频',
-    icon: 'lucide:music',
-    exts: ['mp3', 'wav', 'ogg', 'flac', 'aac'],
-  },
-  {
-    id: 'archive',
-    name: '压缩包',
-    icon: 'lucide:archive',
-    exts: ['zip', 'rar', '7z', 'tar', 'gz', 'bz2'],
-  },
-  { id: 'other', name: '其他', icon: 'lucide:file', exts: [] },
-];
-
 // 根据文件扩展名获取图标
 function getFileIcon(file: Record<string, any>): string {
   // 文件夹
@@ -484,10 +439,6 @@ function handleSearch() {
 }
 
 // 清空搜索
-function clearSearch() {
-  searchKeyword.value = '';
-}
-
 // 高亮显示匹配文本
 function highlightText(text: string): string {
   if (!searchKeyword.value.trim() || !text) {

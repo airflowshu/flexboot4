@@ -22,6 +22,8 @@ commonsCompress = "1.28.0"
 poi = "5.5.1"
 oshi = "6.9.3"
 sms4j = "3.3.5"
+jainSipApi = "1.2.1.4"
+jainSipRi = "1.2.339"
 
 [libraries]
 mybatisFlexStarter = { module = "com.mybatis-flex:mybatis-flex-spring-boot4-starter", version.ref = "mybatisFlex" }
@@ -53,6 +55,8 @@ oshiCore = { module = "com.github.oshi:oshi-core-java25", version.ref = "oshi" }
 sms4jBom = { module = "org.dromara.sms4j:sms4j", version.ref = "sms4j" }
 sms4jCore = { module = "org.dromara.sms4j:sms4j-core", version.ref = "sms4j" }
 sms4jSpringBoot = { module = "org.dromara.sms4j:sms4j-spring-boot-starter", version.ref = "sms4j" }
+jainSipApi = { module = "javax.sip:jain-sip-api", version.ref = "jainSipApi" }
+jainSipRi = { module = "javax.sip:jain-sip-ri", version.ref = "jainSipRi" }
 
 [plugins]
 springBoot = { id = "org.springframework.boot", version.ref = "springBoot" }

@@ -44,6 +44,7 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
         );
         // 1. Super Admin (userId = "1"): Return all enabled menus
         if (SYS_SUPER_USER_ID.equals(userId)) {
+            assert fullTree != null;
             return buildVueRoutes(fullTree);
         }
 

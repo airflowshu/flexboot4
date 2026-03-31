@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { h, ref } from 'vue';
+import { ref } from 'vue';
 
 import {
   CameraOutlined,
@@ -24,19 +24,7 @@ const handleChange = (info: any) => {
 };
 
 // 自定义上传按钮组件
-const UploadButton = (props: { loading: boolean }) => {
-  return h(
-    'div',
-    {
-      class: 'custom-upload-btn',
-    },
-    [
-      props.loading
-        ? h(CloudUploadOutlined, { spin: true, style: { fontSize: '24px' } })
-        : h(CameraOutlined, { style: { fontSize: '24px' } }),
-    ],
-  );
-};
+
 </script>
 
 <template>

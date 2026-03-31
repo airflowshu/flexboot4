@@ -16,6 +16,10 @@ export interface DictItem {
   version: number;
 }
 
+export interface DictItemCreateRequest extends Partial<DictItem> {
+  typeId?: string;
+}
+
 export interface DictType {
   id: string;
   name: string;
@@ -73,7 +77,7 @@ export function getDictItemList(params: SearchRequest) {
 /**
  * Create dict item
  */
-export function createDictItem(data: Partial<DictItem>) {
+export function createDictItem(data: DictItemCreateRequest) {
   return requestClient.post('/admin/dict-item', data);
 }
 

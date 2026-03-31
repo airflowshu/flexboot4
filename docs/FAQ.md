@@ -391,7 +391,7 @@ http://localhost:8080/scalar/index.html
 |------|------|
 | [STARTER_ARCHITECTURE.md](STARTER_ARCHITECTURE.md) | Starter 架构设计 |
 | [QUICKSTART.md](QUICKSTART.md) | 快速开始指南 |
-| [SMS4J_STARTER.md](SMS4J_STARTER.md) | SMS4J Starter 接入说明 |
+| [SMS4J_STARTER.md](../flexboot4-sms4j-starter/SMS4J_STARTER.md) | SMS4J Starter 接入说明 |
 | [flexboot4-admin-starter/README.md](../flexboot4-admin-starter/README.md) | Admin Starter 使用说明 |
 
 ---

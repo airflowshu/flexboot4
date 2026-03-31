@@ -3,7 +3,7 @@ import type { RoleRecord } from '#/api/system/user';
 
 import { ref } from 'vue';
 
-import { useVbenDrawer, useVbenForm, z } from '@vben/common-ui';
+import { useVbenDrawer, useVbenForm } from '@vben/common-ui';
 
 import { message } from 'ant-design-vue';
 

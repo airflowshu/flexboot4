@@ -37,6 +37,13 @@ import UserDrawer from './user-drawer.vue';
 
 defineOptions({ name: 'SystemUser' });
 
+type TreeKey = number | string;
+type DeptTreeNode = DeptRecord & {
+  key: string;
+  children?: DeptTreeNode[];
+  isRoot?: boolean;
+};
+
 const [Drawer, drawerApi] = useVbenDrawer({
   connectedComponent: UserDrawer,
   destroyOnClose: true,
@@ -61,14 +68,16 @@ const statusOptions = [
 const selectedStatus = ref<'' | number>('');
 
 // 部门树数据
-const deptTreeData = ref<DeptRecord[]>([]);
+const deptTreeData = ref<DeptTreeNode[]>([]);
 
-const treeData = computed(() => {
-  const allDeptNode = {
+const treeData = computed<DeptTreeNode[]>(() => {
+  const allDeptNode: DeptTreeNode = {
     id: 'ALL',
-    deptName: '全部部门',
+    parentId: '0',
+    deptName: '??????',
     children: [],
-    status: 1, // 默认为启用状态，用于显示绿色对勾
+    orderNo: 0,
+    status: 1, // ????????????????????????
     key: 'ALL',
     isRoot: true,
   };
@@ -82,14 +91,15 @@ const selectedKeys = ref<string[]>(['ALL']);
 const expandedKeys = ref<string[]>([]);
 
 // 处理树节点选择
-function handleTreeSelect(keys: string[], { node: _node }: any) {
+function handleTreeSelect(keys: TreeKey[]) {
   if (keys.length > 0) {
-    selectedKeys.value = keys;
+    selectedKeys.value = keys.map(String);
     const key = keys[0];
-    selectedDeptId.value = key === 'ALL' ? null : key;
+    selectedDeptId.value =
+      typeof key === 'undefined' || key === 'ALL' ? null : String(key);
     gridApi.reload();
   } else {
-    // 如果取消选中，默认回退到“全部部门”
+    // ?????????????????????????????
     selectedKeys.value = ['ALL'];
     selectedDeptId.value = null;
     gridApi.reload();
@@ -97,26 +107,24 @@ function handleTreeSelect(keys: string[], { node: _node }: any) {
 }
 
 // 将平铺数据转换为树形结构
-function listToTree(list: DeptRecord[]): DeptRecord[] {
-  const map = new Map<
-    string,
-    DeptRecord & { children?: DeptRecord[]; key: string }
-  >();
-  const roots: (DeptRecord & { children?: DeptRecord[]; key: string })[] = [];
+function listToTree(list: DeptRecord[]): DeptTreeNode[] {
+  const map = new Map<string, DeptTreeNode>();
+  const roots: DeptTreeNode[] = [];
 
-  // 第一遍：建立所有节点的映射
+  // ????????????????????
   for (const item of list) {
     map.set(item.id, { ...item, children: [], key: item.id });
   }
 
-  // 第二遍：建立父子关系
-  for (const node of list) {
-    const parentId =
-      node.parentId === '0' || node.parentId === '0' ? null : node.parentId;
+  // ???????????????
+  for (const item of list) {
+    const node = map.get(item.id);
+    if (!node) continue;
+    const parentId = item.parentId === '0' ? null : item.parentId;
     if (parentId && map.has(parentId)) {
-      map.get(parentId)!.children!.push(map.get(node.id)!);
+      map.get(parentId)!.children!.push(node);
     } else {
-      roots.push(map.get(node.id)!);
+      roots.push(node);
     }
   }
 
@@ -268,7 +276,9 @@ const gridOptions: VxeGridProps<UserRecord> = {
       const response = await exportUsers(exportParams);
       // 从响应头中提取文件名
       const contentDisposition =
-        (response.headers?.['content-disposition'] as string) || '';
+        response.headers?.['content-disposition'] ||
+        response.headers?.['Content-Disposition'] ||
+        '';
       const fileNameMatch = contentDisposition.match(
         /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/,
       );
