@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:yl="http://yl-platform.com/yl">
+<head>
+    
+    <meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="icon" href="/public/images/favicon.ico" type="image/x-icon">
+	<link rel="stylesheet" href="/template/1/default/css/style.css">
+	<link rel="stylesheet" href="/template/1/default/css/swiper-bundle.min.css">
+	<link rel="stylesheet" href="/template/1/default/css/base-79bd7df963.css">
+	<link rel="stylesheet" href="/template/1/default/css/mobile-b0cf976afc.css" media="screen and (max-width: 1023px)">
+	<link rel="stylesheet" href="/template/1/default/css/pc-5189bf2023.css" media="screen and (min-width: 1024px)">
+	<script src="/template/1/default/js/jquery-3.7.1.min.js"></script>
+	<script src="/template/1/default/js/swiper-bundle.min.js"></script>
+
+    <link href="/template/1/default/css/wangeditor.css" rel="stylesheet">
+    <title>聚焦市场新态势，共谋发展新篇章 - 6.1.1 铭飞MCms</title>
+    <style>
+        :root {
+            --primary-blue: #0066ff;
+            --text-dark: #333333;
+            --text-gray: #999999;
+            --bg-body: #f5f7f9;
+            --container-radius: 24px;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-dark);
+            margin: 0;
+            padding: 0;
+        }
+
+        .main-content {
+            padding: 40px 0 80px;
+        }
+
+        /* 极简面包屑 */
+        .page-breadcrumb {
+            max-width: 1200px;
+            margin: 0 auto 24px;
+            font-size: 14px;
+            color: var(--text-gray);
+        }
+        .page-breadcrumb a {
+            color: var(--text-gray);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        .page-breadcrumb a:hover {
+            color: var(--primary-blue);
+        }
+        .page-breadcrumb .sep {
+            margin: 0 8px;
+        }
+
+        /* 主体容器 - 参考德生设计 */
+        .article-card {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: var(--container-radius);
+            padding: 80px 100px; /* 超大呼吸感内边距 */
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+            box-sizing: border-box;
+        }
+
+        /* 标题部分 */
+        .article-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+        .article-header h1 {
+            font-size: 32px;
+            color: var(--text-dark);
+            margin: 0 0 24px;
+            line-height: 1.4;
+            font-weight: 700;
+        }
+        .article-info {
+            font-size: 14px;
+            color: var(--text-gray);
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+        }
+        .article-info span {
+            display: inline-flex;
+            align-items: center;
+        }
+
+        /* 内容正文 */
+        .article-body {
+            font-size: 18px;
+            line-height: 1.8;
+            color: #444;
+            overflow: hidden;
+        }
+        .article-body p {
+            margin-bottom: 25px;
+        }
+
+        /* 底部导航 - 参考德生上一篇下一篇 */
+        .article-footer {
+            margin-top: 60px;
+            padding-top: 40px;
+            border-top: 1px solid #eeeeee;
+        }
+        .nav-links {
+            display: flex;
+            justify-content: space-between;
+            align-items: center; /* 垂直居中 */
+            font-size: 16px;
+            width: 100%;
+        }
+        .prev-box, .next-box {
+            flex: 1;
+            min-width: 0;
+        }
+        .next-box {
+            text-align: right;
+            display: flex;
+            justify-content: flex-end;
+        }
+        .nav-link-item {
+            text-decoration: none;
+            color: #555;
+            transition: color 0.3s;
+            max-width: 100%; /* 在 box 内部填满 */
+            display: inline-flex;
+            align-items: center;
+            white-space: nowrap;
+        }
+        .nav-link-item:hover {
+            color: var(--primary-blue);
+        }
+        .nav-text {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* 返回列表按钮 */
+        .back-to-list {
+            margin-top: 60px;
+            text-align: center;
+        }
+        .btn-black {
+            display: inline-block;
+            padding: 12px 40px;
+            background: #181818;
+            color: #fff;
+            border-radius: 50px;
+            text-decoration: none;
+            font-size: 15px;
+            transition: all 0.3s ease;
+        }
+        .btn-black:hover {
+            background: #333;
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 1024px) {
+            .article-card {
+                padding: 40px 30px;
+                margin: 0 15px;
+            }
+            .article-header h1 {
+                font-size: 24px;
+            }
+        }
+
+        /* wangEditor 5 内容展示补全样式 */
+        .editor-content-view {
+            word-wrap: break-word;
+        }
+        .editor-content-view p {
+            line-height: 1.8;
+            margin: 15px 0 !important;
+            display: block !important;
+        }
+        .editor-content-view a {
+            color: var(--primary-blue);
+            text-decoration: underline;
+        }
+        .editor-content-view ul,
+        .editor-content-view ol {
+            display: block !important;
+            padding-left: 2em !important;
+            margin: 15px 0 !important;
+        }
+        /* 针对 base.css 中的 all: unset 进行强制恢复 */
+        .editor-content-view ul {
+            list-style-type: disc !important;
+        }
+        .editor-content-view ol {
+            list-style-type: decimal !important;
+        }
+        .editor-content-view li {
+            display: list-item !important;
+            list-style: inherit !important;
+            line-height: 1.8;
+            margin: 5px 0 !important;
+        }
+        /* 针对可能存在的 inside 需求 */
+        .editor-content-view ul, .editor-content-view ol {
+            list-style-position: outside !important;
+        }
+        
+        .editor-content-view blockquote {
+            display: block !important;
+            border-left: 5px solid #d0e5f2 !important;
+            padding: 15px 20px !important;
+            background-color: #f1f1f1 !important;
+            margin: 20px 0 !important;
+            color: #666 !important;
+            font-style: italic !important;
+        }
+        .editor-content-view table {
+            display: table !important;
+            border-collapse: collapse !important;
+            width: 100% !important;
+            margin: 20px 0 !important;
+        }
+        .editor-content-view table td,
+        .editor-content-view table th {
+            border: 1px solid #ccc !important;
+            min-width: 50px;
+            height: 30px;
+            padding: 8px !important;
+        }
+        .editor-content-view table th {
+            background-color: #f1f1f1 !important;
+        }
+        .editor-content-view pre {
+            display: block !important;
+            background-color: #f8f8f8 !important;
+            padding: 15px !important;
+            border-radius: 5px !important;
+            margin: 20px 0 !important;
+            overflow-x: auto !important;
+        }
+        .editor-content-view pre code {
+            display: block !important;
+            font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace !important;
+            all: initial !important; /* 针对 pre/code 中的 all: unset */
+            font-family: inherit !important;
+        }
+    </style>
+</head>
+<body>
+    <header class='header' xmlns:yl="http://yl-platform.com/yl">
+	<link rel="stylesheet" href="/template/1/default/css/style.css">
+
+	<!-- PC端头部 -->
+	<div class='PC'>
+		<div class='header--content width-inner'>
+			<a href="/index.html" class='item-01'>
+				<img src="/template/1/default/img/logo.png" alt=''>
+			</a>
+			<div class='item-02'>
+				<nav class='nav'>
+<!--					<a href="/index.html">首页</a>-->
+					
+						<div class='nav-item dl'>
+							<a class='nav-li dt'
+							   href="/product/index.html">产品中心</a>
+							<div class='nav-submenu dd'>
+								
+									<a href="/product/zhihuijianguan/index.html" class='li'>智慧监管</a>
+								
+							</div>
+						</div>
+					
+						<div class='nav-item dl'>
+							<a class='nav-li dt'
+							   href="/solution/index.html">解决方案</a>
+							<div class='nav-submenu dd'>
+								
+									<a href="/solution/systemIntegration/index.html" class='li'>系统集成</a>
+								
+									<a href="/solution/ziranziyuan/index.html" class='li'>自然资源</a>
+								
+									<a href="/solution/nongyenongcun/index.html" class='li'>农业农村</a>
+								
+									<a href="/solution/zhihuichengshi/index.html" class='li'>智慧城市</a>
+								
+									<a href="/solution/zhihuijiaoyu/index.html" class='li'>智慧教育</a>
+								
+									<a href="/solution/zhihuiyingji/index.html" class='li'>智慧应急</a>
+								
+									<a href="/solution/zhihuishuili/index.html" class='li'>智慧水利</a>
+								
+									<a href="/solution/zhihuihuanbao/index.html" class='li'>智慧环保</a>
+								
+									<a href="/solution/zhihuidizhi/index.html" class='li'>智慧地质</a>
+								
+									<a href="/solution/dilixinxifuwu/index.html" class='li'>地理信息服务</a>
+								
+							</div>
+						</div>
+					
+						<div class='nav-item dl'>
+							<a class='nav-li dt'
+							   href="/case/index.html">典型案例</a>
+							<div class='nav-submenu dd'>
+								
+									<a href="/case/xitongjicheng/index.html" class='li'>系统集成</a>
+								
+									<a href="/case/ziranziyuan/index.html" class='li'>自然资源</a>
+								
+									<a href="/case/nongyenongcun/index.html" class='li'>农业农村</a>
+								
+									<a href="/case/zhihuichengshi/index.html" class='li'>智慧城市</a>
+								
+									<a href="/case/jianguanpingtai/index.html" class='li'>监管平台</a>
+								
+									<a href="/case/zhihuishuili/index.html" class='li'>智慧水利</a>
+								
+									<a href="" class='li'>其他</a>
+								
+							</div>
+						</div>
+					
+						<div class='nav-item dl'>
+							<a class='nav-li dt active'
+							   href="/news/index.html">新闻中心</a>
+							<div class='nav-submenu dd'>
+								
+									<a href="/news/company/index.html" class='li active'>公司新闻</a>
+								
+									<a href="/news/industry/index.html" class='li'>行业新闻</a>
+								
+									<a href="/news/topics/index.html" class='li'>专题活动</a>
+								
+							</div>
+						</div>
+					
+						<div class='nav-item dl'>
+							<a class='nav-li dt'
+							   href="/about/profile/index.html">关于我们</a>
+							<div class='nav-submenu dd'>
+								
+									<a href="/about/profile/index.html" class='li'>公司简介</a>
+								
+							</div>
+						</div>
+					
+				</nav>
+			</div>
+		</div>
+	</div>
+	<div class='popup-bgc'>
+		<div class='popup-filter'></div>
+	</div>
+</header>
+
+    <main class="main-content">
+        <!-- 面包屑 -->
+        <nav class="page-breadcrumb">
+            <a href="/index.html">首页</a>
+            <span class="sep">></span>
+            <a href="/news/company/index.html">公司新闻</a>
+            <span class="sep">></span>
+            <span>详情正文</span>
+        </nav>
+
+        <!-- 文章主体 -->
+        <article class="article-card">
+            <div class="article-header">
+                <h1>聚焦市场新态势，共谋发展新篇章</h1>
+                <div class="article-info">
+                    <span>2026-03-12</span>
+<!--                    <span th:if="${article.contentSource}">来源：ai编写</span>-->
+                </div>
+            </div>
+
+            <div class="article-body editor-content-view"><p>&nbsp;&nbsp;&nbsp;&nbsp;400012为深入分析当前市场环境变化，明确下半年业务发展方向，进一步提升公司市场竞争力和品牌影响力，[公司名称]于[日期]在[地点/会议室名称]成功召开了2024年度中期市场战略会议。公司高层领导、各事业部负责人及市场营销中心全体成员共同参与了此次会议。</p><p>&nbsp;&nbsp;&nbsp;&nbsp;会议伊始，[公司高层领导姓名/职务]发表了开场致辞。他强调，在当前快速变化的市场环境下，我们需要保持敏锐的洞察力和高效的执行力，坚持“以客户为中心”的理念，持续优化产品结构与服务体系。同时，他对上半年市场营销工作取得的成绩给予了充分肯定，并对全体市场人员的辛勤付出表示感谢。</p><p>&nbsp;&nbsp;&nbsp;&nbsp;会上，市场营销中心负责人[姓名/职务]围绕上半年市场数据、重点项目进展、竞品动态等方面进行了详细汇报。通过多维度的数据分析，全面复盘了上半年营销工作中的亮点与不足，并结合行业趋势提出了针对性的改进建议。</p><table border="0" width="100%" cellpadding="0" cellspacing="0"><tbody><tr><th>表头1</th><th>表头2</th><th>表头3</th><th>表头4</th><th>表头5</th></tr><tr><td>行一</td><td>行一x</td><td>行一v</td><td>行一b</td><td>行一n</td></tr><tr><td>行二</td><td>行二x</td><td>行二v</td><td>行二b</td><td>行二n</td></tr><tr><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td></tr></tbody></table><p><br/></p><p>&nbsp;&nbsp;&nbsp;&nbsp;随后，各区域市场负责人分别就本地市场的实际运作情况、客户反馈及下半年营销计划进行了分享与交流。与会人员围绕“提升品牌影响力”、“优化客户体验”、“数字化转型赋能营销”等核心议题展开了深入讨论，现场气氛热烈，思维碰撞频繁。</p><p>&nbsp;&nbsp;&nbsp;&nbsp;会议最后，[公司高层领导姓名/职务]对下半年市场工作提出了<span style="background-color: rgb(249, 150, 59);"></span>明确要求：</p><ol></ol><ul><li><strong style="font-size: 16px; background-color: inherit;">强化目标导向</strong><span style="font-size: 16px; background-color: inherit;">，细化任务分解，确保各项指标落地见效；</span></li><li><p><strong>加强协同联动</strong>，打破部门壁垒，形成市场合力；</p></li><li><p><strong>注重创新驱动</strong>，积极探索新模式、新渠道，抢占市场先机；</p></li><li><p><strong>提升服务意识</strong>，以客户满意为最高标准，持续提升品牌口碑。</p></li></ul><p>&nbsp;&nbsp;&nbsp;&nbsp;本次市场会议不仅为下半年工作指明了方向，也进一步凝聚了团队共识，激发了全员士气。未来，[公司名称]将继续秉持创新、务实、共赢的理念，紧跟市场步伐，奋力开创高质量发展新局面！<span style="background-color: rgb(194, 79, 74);"></span></p></div>
+
+            <!-- 上下篇导航 -->
+            <div class="article-footer">
+                <div class="nav-links">
+                    <div class="prev-box">
+                        <a href="/news/company/detail/400013.html"
+                           class="nav-link-item prev">
+                            <span style="flex-shrink: 0;">< 上一篇：</span>
+                            <span class="nav-text">聚焦市场新态势，共谋发展新篇章</span>
+                        </a>
+                    </div>
+                    <div class="next-box">
+                        <a href="/news/company/detail/400011.html"
+                           class="nav-link-item next">
+                            <span>下一篇：</span>
+                            <span class="nav-text">聚焦市场新态势，共谋发展新篇章</span>
+                            <span> ></span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 返回上一页按钮 -->
+<!--            <div class="back-to-list">-->
+<!--                <a th:href="'/' + ${category.categoryPath} + '/index.html'" class="btn-black">返回列表</a>-->
+<!--            </div>-->
+        </article>
+    </main>
+
+    <footer xmlns:yl="http://yl-platform.com/yl">
+    <!-- 页脚主内容 -->
+    <div class="footer-main">
+        <div class="width-inner">
+            <div class="footer-container">
+                <!-- 动态导航列 (取前4个顶级栏目) -->
+                
+                    <div class="footer-col">
+                        <h2>
+                            <a href="/product/index.html">产品中心</a>
+                        </h2>
+                        <ul>
+                            
+                                <li>
+                                    <a href="/product/zhihuijianguan/index.html">智慧监管</a>
+                                </li>
+                            
+                        </ul>
+                    </div>
+                
+                    <div class="footer-col">
+                        <h2>
+                            <a href="/solution/index.html">解决方案</a>
+                        </h2>
+                        <ul>
+                            
+                                <li>
+                                    <a href="/solution/systemIntegration/index.html">系统集成</a>
+                                </li>
+                            
+                                <li>
+                                    <a href="/solution/ziranziyuan/index.html">自然资源</a>
+                                </li>
+                            
+                                <li>
+                                    <a href="/solution/nongyenongcun/index.html">农业农村</a>
+                                </li>
+                            
+                                <li>
+                                    <a href="/solution/zhihuichengshi/index.html">智慧城市</a>
+                                </li>
+                            
+                        </ul>
+                    </div>
+                
+                    <div class="footer-col">
+                        <h2>
+                            <a href="/case/index.html">典型案例</a>
+                        </h2>
+                        <ul>
+                            
+                                <li>
+                                    <a href="/case/xitongjicheng/index.html">系统集成</a>
+                                </li>
+                            
+                                <li>
+                                    <a href="/case/ziranziyuan/index.html">自然资源</a>
+                                </li>
+                            
+                                <li>
+                                    <a href="/case/nongyenongcun/index.html">农业农村</a>
+                                </li>
+                            
+                                <li>
+                                    <a href="/case/zhihuichengshi/index.html">智慧城市</a>
+                                </li>
+                            
+                        </ul>
+                    </div>
+                
+                    <div class="footer-col">
+                        <h2>
+                            <a href="/news/index.html">新闻中心</a>
+                        </h2>
+                        <ul>
+                            
+                                <li>
+                                    <a href="/news/company/index.html">公司新闻</a>
+                                </li>
+                            
+                                <li>
+                                    <a href="/news/industry/index.html">行业新闻</a>
+                                </li>
+                            
+                                <li>
+                                    <a href="/news/topics/index.html">专题活动</a>
+                                </li>
+                            
+                        </ul>
+                    </div>
+                
+
+                <!-- 联系我们专栏 -->
+                <div class="footer-contact">
+                    <h2>联系我们</h2>
+                    <a href="tel:19999999999" class="tel">19999999999</a>
+                    <span class="work-time">服务时间 09:00:00 - 18:00:00</span>
+                </div>
+
+                <!-- 二维码区域 -->
+                <div class="footer-qrcode">
+                    <img src="/template/1/default/img/weixin2.png" alt="微信二维码">
+                    <p>公众号</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部版权栏 -->
+    <div class="footer-bottom">
+        <div class="width-inner footx">
+            <span>default</span>
+        </div>
+    </div>
+</footer>
+    <script src="/template/1/default/js/wangeditor.js"></script>
+</body>
+</html>

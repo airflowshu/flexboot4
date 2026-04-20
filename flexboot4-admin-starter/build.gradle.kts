@@ -7,12 +7,10 @@ plugins {
 description = "flexboot4 - Admin Starter (RBAC + Base Features)"
 
 dependencies {
-    api(project(":flexboot4-core"))
+    api(project(":flexboot4-admin-kernel"))
 
-    api("org.springframework.boot:spring-boot-starter-web")
     api("org.springframework.boot:spring-boot-starter-security")
     api("org.springframework.boot:spring-boot-starter-data-redis")
-    api("org.springframework.boot:spring-boot-starter-validation")
     api("org.springframework.boot:spring-boot-starter-jdbc")
     api("org.springframework.boot:spring-boot-starter-mail")
 
@@ -28,8 +26,6 @@ dependencies {
     annotationProcessor(libs.mybatisFlexProcessor)
     implementation(libs.mybatisFlexReactorSpring)
     implementation(libs.hikariCp)
-    api(libs.easyexcel)
-
     constraints {
         implementation(libs.commonsCompress) {
             because("fix CVE-2024-25710 and CVE-2024-26308")
@@ -58,6 +54,7 @@ dependencies {
     api(libs.minio)
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 publishing {

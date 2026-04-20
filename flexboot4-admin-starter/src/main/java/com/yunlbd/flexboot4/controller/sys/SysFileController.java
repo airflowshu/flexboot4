@@ -14,7 +14,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -24,9 +23,14 @@ import java.util.Collection;
 @RestController
 @RequestMapping("/api/admin/file")
 @Tag(name = "文件管理", description = "SysFile - 文件管理")
-@RequiredArgsConstructor
 @ApiTagGroup(group = "运维管理")
 public class SysFileController extends BaseController<SysFileService, SysFile, String> {
+
+    public SysFileController(SysFileService service, FileManagerService fileManagerService) {
+        super(service);
+        this.fileManagerService = fileManagerService;
+    }
+
 
     private final FileManagerService fileManagerService;
 

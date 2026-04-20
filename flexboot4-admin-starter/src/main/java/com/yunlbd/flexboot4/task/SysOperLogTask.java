@@ -3,6 +3,7 @@ package com.yunlbd.flexboot4.task;
 import com.yunlbd.flexboot4.util.LogTableUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -15,6 +16,7 @@ import java.time.LocalDate;
  */
 @Slf4j
 @Component
+@ConditionalOnProperty(prefix = "flexboot4.schedule", name = "enabled", havingValue = "true")
 @RequiredArgsConstructor
 public class SysOperLogTask {
 

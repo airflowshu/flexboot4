@@ -19,7 +19,6 @@ CREATE TABLE IF NOT EXISTS sms4j_config
     is_default        SMALLINT              DEFAULT 0,
     ext_params        JSONB,
     status            SMALLINT     NOT NULL DEFAULT 1,
-    -- BaseEntity 公共字段
     create_by         VARCHAR(32)           DEFAULT '',
     create_time       TIMESTAMP             DEFAULT now(),
     last_modify_by    VARCHAR(32)           DEFAULT '',
@@ -48,24 +47,19 @@ CREATE INDEX IF NOT EXISTS idx_sms4j_config_supplier ON sms4j_config (supplier_t
 
 -- ============================================================
 -- sys_menu 初始化数据：短信管理菜单
--- 请按实际 sys_menu 表主键生成规则调整 ID 值
--- parent_id 填写实际的根菜单 id（'0' 表示顶层）
 -- ============================================================
 
--- 短信管理 - 父菜单（一级目录）
 INSERT INTO sys_menu (id, parent_id, path, name, component, title, icon, order_no,
                       hide_menu, keep_alive, status,
                       create_time, last_modify_time, del_flag, version)
-VALUES ('sms_menu_root', '0', '/sms', 'Sms', 'LAYOUT', '短信管理', 'ant-design:message-outlined', 90,
+VALUES ('sms_menu_root', null, '/sms', 'Sms', 'LAYOUT', 'sms.title', 'ant-design:message-outlined', 90,
         false, false, 1, now(), now(), 0, 0)
 ON CONFLICT (id) DO NOTHING;
 
--- 短信厂商配置 - 子菜单（二级页面）
 INSERT INTO sys_menu (id, parent_id, path, name, component, title, icon, order_no,
                       hide_menu, keep_alive, status,
                       create_time, last_modify_time, del_flag, version)
 VALUES ('sms_menu_config', 'sms_menu_root', '/sms/config', 'SmsConfig',
-        '/sms/config/index', '短信厂商配置', 'ant-design:setting-outlined', 1,
+        '/sms/config/index', 'sms.config.title', 'ant-design:setting-outlined', 1,
         false, true, 1, now(), now(), 0, 0)
 ON CONFLICT (id) DO NOTHING;
-

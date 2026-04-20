@@ -1,6 +1,7 @@
 package com.yunlbd.flexboot4.controller.ops;
 
 import com.yunlbd.flexboot4.common.ApiResult;
+import com.yunlbd.flexboot4.common.annotation.RequirePermission;
 import com.yunlbd.flexboot4.config.ApiTagGroup;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -38,10 +39,15 @@ import java.util.Map;
 public class SysMonitorController {
 
     private static final SystemInfo SYSTEM_INFO = new SystemInfo();
+    private static final long CPU_SAMPLE_INTERVAL_MS = 1000L;
+    private static volatile long[] lastCpuTicks = SYSTEM_INFO.getHardware().getProcessor().getSystemCpuLoadTicks();
+    private static volatile long lastCpuSampleMillis = System.currentTimeMillis();
+    private static volatile double lastCpuLoad = 0.0D;
 
     /**
      * 获取系统监控统计信息
      */
+    @RequirePermission("sys:monitor:stats")
     @GetMapping("/stats")
     public ApiResult<Map<String, Object>> getStats() {
         Map<String, Object> result = new LinkedHashMap<>();
@@ -71,13 +77,13 @@ public class SysMonitorController {
         HardwareAbstractionLayer hal = SYSTEM_INFO.getHardware();
         CentralProcessor processor = hal.getProcessor();
 
-        long[] prevTicks = processor.getSystemCpuLoadTicks();
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+        long now = System.currentTimeMillis();
+        if (now - lastCpuSampleMillis >= CPU_SAMPLE_INTERVAL_MS) {
+            lastCpuLoad = processor.getSystemCpuLoadBetweenTicks(lastCpuTicks);
+            lastCpuTicks = processor.getSystemCpuLoadTicks();
+            lastCpuSampleMillis = now;
         }
-        double cpuLoad = processor.getSystemCpuLoadBetweenTicks(prevTicks);
+        double cpuLoad = Math.max(0D, Math.min(lastCpuLoad, 1D));
 
         Map<String, Object> cpuInfo = new LinkedHashMap<>();
         cpuInfo.put("usage", Math.round(cpuLoad * 100 * 10) / 10.0);
@@ -87,7 +93,7 @@ public class SysMonitorController {
         long maxFreq = processor.getMaxFreq();
         cpuInfo.put("frequency", maxFreq > 0 ? FormatUtil.formatHertz(maxFreq) : "N/A");
 
-        double userUsage = (processor.getSystemCpuLoadTicks()[CentralProcessor.TickType.USER.getIndex()] * 100.0);
+        double userUsage = cpuLoad * 100;
         cpuInfo.put("userUsage", String.format("%.1f%%", userUsage));
 
         return cpuInfo;

@@ -66,7 +66,7 @@ public class BootstrapModuleInfoPrinter {
         padding = headerLength - appName.length() - 2;
         banner.repeat(" ", padding + 1).append("║").append(reset).append("\n");
         banner.append(green).append("╠").repeat("═", headerLength).append("╣").append(reset).append("\n");
-        banner.append(green).append("║ ").append(cyan).append(" Loaded modules: ").append(modulesStr).append(reset).append(green);
+        banner.append(green).append("║ ").append(cyan).append("[ ").append(modulesStr).append(" ]").append(reset).append(green);
         padding = headerLength - modulesStr.length() - 6;
         banner.repeat(" ", Math.max(0, padding + 1)).append("║").append(reset).append("\n");
         banner.append(green).append("╚").repeat("═", headerLength).append("╝").append(reset).append("\n");

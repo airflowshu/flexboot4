@@ -8,10 +8,12 @@ description = "flexboot4 - BOM (Bill of Materials)"
 dependencies {
     constraints {
         api(project(":flexboot4-core"))
+        api(project(":flexboot4-admin-kernel"))
         api(project(":flexboot4-admin-starter"))
         api(project(":flexboot4-kb-starter"))
         api(project(":flexboot4-media-starter"))
         api(project(":flexboot4-cms-starter"))
+        api(project(":flexboot4-sms4j-starter"))
     }
 }
 

@@ -3,6 +3,7 @@ package com.yunlbd.flexboot4.controller.ops;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.yunlbd.flexboot4.common.ApiResult;
+import com.yunlbd.flexboot4.common.annotation.RequirePermission;
 import com.yunlbd.flexboot4.config.ApiTagGroup;
 import com.yunlbd.flexboot4.dto.SearchDto;
 import com.yunlbd.flexboot4.entity.ops.SysOperLog;
@@ -65,6 +66,7 @@ public class SysOperLogController {
                     )
             )
     )
+    @RequirePermission("sys:oper:log:list")
     @PostMapping("/page")
     public ApiResult<Page<SysOperLog>> page(@RequestBody SearchDto searchDto) {
         // 1. 从 SearchDto 提取时间范围

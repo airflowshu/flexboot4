@@ -16,6 +16,8 @@ public interface AiApiKeyService extends IExtendedService<AiApiKey> {
 
     boolean removeById(String id);
 
+    void rebuildSnapshot();
+
     /**
      * 查询 user_id 不在 sys_user 表中的 用户集合
      *

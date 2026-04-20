@@ -10,7 +10,6 @@ import com.yunlbd.flexboot4.entity.sms.Sms4jConfig;
 import com.yunlbd.flexboot4.service.sms.Sms4jConfigService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -24,10 +23,15 @@ import java.util.UUID;
  */
 @RestController
 @RequestMapping("/api/admin/sms/config")
-@RequiredArgsConstructor
 @Tag(name = "短信厂商配置", description = "Sms4jConfig - 短信厂商配置管理")
 @ApiTagGroup(group = "短信管理")
 public class Sms4jConfigController extends BaseController<Sms4jConfigService, Sms4jConfig, String> {
+
+    public Sms4jConfigController(Sms4jConfigService service, SmsSupplierConfigDataSource smsSupplierConfigDataSource) {
+        super(service);
+        this.smsSupplierConfigDataSource = smsSupplierConfigDataSource;
+    }
+
 
     private final SmsSupplierConfigDataSource smsSupplierConfigDataSource;
 
@@ -69,28 +73,9 @@ public class Sms4jConfigController extends BaseController<Sms4jConfigService, Sm
         entity.setConfigId(null);
         boolean ok = service.updateById(entity, true);
         if (ok) {
-            // 重新查出完整记录获取 configId 后做精准刷新
-            Sms4jConfig saved = service.getById(id);
-            if (saved != null && saved.getConfigId() != null) {
-                smsSupplierConfigDataSource.reload(saved.getConfigId());
-            }
+            //SmsFactory重新完整加载可用厂商实例配置
+            smsSupplierConfigDataSource.reloadAll();
         }
         return ApiResult.success(ok);
     }
-
-    // /**
-    //  * 删除厂商配置后触发全量热刷新
-    //  */
-    // @Override
-    // @Operation(summary = "删除厂商配置")
-    // @OperLog(title = "短信厂商配置", businessType = BusinessType.DELETE)
-    // @DeleteMapping("/{id}")
-    // public ApiResult<Boolean> remove(@PathVariable String id) {
-    //     boolean ok = service.removeById(id);
-    //     if (ok) {
-    //         smsSupplierConfigDataSource.reloadAll();
-    //     }
-    //     return ApiResult.success(ok);
-    // }
-
 }

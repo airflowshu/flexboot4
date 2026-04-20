@@ -15,6 +15,7 @@ dependencyResolutionManagement {
 include(
     ":flexboot4-bom",
     ":flexboot4-core",
+    ":flexboot4-admin-kernel",
     ":flexboot4-admin-starter",
     ":flexboot4-kb-starter",
     ":flexboot4-media-starter",

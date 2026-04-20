@@ -18,6 +18,7 @@ import java.util.Set;
 
 @Component
 @ConditionalOnProperty(prefix = "rag", name = "parse-retry-enabled", havingValue = "true")
+@ConditionalOnProperty(prefix = "flexboot4.schedule", name = "enabled", havingValue = "true")
 @RequiredArgsConstructor
 public class SysFileParseRetryTask {
 

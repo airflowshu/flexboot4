@@ -11,19 +11,19 @@ import com.yunlbd.flexboot4.service.ops.AiApiKeyService;
 import com.yunlbd.flexboot4.util.AiApiKeyGenerator;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin/api-key")
-@RequiredArgsConstructor
 @Tag(name = "apiKey管理", description = "AiApiKey - key管理")
 @ApiTagGroup(group = "运维管理")
 public class AiApiKeyController extends BaseController<AiApiKeyService, AiApiKey, String> {
 
-    private final  AiApiKeyService aiApiKeyService;
+    public AiApiKeyController(AiApiKeyService service) {
+        super(service);
+    }
 
     @Override
     public Class<AiApiKey> getEntityClass() {
@@ -44,7 +44,7 @@ public class AiApiKeyController extends BaseController<AiApiKeyService, AiApiKey
     @Operation(summary = "查询孤儿Key", description = "获取 user_id 不在 sys_user 表中的 API Key 列表")
     @GetMapping("/orphaned-users")
     public ApiResult<List<SysUser>> getOrphanedUsers() {
-        return ApiResult.success(aiApiKeyService.selectOrphanedUsers());
+        return ApiResult.success(service.selectOrphanedUsers());
     }
 
 

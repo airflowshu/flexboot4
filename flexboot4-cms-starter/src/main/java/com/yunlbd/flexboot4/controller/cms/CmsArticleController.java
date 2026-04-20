@@ -21,6 +21,11 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 @ApiTagGroup(group = "内容管理")
 public class CmsArticleController extends BaseController<CmsArticleService, CmsArticle, String> {
 
+    public CmsArticleController(CmsArticleService service) {
+        super(service);
+    }
+
+
     @Override
     public Class<CmsArticle> getEntityClass() {
         return CmsArticle.class;

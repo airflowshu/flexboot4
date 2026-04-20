@@ -194,6 +194,9 @@ ls docs/sql/
 
 # 执行脚本
 psql -U postgres -d flexboot4 -f docs/sql/init.sql
+
+# P0 permission hardening patch (reset-password / monitor / oper-log)
+psql -U postgres -d flexboot4 -f docs/sql/admin_permission_p0_patch_pg.sql
 ```
 
 或者在应用配置中启用自动建表（仅开发环境）：

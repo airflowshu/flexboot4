@@ -16,13 +16,24 @@ security:
     urls:
       - /resources/**
       - /static/**
-      - /api/admin/auth/**
+      - /api/admin/auth/login
+      - /api/admin/auth/forget-password
+      - /api/admin/auth/reset-password
       - /v3/api-docs/**
       - /scalar/**
       - /error
 
+flexboot4:
+  minio:
+    enabled: ${FLEXBOOT4_MINIO_ENABLED:false}
+  mail:
+    enabled: ${FLEXBOOT4_MAIL_ENABLED:false}
+  schedule:
+    enabled: ${FLEXBOOT4_SCHEDULE_ENABLED:false}
+
 operlog:
   stream:
+    enabled: ${OPERLOG_STREAM_ENABLED:false}
     key: ${OPERLOG_STREAM_KEY:operlog:stream}
     group: ${OPERLOG_STREAM_GROUP:operlog-group}
     consumer: ${OPERLOG_STREAM_CONSUMER:${spring.application.name}-1}
@@ -46,5 +57,3 @@ mybatis-flex:
   inject-sql-session-on-mapper-scan: true
   global-config:
     print-banner: false
-
-

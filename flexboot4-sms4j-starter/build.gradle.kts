@@ -7,7 +7,7 @@ plugins {
 description = "flexboot4 - SMS4J Starter (Multi-channel SMS Integration)"
 
 dependencies {
-    api(project(":flexboot4-admin-starter"))
+    api(project(":flexboot4-admin-kernel"))
 
     // sms4j BOM + spring-boot starter
     implementation(platform(libs.sms4jBom))

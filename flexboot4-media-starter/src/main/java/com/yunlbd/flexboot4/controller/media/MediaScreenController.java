@@ -10,17 +10,17 @@ import com.yunlbd.flexboot4.media.dto.ScreenSaveRequest;
 import com.yunlbd.flexboot4.service.media.MediaScreenService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/admin/media/screen")
-@RequiredArgsConstructor
 @Tag(name = "分屏展示", description = "MediaScreen - 分屏展示")
 @ApiTagGroup(group = "视频中心")
 public class MediaScreenController extends BaseController<MediaScreenService, MediaScreen, String> {
 
-    private final MediaScreenService mediaScreenService;
+    public MediaScreenController(MediaScreenService service) {
+        super(service);
+    }
 
     @Override
     public Class<MediaScreen> getEntityClass() {
@@ -31,13 +31,13 @@ public class MediaScreenController extends BaseController<MediaScreenService, Me
     @RequirePermission("media:screen:save")
     @PostMapping("/save-layout")
     public ApiResult<MediaScreenDetail> saveLayout(@RequestBody ScreenSaveRequest request) {
-        return ApiResult.success(mediaScreenService.saveScreen(request));
+        return ApiResult.success(service.saveScreen(request));
     }
 
     @Operation(summary = "查询分屏详情")
     @RequirePermission("media:screen:list")
     @GetMapping("/{id}/detail")
     public ApiResult<MediaScreenDetail> detail(@PathVariable String id) {
-        return ApiResult.success(mediaScreenService.getDetail(id));
+        return ApiResult.success(service.getDetail(id));
     }
 }

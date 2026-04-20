@@ -10,17 +10,18 @@ import com.yunlbd.flexboot4.service.media.MediaChannelService;
 import com.yunlbd.flexboot4.service.media.MediaDeviceService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/admin/media/device")
-@RequiredArgsConstructor
 @Tag(name = "视频设备", description = "MediaDevice - 视频设备")
 @ApiTagGroup(group = "视频中心")
 public class MediaDeviceController extends BaseController<MediaDeviceService, MediaDevice, String> {
 
-    private final MediaDeviceService mediaDeviceService;
+    public MediaDeviceController(MediaDeviceService service, MediaChannelService mediaChannelService) {
+        super(service);
+        this.mediaChannelService = mediaChannelService;
+    }
     private final MediaChannelService mediaChannelService;
 
     @Override
@@ -32,7 +33,7 @@ public class MediaDeviceController extends BaseController<MediaDeviceService, Me
     @RequirePermission("media:device:list")
     @GetMapping("/{id}/detail")
     public ApiResult<MediaDeviceDetail> detail(@PathVariable("id") String id) {
-        return ApiResult.success(mediaDeviceService.getDetail(id));
+        return ApiResult.success(service.getDetail(id));
     }
 
     @Operation(summary = "查询设备通道")

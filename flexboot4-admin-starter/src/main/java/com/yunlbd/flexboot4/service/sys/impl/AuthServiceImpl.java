@@ -1,7 +1,11 @@
 package com.yunlbd.flexboot4.service.sys.impl;
 
 import com.mybatisflex.core.query.QueryWrapper;
-import com.yunlbd.flexboot4.dto.*;
+import com.yunlbd.flexboot4.dto.AdminResetPasswordReq;
+import com.yunlbd.flexboot4.dto.ForgetPasswordReq;
+import com.yunlbd.flexboot4.dto.LoginReq;
+import com.yunlbd.flexboot4.dto.LoginResp;
+import com.yunlbd.flexboot4.dto.ResetPasswordReq;
 import com.yunlbd.flexboot4.entity.sys.SysRole;
 import com.yunlbd.flexboot4.entity.sys.SysUser;
 import com.yunlbd.flexboot4.mapper.SysUserMapper;
@@ -15,6 +19,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -33,19 +38,20 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AuthServiceImpl implements IAuthService {
 
+    private static final String LOGIN_LIMIT_KEY_PREFIX = "auth:limit:";
+    private static final String BLACKLIST_KEY_PREFIX = "auth:blacklist:";
+    private static final int MAX_LOGIN_ATTEMPTS = 5;
+    private static final long LOCK_TIME_MINUTES = 15;
+    private static final String RESET_LINK_SENT_MSG = "Reset link sent. Please check your email.";
+
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
     private final StringRedisTemplate redisTemplate;
     private final SysUserMapper sysUserMapper;
     private final SysMenuService sysMenuService;
     private final UserDetailsServiceImpl userDetailsService;
-    private final EmailService emailService;
+    private final ObjectProvider<EmailService> emailServiceProvider;
     private final SysUserService sysUserService;
-
-    private static final String LOGIN_LIMIT_KEY_PREFIX = "auth:limit:";
-    private static final String BLACKLIST_KEY_PREFIX = "auth:blacklist:";
-    private static final int MAX_LOGIN_ATTEMPTS = 5;
-    private static final long LOCK_TIME_MINUTES = 15;
 
     @Override
     public List<String> getPermissionCodes(HttpServletRequest request) {
@@ -61,7 +67,6 @@ public class AuthServiceImpl implements IAuthService {
     public LoginResp login(LoginReq req, String clientIp) {
         String limitKey = LOGIN_LIMIT_KEY_PREFIX + req.getUsername() + ":" + clientIp;
 
-        // Rate limiting check
         String attemptsStr = redisTemplate.opsForValue().get(limitKey);
         int attempts = attemptsStr != null ? Integer.parseInt(attemptsStr) : 0;
         if (attempts >= MAX_LOGIN_ATTEMPTS) {
@@ -70,7 +75,6 @@ public class AuthServiceImpl implements IAuthService {
         }
 
         try {
-            // Authenticate
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(req.getUsername(), req.getPassword())
             );
@@ -80,18 +84,15 @@ public class AuthServiceImpl implements IAuthService {
                     QueryWrapper.create().where(SysUser::getUsername).eq(req.getUsername())
             );
 
-            // Generate token
             List<String> roles = userDetails.getAuthorities().stream()
                     .map(GrantedAuthority::getAuthority)
                     .collect(Collectors.toList());
             List<String> permissions = sysMenuService.getPermissionCodes(sysUser.getId());
             String token = jwtUtil.generateToken(userDetails, sysUser.getId(), roles, permissions);
 
-            // Reset login limit
             redisTemplate.delete(limitKey);
             log.info("User logged in successfully: {}", req.getUsername());
 
-            // Build response
             LoginResp loginResp = new LoginResp();
             loginResp.setId(sysUser.getId());
             loginResp.setUsername(sysUser.getUsername());
@@ -99,9 +100,7 @@ public class AuthServiceImpl implements IAuthService {
             loginResp.setRoles(roles);
             loginResp.setAccessToken(token);
             return loginResp;
-
         } catch (Exception e) {
-            // Increment failed attempts
             redisTemplate.opsForValue().increment(limitKey);
             redisTemplate.expire(limitKey, LOCK_TIME_MINUTES, TimeUnit.MINUTES);
             log.warn("Login failed for user: {} IP: {} Reason: {}", req.getUsername(), clientIp, e.getMessage());
@@ -113,13 +112,11 @@ public class AuthServiceImpl implements IAuthService {
     public void logout(HttpServletRequest request) {
         String token = jwtUtil.resolveToken(request);
         if (token != null) {
-            // Add to blacklist
-            long remainingTTL = jwtUtil.extractExpiration(token).getTime() - System.currentTimeMillis();
-            if (remainingTTL > 0) {
-                redisTemplate.opsForValue().set(BLACKLIST_KEY_PREFIX + token, "revoked", remainingTTL, TimeUnit.MILLISECONDS);
+            long remainingTtl = jwtUtil.extractExpiration(token).getTime() - System.currentTimeMillis();
+            if (remainingTtl > 0) {
+                redisTemplate.opsForValue().set(BLACKLIST_KEY_PREFIX + token, "revoked", remainingTtl, TimeUnit.MILLISECONDS);
             }
 
-            // Clear user cache
             String username = jwtUtil.extractUsername(token);
             if (username != null) {
                 userDetailsService.evictUserCache(username);
@@ -135,7 +132,6 @@ public class AuthServiceImpl implements IAuthService {
             throw new SecurityException("No token provided");
         }
 
-        // Check blacklist
         if (Boolean.TRUE.equals(redisTemplate.hasKey(BLACKLIST_KEY_PREFIX + token))) {
             throw new SecurityException("Token is invalid");
         }
@@ -145,13 +141,11 @@ public class AuthServiceImpl implements IAuthService {
             throw new SecurityException("Invalid token");
         }
 
-        // Invalidate old token
-        long remainingTTL = jwtUtil.extractExpiration(token).getTime() - System.currentTimeMillis();
-        if (remainingTTL > 0) {
-            redisTemplate.opsForValue().set(BLACKLIST_KEY_PREFIX + token, "revoked", remainingTTL, TimeUnit.MILLISECONDS);
+        long remainingTtl = jwtUtil.extractExpiration(token).getTime() - System.currentTimeMillis();
+        if (remainingTtl > 0) {
+            redisTemplate.opsForValue().set(BLACKLIST_KEY_PREFIX + token, "revoked", remainingTtl, TimeUnit.MILLISECONDS);
         }
 
-        // Get user with roles
         SysUser fullUser = sysUserMapper.selectOneWithRelationsByQuery(
                 QueryWrapper.create().where(SysUser::getUsername).eq(username)
         );
@@ -159,12 +153,11 @@ public class AuthServiceImpl implements IAuthService {
             throw new SecurityException("User not found");
         }
 
-        List<String> roles = fullUser.getRoles() != null ?
-                fullUser.getRoles().stream().map(SysRole::getRoleValue).collect(Collectors.toList())
-                : Collections.emptyList();
+        List<String> roles = fullUser.getRoles() == null
+                ? Collections.emptyList()
+                : fullUser.getRoles().stream().map(SysRole::getRoleValue).collect(Collectors.toList());
         List<String> permissions = sysMenuService.getPermissionCodes(fullUser.getId());
 
-        // Generate new token
         UserDetails userDetails = org.springframework.security.core.userdetails.User.builder()
                 .username(username)
                 .password("")
@@ -182,17 +175,22 @@ public class AuthServiceImpl implements IAuthService {
                 QueryWrapper.create().where(SysUser::getEmail).eq(email)
         );
 
-        // Always return success to prevent email enumeration
         if (user == null) {
             log.warn("Password reset requested for non-existent email: {}", email);
-            return "重置链接已发送，请查收邮件";
+            return RESET_LINK_SENT_MSG;
+        }
+
+        EmailService emailService = emailServiceProvider.getIfAvailable();
+        if (emailService == null) {
+            log.warn("Password reset email skipped because mail feature is disabled.");
+            return RESET_LINK_SENT_MSG;
         }
 
         String resetToken = UUID.randomUUID().toString().replace("-", "");
         emailService.sendPasswordResetEmail(email, resetToken, user.getId());
         log.info("Password reset email sent for user: {} ({})", user.getUsername(), email);
 
-        return "重置链接已发送，请查收邮件";
+        return RESET_LINK_SENT_MSG;
     }
 
     @Override
@@ -200,16 +198,17 @@ public class AuthServiceImpl implements IAuthService {
         String token = req.getToken().trim();
         String newPassword = req.getNewPassword();
 
+        EmailService emailService = requireEmailService();
         String userId = emailService.validateResetToken(token);
         if (userId == null) {
             log.warn("Invalid or expired reset token");
-            throw new SecurityException("无效或已过期的重置链接");
+            throw new SecurityException("Invalid or expired reset link");
         }
 
         boolean updated = sysUserService.updatePasswordById(userId, newPassword);
         if (!updated) {
             log.error("Failed to update password for user ID: {}", userId);
-            throw new RuntimeException("密码重置失败");
+            throw new RuntimeException("Password reset failed");
         }
 
         emailService.invalidateResetToken(token);
@@ -219,29 +218,34 @@ public class AuthServiceImpl implements IAuthService {
             userDetailsService.evictUserCache(user.getUsername());
         }
 
-        log.info("Password reset successfully for user: {}", user != null ? user.getUsername() : userId);
-        return "密码重置成功，请使用新密码登录";
+        log.info("Password reset successfully for user: {}", user == null ? userId : user.getUsername());
+        return "Password reset successfully";
     }
 
     @Override
     public String adminResetPassword(AdminResetPasswordReq req) {
+        EmailService emailService = requireEmailService();
         SysUser user = sysUserService.getById(req.getUserId());
         if (user == null) {
-            throw new IllegalArgumentException("用户不存在");
+            throw new IllegalArgumentException("User not found");
         }
 
-        boolean updated = sysUserService.updatePasswordById(req.getUserId(), req.getNewPassword());
-        if (!updated) {
-            log.error("Failed to update password for user ID: {}", req.getUserId());
-            throw new RuntimeException("密码重置失败");
+        if (user.getEmail() == null || user.getEmail().isBlank()) {
+            throw new IllegalArgumentException("User email is required for password reset");
         }
 
-        userDetailsService.evictUserCache(user.getUsername());
+        String resetToken = UUID.randomUUID().toString().replace("-", "");
+        emailService.sendPasswordResetEmail(user.getEmail(), resetToken, user.getId());
 
-        // Send notification email asynchronously
-        emailService.sendPasswordResetNotificationAsync(user.getEmail(), req.getNewPassword());
+        log.info("Admin sent password reset link for user ID: {}", req.getUserId());
+        return RESET_LINK_SENT_MSG;
+    }
 
-        log.info("Admin reset password successfully for user ID: {}", req.getUserId());
-        return "密码重置成功";
+    private EmailService requireEmailService() {
+        EmailService emailService = emailServiceProvider.getIfAvailable();
+        if (emailService == null) {
+            throw new IllegalStateException("Mail feature is disabled. Set flexboot4.mail.enabled=true to enable password reset flow.");
+        }
+        return emailService;
     }
 }

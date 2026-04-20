@@ -14,12 +14,12 @@ import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 /**
- * 权限校验拦截器
+ * Permission interceptor.
  *
- * 校验逻辑：
- * 1. 有 @RequirePermission 注解 → 使用注解指定的权限码校验
- * 2. 无注解 + BaseController 方法 → 自动生成权限码校验
- * 3. 无注解 + 非 BaseController 方法 → 放行（不做权限控制）
+ * Rule:
+ * 1. If method has @RequirePermission, obey it.
+ * 2. If method is inherited from BaseController, auto-resolve permission code.
+ * 3. For /api/admin/**, methods without annotation are denied by default.
  */
 @Slf4j
 @Component
@@ -35,7 +35,6 @@ public class PermissionCheckInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        // 0. 检查是否在忽略列表中
         String uri = request.getRequestURI();
         for (String pattern : ignoreUrlsConfig.getUrls()) {
             if (pathMatcher.match(pattern, uri)) {
@@ -43,69 +42,69 @@ public class PermissionCheckInterceptor implements HandlerInterceptor {
             }
         }
 
-        // 1. 获取当前登录用户
         LoginUser loginUser = SecurityUtils.getLoginUser();
         if (loginUser == null) {
             response.setStatus(401);
             return false;
         }
 
-        // 2. 超级管理员 bypass
         if (loginUser.isSuperAdmin()) {
             return true;
         }
 
-        // 3. 检查方法注解
         RequirePermission annotation = handlerMethod.getMethodAnnotation(RequirePermission.class);
         if (annotation != null) {
             if (annotation.skip()) {
-                return true; // 跳过校验
+                return true;
             }
             if (!annotation.value().isEmpty()) {
-                // 使用注解指定的权限码
                 return checkPermission(loginUser, annotation.value(), request, response);
             }
         }
 
-        // 4. 无注解时，判断是否是 BaseController 方法
         Object controller = handlerMethod.getBean();
-        if (controller instanceof BaseController) {
-            // BaseController 方法需要自动生成权限码校验
-            String requiredPermission = buildPermissionFromRequest(handlerMethod, (BaseController<?, ?, ?>) controller);
+        if (controller instanceof BaseController<?, ?, ?> baseController) {
+            String requiredPermission = buildPermissionFromRequest(handlerMethod, baseController);
             if (requiredPermission != null) {
                 return checkPermission(loginUser, requiredPermission, request, response);
             }
         }
 
-        // 5. 非 BaseController 方法且无注解 → 放行（不做权限控制）
+        if (uri.startsWith("/api/admin/")) {
+            return writeForbidden(response, "Missing permission annotation");
+        }
+
         return true;
     }
 
-    /**
-     * 权限校验
-     */
-    private boolean checkPermission(LoginUser loginUser, String requiredPermission,
-                                    HttpServletRequest request, HttpServletResponse response) {
+    private boolean checkPermission(LoginUser loginUser,
+                                    String requiredPermission,
+                                    HttpServletRequest request,
+                                    HttpServletResponse response) {
         if (!loginUser.hasPermission(requiredPermission)) {
             log.warn("Permission denied: user={}, permission={}, uri={}",
                     loginUser.getSysUser().getUsername(),
                     requiredPermission,
                     request.getRequestURI());
-            response.setStatus(403);
-            response.setContentType("application/json;charset=UTF-8");
-            try {
-                response.getWriter().write("{\"code\":403,\"msg\":\"权限不足，禁止访问\"}");
-            } catch (Exception e) {
-                log.error("Failed to write response", e);
-            }
-            return false;
+            return writeForbidden(response, "Permission denied");
         }
         return true;
     }
 
+    private boolean writeForbidden(HttpServletResponse response, String reason) {
+        response.setStatus(403);
+        response.setContentType("application/json;charset=UTF-8");
+        try {
+            response.getWriter().write("{\"code\":403,\"msg\":\"权限不足，禁止访问\"}");
+        } catch (Exception e) {
+            log.error("Failed to write forbidden response, reason={}", reason, e);
+        }
+        return false;
+    }
+
     /**
-     * 根据请求自动生成权限码
-     * 格式: {entityName}:{operation}
+     * Build permission from BaseController method name.
+     * Format: {entity}:{operation}
      */
     private String buildPermissionFromRequest(HandlerMethod handlerMethod, BaseController<?, ?, ?> controller) {
         String method = handlerMethod.getMethod().getName();
@@ -121,24 +120,14 @@ public class PermissionCheckInterceptor implements HandlerInterceptor {
         };
     }
 
-    /**
-     * 获取实体名称（首字母小写 + 冒号分隔）
-     * 例如: SysUser -> sys:user
-     */
     private String getEntityName(BaseController<?, ?, ?> controller) {
         Class<?> entityClass = controller.getEntityClass();
         if (entityClass == null) {
             return "unknown";
         }
-        String simpleName = entityClass.getSimpleName();
-        return toSnakeCase(simpleName);
+        return toSnakeCase(entityClass.getSimpleName());
     }
 
-    /**
-     * 大写字母转换为冒号分隔的小写形式
-     * SysUser -> sys:user
-     * SysUserRole -> sys:user:role
-     */
     private String toSnakeCase(String name) {
         if (name == null || name.isEmpty()) {
             return name;

@@ -12,7 +12,6 @@ import com.yunlbd.flexboot4.service.sys.SysUserService;
 import com.yunlbd.flexboot4.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,10 +22,16 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/admin/user")
-@RequiredArgsConstructor
 @Tag(name = "用户管理", description = "SysUser - 用户管理")
 @ApiTagGroup(group = "系统管理")
 public class SysUserController extends BaseController<SysUserService, SysUser, String> {
+
+    public SysUserController(SysUserService service, PasswordEncoder passwordEncoder, MinioProperties minioProperties) {
+        super(service);
+        this.passwordEncoder = passwordEncoder;
+        this.minioProperties = minioProperties;
+    }
+
 
     @Override
     public Class<SysUser> getEntityClass() {

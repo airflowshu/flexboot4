@@ -114,6 +114,7 @@ public class AiApiKeyServiceImpl extends BaseServiceImpl<AiApiKeyMapper, AiApiKe
         return removeById((Serializable) id);
     }
 
+    @Override
     public void rebuildSnapshot() {
         long version = TableVersions.getVersion("ai_api_key");
         String snapshotKey = AI_API_KEY_SNAPSHOT_PREFIX + version;

@@ -4,12 +4,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yunlbd.flexboot4.listener.OperLogStreamListener;
 import com.yunlbd.flexboot4.service.ops.SysOperLogService;
 import com.yunlbd.flexboot4.util.UserAgentService;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
 @Configuration
+@ConditionalOnClass(StringRedisTemplate.class)
+@ConditionalOnProperty(prefix = "operlog.stream", name = "enabled", havingValue = "true")
 @EnableConfigurationProperties(OperLogStreamProperties.class)
 public class OperLogStreamConfig {
 

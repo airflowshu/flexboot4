@@ -18,7 +18,11 @@
       "Bash(tree -L 3 -I 'build|target|.gradle|.idea|.git|node_modules' .)",
       "Bash(./gradlew projects --console=plain)",
       "Bash(./gradlew:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(pnpm --filter @vben/tailwind-config run stub)",
+      "WebFetch(domain:www.jetbrains.com)",
+      "Bash(iconv -f UTF-8 -t UTF-8 \"E:/flexboot4/flexboot4/flexboot4-web/apps/web-antd/src/views/media/device/index.vue\")",
+      "Bash(node:*)"
     ]
   }
 }

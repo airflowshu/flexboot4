@@ -19,8 +19,8 @@ import lombok.experimental.SuperBuilder;
 @Table("sys_user_role")
 @Schema(name = "SysUserRole")
 public class SysUserRole extends BaseEntity {
-    private Long userId;
-    private Long roleId;
+    private String userId;
+    private String roleId;
 
     // 虽然 IDEA 提示该参数是“冗余”的，但强烈建议不要移除它。
     // 在当前这种“子类覆盖父类配置”的特殊场景下，显式写出 isLogicDelete = false 的意义远大于它的技术冗余。

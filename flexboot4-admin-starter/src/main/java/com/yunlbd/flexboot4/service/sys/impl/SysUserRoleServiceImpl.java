@@ -34,8 +34,8 @@ public class SysUserRoleServiceImpl extends BaseServiceImpl<SysUserRoleMapper, S
         // 批量新增角色关联
         List<SysUserRole> userRoles = roleIds.stream()
                 .map(roleId -> SysUserRole.builder()
-                        .userId(Long.valueOf(userId))
-                        .roleId(Long.valueOf(roleId))
+                        .userId(userId)
+                        .roleId(roleId)
                         .build()).collect(Collectors.toUnmodifiableList());
         super.saveBatch(userRoles);
         return true;

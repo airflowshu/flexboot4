@@ -2,11 +2,16 @@ package com.yunlbd.flexboot4.controller.sys;
 
 import com.yunlbd.flexboot4.common.ApiResult;
 import com.yunlbd.flexboot4.common.annotation.OperLog;
+import com.yunlbd.flexboot4.common.annotation.RequirePermission;
 import com.yunlbd.flexboot4.common.enums.BusinessType;
-import com.yunlbd.flexboot4.dto.*;
+import com.yunlbd.flexboot4.config.ApiTagGroup;
+import com.yunlbd.flexboot4.dto.AdminResetPasswordReq;
+import com.yunlbd.flexboot4.dto.ForgetPasswordReq;
+import com.yunlbd.flexboot4.dto.LoginReq;
+import com.yunlbd.flexboot4.dto.LoginResp;
+import com.yunlbd.flexboot4.dto.ResetPasswordReq;
 import com.yunlbd.flexboot4.security.JwtUtil;
 import com.yunlbd.flexboot4.service.sys.IAuthService;
-import com.yunlbd.flexboot4.config.ApiTagGroup;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
@@ -14,36 +19,35 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Duration;
 import java.util.List;
 
-@Slf4j
 @RestController
 @RequestMapping("/api/admin/auth")
 @RequiredArgsConstructor
-@Tag(name = "认证管理", description = "Authentication - 用户登录和注销")
-@ApiTagGroup(group = "系统管理")
+@Tag(name = "Authentication", description = "User login, token and password reset APIs")
+@ApiTagGroup(group = "System")
 public class AuthController {
-
-    private final IAuthService authService;
 
     private static final long TOKEN_VALIDITY_HOURS = 2;
 
-    @Operation(summary = "User Login",
-            description = "Authenticate user and return JWT token. Sets HTTP-only cookie.",
-            tags = {"1. 用户登录"}
-    )
-    @OperLog(title = "用户登录", businessType = BusinessType.LOGIN)
-    @PostMapping("/login")
-    public ApiResult<LoginResp> login(@Valid @RequestBody LoginReq req, HttpServletRequest request, HttpServletResponse response) {
-        String clientIp = JwtUtil.getClientIp(request);
+    private final IAuthService authService;
 
+    @Operation(summary = "User login", description = "Authenticate user and return JWT token")
+    @OperLog(title = "User Login", businessType = BusinessType.LOGIN)
+    @PostMapping("/login")
+    public ApiResult<LoginResp> login(@Valid @RequestBody LoginReq req,
+                                      HttpServletRequest request,
+                                      HttpServletResponse response) {
+        String clientIp = JwtUtil.getClientIp(request);
         LoginResp loginResp = authService.login(req, clientIp);
 
-        // Set HTTP-only Cookie
         Cookie cookie = new Cookie("access_token", loginResp.getAccessToken());
         cookie.setHttpOnly(true);
         cookie.setSecure(request.isSecure());
@@ -55,13 +59,14 @@ public class AuthController {
         return ApiResult.success(loginResp);
     }
 
-    @Operation(summary = "User Logout", description = "Invalidate JWT token and clear cookie.", tags = {"2. 用户登出"})
-    @OperLog(title = "用户登出", businessType = BusinessType.LOGOUT, isSaveRequestData = false, isSaveResponseData = false)
+    @Operation(summary = "User logout", description = "Invalidate JWT token and clear cookie")
+    @OperLog(title = "User Logout", businessType = BusinessType.LOGOUT,
+            isSaveRequestData = false, isSaveResponseData = false)
+    @RequirePermission(skip = true)
     @PostMapping("/logout")
     public ApiResult<String> logout(HttpServletRequest request, HttpServletResponse response) {
         authService.logout(request);
 
-        // Clear cookie
         Cookie cookie = new Cookie("access_token", null);
         cookie.setHttpOnly(true);
         cookie.setPath("/");
@@ -71,12 +76,12 @@ public class AuthController {
         return ApiResult.success("Logged out successfully");
     }
 
-    @Operation(summary = "Refresh Token", description = "Refresh the current JWT token.", tags = {"3. 刷新token"})
+    @Operation(summary = "Refresh token", description = "Refresh the current JWT token")
+    @RequirePermission(skip = true)
     @PostMapping("/refresh")
     public ApiResult<String> refresh(HttpServletRequest request, HttpServletResponse response) {
         String newToken = authService.refreshToken(request);
 
-        // Set new cookie
         Cookie cookie = new Cookie("access_token", newToken);
         cookie.setHttpOnly(true);
         cookie.setSecure(request.isSecure());
@@ -88,39 +93,29 @@ public class AuthController {
         return ApiResult.success(newToken);
     }
 
-    @Operation(summary = "Forget Password",
-            description = "Send password reset email to the registered email address.",
-            tags = {"4. 忘记密码"}
-    )
+    @Operation(summary = "Forget password", description = "Send password reset email to registered address")
     @PostMapping("/forget-password")
     public ApiResult<String> forgetPassword(@Valid @RequestBody ForgetPasswordReq req) {
-        String result = authService.forgetPassword(req);
-        return ApiResult.success(result);
+        return ApiResult.success(authService.forgetPassword(req));
     }
 
-    @Operation(summary = "Reset Password", description = "Reset password using token received via email.",tags = {"5. 重置密码"})
+    @Operation(summary = "Reset password", description = "Reset password using token from email")
     @PostMapping("/reset-password")
     public ApiResult<String> resetPassword(@Valid @RequestBody ResetPasswordReq req) {
-        String result = authService.resetPassword(req);
-        return ApiResult.success(result);
+        return ApiResult.success(authService.resetPassword(req));
     }
 
-    @Operation(summary = "Super/Admin Reset User Password",
-            description = "Super/Admin can reset any user's password by user ID.",
-            tags = {"6. 管理员重置密码"}
-    )
+    @Operation(summary = "Admin trigger reset", description = "Send one-time reset link to target user email")
+    @RequirePermission("sys:user:reset-password")
     @PostMapping("/admin/reset-password")
     public ApiResult<String> adminResetPassword(@Valid @RequestBody AdminResetPasswordReq req) {
-        String result = authService.adminResetPassword(req);
-        return ApiResult.success(result);
+        return ApiResult.success(authService.adminResetPassword(req));
     }
 
-    @Operation(summary = "Get User Permission Codes",
-            description = "Fetch permission codes for the current user.",
-            tags = {"7. 获取权限码"}
-    )
+    @Operation(summary = "Get permission codes", description = "Fetch permission codes for current user")
+    @RequirePermission(skip = true)
     @GetMapping("/codes")
-    @OperLog(title = "获取权限码", businessType = BusinessType.OTHER)
+    @OperLog(title = "Get Permission Codes", businessType = BusinessType.OTHER)
     public ApiResult<List<String>> getCodes(HttpServletRequest request) {
         List<String> codes = authService.getPermissionCodes(request);
         if (codes == null || codes.isEmpty()) {

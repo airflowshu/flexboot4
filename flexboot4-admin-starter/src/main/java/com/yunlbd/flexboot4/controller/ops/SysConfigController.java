@@ -7,7 +7,6 @@ import com.yunlbd.flexboot4.entity.ops.SysConfig;
 import com.yunlbd.flexboot4.service.ops.SysConfigService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,10 +20,14 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/admin/config")
-@RequiredArgsConstructor
 @Tag(name = "系统配置", description = "SysConfig - 系统参数配置管理")
 @ApiTagGroup(group = "运维管理")
 public class SysConfigController extends BaseController<SysConfigService, SysConfig, String> {
+
+    public SysConfigController(SysConfigService service) {
+        super(service);
+    }
+
 
     @Override
     public Class<SysConfig> getEntityClass() {
