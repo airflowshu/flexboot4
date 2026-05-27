@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.yunlbd.flexboot4.common.constant.SysConstant.SYS_SUPER_USER_ID;
@@ -31,20 +32,24 @@ import static com.yunlbd.flexboot4.common.constant.SysConstant.SYS_SUPER_USER_ID
 @CacheConfig(cacheNames = "sysMenu")
 public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> implements SysMenuService {
 
+    private static final Set<String> ROUTE_TYPES = Set.of("catalog", "menu", "embedded", "link");
+
     private final SysUserRoleMapper sysUserRoleMapper;
 
     //这里不声明使用缓存，一般系统登录后初始会调用一次，使用缓存意义大不，徒增缓存数据一致性的维护成本
     public List<VueRoute> getUserMenus(String userId) {
-        // 查询所有状态为启用的菜单（包含所有type：catalog、menu、button）
+        // 查询所有状态为启用的菜单。返回给 vben 的路由树只包含路由型节点，按钮节点只用于权限码接口。
         List<SysMenu> fullTree = mapper.selectListWithRelationsByQuery(
                 QueryWrapper.create()
                         .where(SysMenu::getStatus).eq(1)
-                        .and(SysMenu::getParentId).isNull() // Fetch roots
+                        .and(SysMenu::getParentId).isNull()
                         .orderBy(SysMenu::getOrderNo).asc()
         );
         // 1. Super Admin (userId = "1"): Return all enabled menus
         if (SYS_SUPER_USER_ID.equals(userId)) {
-            assert fullTree != null;
+            if (fullTree == null) {
+                return List.of();
+            }
             return buildVueRoutes(fullTree);
         }
 
@@ -62,6 +67,9 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
         if (accessibleMenuIds.isEmpty()) {
             return new ArrayList<>();
         }
+        if (fullTree == null) {
+            return List.of();
+        }
         return buildVueRoutesWithFilter(fullTree, accessibleMenuIds);
     }
 
@@ -69,7 +77,6 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
     private List<VueRoute> buildVueRoutesWithFilter(List<SysMenu> menus, List<String> accessibleIds) {
         List<VueRoute> routes = new ArrayList<>();
         for (SysMenu menu : menus) {
-            // Check if this menu or any of its children are accessible
             if (isMenuAccessibleOrHasAccessibleChildren(menu, accessibleIds)) {
                 VueRoute route = convertToVueRouteWithFilter(menu, accessibleIds);
                 if (route != null) {
@@ -81,14 +88,15 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
     }
 
     private boolean isMenuAccessibleOrHasAccessibleChildren(SysMenu menu, List<String> accessibleIds) {
-        if (accessibleIds == null) {
-            return true; // If null, assume super admin or full access
+        if (menu == null || !isEnabled(menu)) {
+            return false;
         }
-        // 检查当前菜单（包括按钮类型）是否在权限列表中
-        if (accessibleIds.contains(menu.getId())) {
+        if (accessibleIds == null) {
+            return isRouteType(menu);
+        }
+        if (isRouteType(menu) && accessibleIds.contains(menu.getId())) {
             return true;
         }
-        // 递归检查子节点（包含所有type：catalog、menu、button）
         if (menu.getChildren() != null) {
             for (SysMenu child : menu.getChildren()) {
                 if (isMenuAccessibleOrHasAccessibleChildren(child, accessibleIds)) {
@@ -100,6 +108,9 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
     }
 
     private VueRoute convertToVueRouteWithFilter(SysMenu menu, List<String> accessibleIds) {
+        if (!isRouteType(menu)) {
+            return null;
+        }
         VueRoute route = new VueRoute();
         route.setId(menu.getId());
         route.setPid(menu.getParentId());
@@ -115,13 +126,10 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
         List<VueRoute> childrenRoutes = new ArrayList<>();
         if (menu.getChildren() != null && !menu.getChildren().isEmpty()) {
             for (SysMenu child : menu.getChildren()) {
-                if (child.getStatus() == 1) {
-                    // 如果子节点有权限或者有后代有权限，则处理
-                    if (isMenuAccessibleOrHasAccessibleChildren(child, accessibleIds)) {
-                        VueRoute childRoute = convertToVueRouteWithFilter(child, accessibleIds);
-                        if (childRoute != null) {
-                            childrenRoutes.add(childRoute);
-                        }
+                if (isMenuAccessibleOrHasAccessibleChildren(child, accessibleIds)) {
+                    VueRoute childRoute = convertToVueRouteWithFilter(child, accessibleIds);
+                    if (childRoute != null) {
+                        childrenRoutes.add(childRoute);
                     }
                 }
             }
@@ -132,7 +140,6 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
             return route;
         }
 
-        // 如果是叶子节点（有 type 为 button 的子节点），并且自己在权限列表中，则返回
         if (accessibleIds != null && accessibleIds.contains(menu.getId())) {
             return route;
         }
@@ -141,9 +148,7 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
         return null;
     }
     
-    // Kept for backward compatibility or direct full tree conversion
     private List<VueRoute> buildVueRoutes(List<SysMenu> menus) {
-        // super admin默认也按所有type返回
         List<VueRoute> routes = new ArrayList<>();
         for (SysMenu menu : menus) {
             VueRoute route = convertToVueRouteAll(menu);
@@ -153,12 +158,6 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
         }
         return routes;
     }
-
-    // Helper to unify logic: if accessibleIds is null, it means allow all
-    private boolean isAccessible(String menuId, List<String> accessibleIds) {
-        return accessibleIds == null || accessibleIds.contains(menuId);
-    }
-
 
     private String sanitizeComponentPath(String component) {
         if (component == null) {
@@ -216,7 +215,7 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
         meta.setTitle(menu.getTitle());
         meta.setIcon(menu.getIcon());
         meta.setActiveIcon(menu.getActiveIcon());
-        meta.setHideMenu(menu.getHideMenu());
+        meta.setHideInMenu(menu.getHideInMenu());
         meta.setOrder(menu.getOrderNo());
         meta.setBadge(menu.getBadge());
         meta.setBadgeType(menu.getBadgeType());
@@ -225,8 +224,8 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
         meta.setIframeSrc(menu.getIframeSrc());
         meta.setAffixTab(menu.getAffixTab());
         meta.setHideChildrenInMenu(menu.getHideChildrenInMenu());
-        meta.setHideBreadcrumb(menu.getHideBreadcrumb());
-        meta.setHideTab(menu.getHideTab());
+        meta.setHideInBreadcrumb(menu.getHideInBreadcrumb());
+        meta.setHideInTab(menu.getHideInTab());
         meta.setKeepAlive(menu.getKeepAlive());
         meta.setMenuVisibleWithForbidden(menu.getMenuVisibleWithForbidden());
         if (menu.getAuthority() != null && !menu.getAuthority().isEmpty()) {
@@ -236,7 +235,7 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
     }
 
     private VueRoute convertToVueRouteAll(SysMenu menu) {
-        if (menu.getStatus() != null && menu.getStatus() != 1) {
+        if (!isEnabled(menu) || !isRouteType(menu)) {
             return null;
         }
         VueRoute route = new VueRoute();
@@ -264,6 +263,14 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
             route.setChildren(childrenRoutes);
         }
         return route;
+    }
+
+    private boolean isEnabled(SysMenu menu) {
+        return menu.getStatus() == null || menu.getStatus() == 1;
+    }
+
+    private boolean isRouteType(SysMenu menu) {
+        return menu.getType() == null || ROUTE_TYPES.contains(menu.getType());
     }
 
 }

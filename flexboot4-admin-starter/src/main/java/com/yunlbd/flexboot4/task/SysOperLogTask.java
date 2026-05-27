@@ -1,6 +1,7 @@
 package com.yunlbd.flexboot4.task;
 
 import com.yunlbd.flexboot4.util.LogTableUtils;
+import com.yunlbd.flexboot4.lock.DistributedLockService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -8,6 +9,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
 import java.time.LocalDate;
 
 /**
@@ -21,6 +23,7 @@ import java.time.LocalDate;
 public class SysOperLogTask {
 
     private final JdbcTemplate jdbcTemplate;
+    private final DistributedLockService distributedLockService;
 
     /**
      * 每季度末（3,6,9,12月）的25号凌晨1点执行
@@ -28,6 +31,10 @@ public class SysOperLogTask {
      */
     @Scheduled(cron = "0 0 1 25 3,6,9,12 ?")
     public void createNextQuarterTable() {
+        distributedLockService.executeIfLocked("admin:operlog:create-next-quarter-table", Duration.ofMinutes(10), this::doCreateNextQuarterTable);
+    }
+
+    void doCreateNextQuarterTable() {
         log.info("Start checking next quarter log table...");
         
         // 获取下个季度的第一天
@@ -42,6 +49,10 @@ public class SysOperLogTask {
      */
     @Scheduled(initialDelay = 10000, fixedDelay = Long.MAX_VALUE)
     public void initCheck() {
+        distributedLockService.executeIfLocked("admin:operlog:init-check", Duration.ofMinutes(10), this::doInitCheck);
+    }
+
+    void doInitCheck() {
         // 当前季度
         createTableIfNotExists(LogTableUtils.getCurrentQuarterTableName());
         

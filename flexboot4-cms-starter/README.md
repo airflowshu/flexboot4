@@ -8,6 +8,11 @@
 - CMS 文件上传接口
 - **模板文件管理 + iframe 在线预览 + 直接回写 + 静态发布 ZIP（v1）**
 
+该 starter 使用 Spring Boot 标准自动装配入口加载 CMS 组件，并仅依赖
+`flexboot4-admin-kernel` 提供的文件、配置与用户摘要契约。管理台组合运行时如需
+RBAC、默认文件管理、配置读取和当前用户上下文，请在应用中显式引入
+`flexboot4-admin-starter`，或提供等价 Bean 实现。
+
 ## v1 模板管理能力
 
 ### 后端接口

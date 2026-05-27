@@ -8,16 +8,20 @@ Admin Starter 提供了 flexboot4 的核心 RBAC（基于角色的访问控制�
 - **角色管理**：角色定义、权限分配
 - **菜单管理**：动态菜单、权限控制
 - **部门管理**：组织架构管理
-- **操作日志**：系统操作审计
+- **操作日志**：系统操作审计，Redis Stream 消费支持 `event_id` 幂等、成功后 ack、pending reclaim 与 dead-letter stream
+- **分布式任务锁**：关键定时任务通过 `DistributedLockService` 加锁，Redis 可用时自动使用 Redis 锁
+- **Flyway 迁移脚本**：内置 Admin PostgreSQL 迁移目录，可按需追加到业务应用的 Flyway locations
+- **架构约束测试**：固化禁止字段注入、禁止注入具体 `*Impl`、starter 边界依赖等规则
+- **轻量指标接口**：通过 `MetricsRecorder` 记录认证、权限、OperLog Stream、分布式锁等关键事件，默认 Noop，支持业务项目替换实现
 - **登录日志**：用户登录追踪
-- **安全认证**：JWT Token 认证
+- **安全认证**：JWT Token 认证，`/api/admin/**` 未声明权限的接口默认拒绝
 - **Redis 缓存**：高性能缓存支持
 - **数据权限**：基于注解的数据权限控制
 - **API 文档**：集成 SpringDoc（Scalar UI）
 
 ## 依赖
 
-- Spring Boot 3.4.x
+- Spring Boot 4.x
 - Spring Security
 - MyBatis-Flex
 - PostgreSQL
@@ -39,22 +43,26 @@ dependencies {
 ```java
 package com.example.yourapp;
 
-import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cache.annotation.EnableCaching;
 
-@SpringBootApplication(scanBasePackages = {
-    "com.yunlbd.flexboot4",
-    "com.example.yourapp"
-})
+@SpringBootApplication
 @EnableCaching
-@MapperScan({"com.yunlbd.flexboot4.mapper", "com.example.yourapp.mapper"})
 public class YourApplication {
     public static void main(String[] args) {
         SpringApplication.run(YourApplication.class, args);
     }
 }
+```
+
+Admin Starter 使用 Spring Boot 标准自动装配入口加载框架 Bean，业务应用无需再配置
+`scanBasePackages("com.yunlbd.flexboot4")`。如果业务应用有自己的 Mapper，请只扫描业务包：
+
+```java
+import org.mybatis.spring.annotation.MapperScan;
+
+@MapperScan("com.example.yourapp.mapper")
 ```
 
 ### 配置 application.yml
@@ -85,28 +93,71 @@ mybatis-flex:
 
 # JWT 配置
 flexboot4:
+  flyway:
+    admin-migrations-enabled: false
+  lock:
+    key-prefix: flexboot4:lock:
+    default-ttl-millis: 60000
   jwt:
     secret: your-secret-key-at-least-256-bits-long
     expiration: 86400000 # 24小时
+
+operlog:
+  stream:
+    enabled: true
+    key: operlog:stream
+    dead-letter-key: operlog:stream:dead
+    max-delivery-attempts: 10
 ```
+
+`operlog.stream.dead-letter-key` 默认值为 `operlog:stream:dead`。超过最大投递次数的 pending 消息，或 payload 无法解析的消息，会写入死信流并在写入成功后 ack 原消息，便于人工排查与重放。
 
 ## 核心 API
 
 引入 Admin Starter 后，你可以使用以下服务：
 
 ```java
-@Autowired
-private SysUserService userService;
+@Service
+public class YourService {
+    private final SysUserService userService;
+    private final SysRoleService roleService;
+    private final SysMenuService menuService;
+    private final SysDeptService deptService;
 
-@Autowired
-private SysRoleService roleService;
-
-@Autowired
-private SysMenuService menuService;
-
-@Autowired
-private SysDeptService deptService;
+    public YourService(SysUserService userService,
+                       SysRoleService roleService,
+                       SysMenuService menuService,
+                       SysDeptService deptService) {
+        this.userService = userService;
+        this.roleService = roleService;
+        this.menuService = menuService;
+        this.deptService = deptService;
+    }
+}
 ```
+
+如果业务应用已引入 Flyway，并希望自动纳入 Admin starter 的 SQL 演进脚本，可设置：
+
+```yaml
+flexboot4:
+  flyway:
+    admin-migrations-enabled: true
+```
+
+启用后会追加迁移目录 `classpath:db/migration/flexboot4/admin/postgresql`。starter 默认不强制启用 Flyway，避免影响已有项目的数据库启动策略。
+
+### 可观测性扩展
+
+默认提供 Noop `MetricsRecorder`，不会引入额外监控依赖。业务项目可声明自己的 Bean 接入 Micrometer、Prometheus 或内部监控：
+
+```java
+@Bean
+MetricsRecorder metricsRecorder() {
+    return new YourMetricsRecorder();
+}
+```
+
+当前内置打点覆盖登录成功/失败/锁定、JWT 无效、权限拒绝、OperLog Stream 持久化/重复/reclaim、Redis 分布式锁抢占/释放。
 
 ## 注解使用
 
@@ -117,19 +168,27 @@ private SysDeptService deptService;
 @RequestMapping("/api/users")
 public class UserController {
     
-    @PreAuthorize("hasAuthority('system:user:list')")
+    @RequirePermission("sys:user:list")
     @GetMapping
     public List<SysUser> list() {
         // ...
     }
     
-    @PreAuthorize("hasAuthority('system:user:add')")
+    @RequirePermission("sys:user:add")
     @PostMapping
     public void add(@RequestBody SysUser user) {
         // ...
     }
 }
 ```
+
+P0 安全收口后，Admin 接口应显式声明 `@RequirePermission`；`/api/admin/**` 下未声明权限且未配置跳过的接口会被默认拒绝。当前关键权限码包括：
+
+- `sys:user:reset-password`
+- `sys:oper:log:list`
+- `sys:monitor:stats`
+
+登录、找回密码、重置密码、静态资源、OpenAPI/Scalar 与 `/error` 保持最小白名单。
 
 ### 数据权限
 
@@ -159,14 +218,15 @@ public class YourService {
 
 ## 注意事项
 
-1. Admin Starter 是纯库模块，不包含 `application.yml` 等配置文件
+1. Admin Starter 是纯库模块，通过默认配置文件提供框架级默认值，外部项目仍需提供数据库、Redis、JWT 等环境配置
 2. 外部项目需要配置数据库连接、Redis 连接等信息
-3. 确保数据库已创建相应的表结构（可参考 `doc/sql/` 目录）
+3. 确保数据库已创建相应的表结构与权限数据（可参考 `../docs/sql/` 目录，P0 权限码补丁见 `../docs/sql/admin_permission_p0_patch_pg.sql`，P2 操作日志幂等补丁见 `../docs/sql/admin_operlog_p2_reliability_pg.sql`）
 4. JWT Secret 建议使用至少 256 位的随机字符串
+5. `flexboot4-admin-kernel` 仅承载公共底座类，不会自动启用 RBAC/运维 Bean；kb/media/sms/cms starter 已按 kernel 解耦。kb/cms 如需使用默认文件管理、配置读取、用户上下文与后台管理能力，请在应用中显式引入 `admin-starter`，或提供等价 Bean 实现
 
 ## 相关文档
 
-- [完整架构说明](../STARTER_ARCHITECTURE.md)
-- [权限控制设计](../doc/backend_permission_control_design.md)
-- [API 分组指南](../doc/API_TAG_GROUP_GUIDE.md)
+- [完整架构说明](../docs/STARTER_ARCHITECTURE.md)
+- [权限控制设计](../docs/backend_permission_control_design.md)
+- [API 分组指南](../docs/API_TAG_GROUP_GUIDE.md)
 

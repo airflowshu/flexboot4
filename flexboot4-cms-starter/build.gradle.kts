@@ -7,7 +7,7 @@ plugins {
 description = "flexboot4 - CMS Starter"
 
 dependencies {
-    api(project(":flexboot4-admin-starter"))
+    api(project(":flexboot4-admin-kernel"))
 
     implementation(libs.mybatisFlexStarter)
     annotationProcessor(libs.mybatisFlexProcessor)

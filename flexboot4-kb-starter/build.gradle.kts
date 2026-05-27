@@ -8,11 +8,12 @@ description = "flexboot4 - Knowledge Base Starter"
 
 
 dependencies {
-    api(project(":flexboot4-admin-starter"))
+    api(project(":flexboot4-admin-kernel"))
 
     implementation(libs.pdfbox)
     implementation(libs.poiOoxml)
 
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
 
@@ -30,6 +31,7 @@ dependencies {
     }
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 publishing {
@@ -40,4 +42,3 @@ publishing {
         }
     }
 }
-

@@ -11,10 +11,6 @@ public interface FileManagerService {
                       String bizType,
                       String bizId);
 
-    /**
-     * 上传文件
-     * @param forceNew 是否强制创建新记录（true=同一文件也创建新记录，false=复用已有记录）
-     */
     FileObject upload(MultipartFile file,
                       String tenantId,
                       String bizType,

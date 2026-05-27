@@ -17,7 +17,7 @@ import com.yunlbd.flexboot4.file.parse.ParsedDocument;
 import com.yunlbd.flexboot4.file.parse.TokenEstimator;
 import com.yunlbd.flexboot4.mapper.KbFileTreeMapper;
 import com.yunlbd.flexboot4.service.kb.*;
-import com.yunlbd.flexboot4.service.ops.SysConfigService;
+import com.yunlbd.flexboot4.service.sys.ConfigLookupService;
 import com.yunlbd.flexboot4.service.sys.SysFileService;
 import org.springframework.stereotype.Service;
 
@@ -37,7 +37,7 @@ public class KnowledgeBaseIndexingServiceImpl implements KnowledgeBaseIndexingSe
     private final KbEmbeddingPublisher kbEmbeddingPublisher;
     private final FileStorage fileStorage;
     private final List<FileParser> parsers;
-    private final SysConfigService sysConfigService;
+    private final ConfigLookupService configLookupService;
 
     public KnowledgeBaseIndexingServiceImpl(KnowledgeBaseService knowledgeBaseService,
                                             KbFileTreeMapper kbFileTreeMapper,
@@ -48,7 +48,7 @@ public class KnowledgeBaseIndexingServiceImpl implements KnowledgeBaseIndexingSe
                                             KbEmbeddingPublisher kbEmbeddingPublisher,
                                             FileStorage fileStorage,
                                             List<FileParser> parsers,
-                                            SysConfigService sysConfigService) {
+                                            ConfigLookupService configLookupService) {
         this.knowledgeBaseService = knowledgeBaseService;
         this.kbFileTreeMapper = kbFileTreeMapper;
         this.sysFileService = sysFileService;
@@ -58,7 +58,7 @@ public class KnowledgeBaseIndexingServiceImpl implements KnowledgeBaseIndexingSe
         this.kbEmbeddingPublisher = kbEmbeddingPublisher;
         this.fileStorage = fileStorage;
         this.parsers = parsers;
-        this.sysConfigService = sysConfigService;
+        this.configLookupService = configLookupService;
     }
 
     @Override
@@ -177,7 +177,7 @@ public class KnowledgeBaseIndexingServiceImpl implements KnowledgeBaseIndexingSe
     }
 
     private boolean isRagSupportedFileType(SysFile file) {
-        List<String> supportedTypes = sysConfigService.getConfigValueAs("rag.file.type", "ARRAY");
+        List<String> supportedTypes = configLookupService.getConfigValueAs("rag.file.type", "ARRAY");
         if (supportedTypes == null || supportedTypes.isEmpty()) {
             return false;
         }

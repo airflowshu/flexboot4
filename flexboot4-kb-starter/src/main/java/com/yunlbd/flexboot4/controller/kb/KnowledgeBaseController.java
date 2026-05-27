@@ -15,7 +15,7 @@ import com.yunlbd.flexboot4.service.kb.KbMemberService;
 import com.yunlbd.flexboot4.service.kb.KnowledgeBaseIndexingService;
 import com.yunlbd.flexboot4.service.kb.KnowledgeBaseService;
 import com.yunlbd.flexboot4.service.sys.FileManagerService;
-import com.yunlbd.flexboot4.util.SecurityUtils;
+import com.yunlbd.flexboot4.auth.CurrentUserProvider;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -38,13 +38,14 @@ public class KnowledgeBaseController {
     private final KbFileTreeService kbFileTreeService;
     private final KnowledgeBaseIndexingService knowledgeBaseIndexingService;
     private final FileManagerService fileManagerService;
+    private final CurrentUserProvider currentUserProvider;
 
     @Operation(summary = "创建知识库")
     @OperLog(title = "创建知识库", businessType = BusinessType.INSERT)
     // @RequirePermission("kb:manage:create")
     @PostMapping
     public ApiResult<Boolean> create(@RequestBody KnowledgeBase kb) {
-        String userId = SecurityUtils.getUserId();
+        String userId = currentUserProvider.getUserId();
         return ApiResult.success(knowledgeBaseService.createKnowledgeBase(kb, userId));
     }
 
@@ -53,7 +54,7 @@ public class KnowledgeBaseController {
     // @RequirePermission("kb:manage:update")
     @PutMapping("/{id}")
     public ApiResult<Boolean> update(@PathVariable String id, @RequestBody KnowledgeBase kb) {
-        String userId = SecurityUtils.getUserId();
+        String userId = currentUserProvider.getUserId();
         return ApiResult.success(knowledgeBaseService.updateKnowledgeBase(id, kb, userId));
     }
 
@@ -62,7 +63,7 @@ public class KnowledgeBaseController {
     // @RequirePermission("kb:manage:delete")
     @DeleteMapping("/{id}")
     public ApiResult<Boolean> delete(@PathVariable String id) {
-        String userId = SecurityUtils.getUserId();
+        String userId = currentUserProvider.getUserId();
         return ApiResult.success(knowledgeBaseService.deleteKnowledgeBase(id, userId));
     }
 
@@ -71,7 +72,7 @@ public class KnowledgeBaseController {
     // @RequirePermission("kb:manage:view")
     @GetMapping("/{id}")
     public ApiResult<KnowledgeBase> get(@PathVariable String id) {
-        String userId = SecurityUtils.getUserId();
+        String userId = currentUserProvider.getUserId();
         knowledgeBaseService.checkVisible(id, userId);
         return ApiResult.success(knowledgeBaseService.getById(id));
     }
@@ -81,7 +82,7 @@ public class KnowledgeBaseController {
     // @RequirePermission("kb:manage:view")
     @PostMapping("/page")
     public ApiResult<?> page(@RequestBody SearchDto searchDto) {
-        String userId = SecurityUtils.getUserId();
+        String userId = currentUserProvider.getUserId();
         return ApiResult.success(knowledgeBaseService.pageVisible(searchDto, userId));
     }
 
@@ -90,7 +91,7 @@ public class KnowledgeBaseController {
     // @RequirePermission("kb:manage:view")
     @PostMapping("/list")
     public ApiResult<List<KnowledgeBase>> list(@RequestBody SearchDto searchDto) {
-        String userId = SecurityUtils.getUserId();
+        String userId = currentUserProvider.getUserId();
         return ApiResult.success(knowledgeBaseService.pageVisible(searchDto, userId).getRecords());
     }
 
@@ -101,7 +102,7 @@ public class KnowledgeBaseController {
     // @RequirePermission("kb:member:view")
     @GetMapping("/{kbId}/members")
     public ApiResult<List<KbMember>> listMembers(@PathVariable String kbId) {
-        String userId = SecurityUtils.getUserId();
+        String userId = currentUserProvider.getUserId();
         knowledgeBaseService.checkVisible(kbId, userId);
         KnowledgeBase kb = knowledgeBaseService.getById(kbId);
         if (!"team".equalsIgnoreCase(kb.getType())) {
@@ -115,7 +116,7 @@ public class KnowledgeBaseController {
     @RequirePermission("kb:member:add")
     // @PostMapping("/{kbId}/members")
     public ApiResult<Boolean> addMembers(@PathVariable String kbId, @RequestBody Collection<String> userIds) {
-        String userId = SecurityUtils.getUserId();
+        String userId = currentUserProvider.getUserId();
         knowledgeBaseService.checkOwner(kbId, userId);
         return ApiResult.success(kbMemberService.addMembers(kbId, userIds));
     }
@@ -125,7 +126,7 @@ public class KnowledgeBaseController {
     // @RequirePermission("kb:member:remove")
     @DeleteMapping("/{kbId}/members")
     public ApiResult<Boolean> removeMembers(@PathVariable String kbId, @RequestBody Collection<String> userIds) {
-        String userId = SecurityUtils.getUserId();
+        String userId = currentUserProvider.getUserId();
         knowledgeBaseService.checkOwner(kbId, userId);
         return ApiResult.success(kbMemberService.removeMembers(kbId, userIds));
     }
@@ -137,7 +138,7 @@ public class KnowledgeBaseController {
     // @RequirePermission("kb:index")
     @PostMapping("/{kbId}/index")
     public ApiResult<Integer> index(@PathVariable String kbId, @RequestBody(required = false) Collection<String> fileTreeIds) {
-        String userId = SecurityUtils.getUserId();
+        String userId = currentUserProvider.getUserId();
         knowledgeBaseService.checkOwner(kbId, userId);
         int processed = knowledgeBaseIndexingService.indexFiles(kbId, fileTreeIds);
         return ApiResult.success(processed);
@@ -150,7 +151,7 @@ public class KnowledgeBaseController {
     public ApiResult<List<KbFileTree>> fsList(
             @PathVariable String kbId,
             @RequestParam(required = false) String parentId) {
-        String userId = SecurityUtils.getUserId();
+        String userId = currentUserProvider.getUserId();
         knowledgeBaseService.checkVisible(kbId, userId);
         return ApiResult.success(kbFileTreeService.fsList(kbId, parentId));
     }
@@ -162,7 +163,7 @@ public class KnowledgeBaseController {
     public ApiResult<Boolean> createFolder(
             @PathVariable String kbId,
             @RequestBody CreateFolderRequest request) {
-        String userId = SecurityUtils.getUserId();
+        String userId = currentUserProvider.getUserId();
         knowledgeBaseService.checkOwner(kbId, userId);
         return ApiResult.success(kbFileTreeService.createFolder(kbId, request.parentId(), request.name()));
     }
@@ -172,7 +173,7 @@ public class KnowledgeBaseController {
     // @RequirePermission("kb:file:remove")
     @DeleteMapping("/{kbId}/fs/delete/{nodeId}")
     public ApiResult<Boolean> deleteNode(@PathVariable String kbId, @PathVariable String nodeId) {
-        String userId = SecurityUtils.getUserId();
+        String userId = currentUserProvider.getUserId();
         knowledgeBaseService.checkOwner(kbId, userId);
         return ApiResult.success(kbFileTreeService.deleteNode(nodeId));
     }
@@ -184,7 +185,7 @@ public class KnowledgeBaseController {
     public ApiResult<Boolean> moveNodes(
             @PathVariable String kbId,
             @RequestBody MoveRequest request) {
-        String userId = SecurityUtils.getUserId();
+        String userId = currentUserProvider.getUserId();
         knowledgeBaseService.checkOwner(kbId, userId);
         return ApiResult.success(kbFileTreeService.move(kbId, request.ids(), request.targetParentId()));
     }
@@ -197,7 +198,7 @@ public class KnowledgeBaseController {
             @PathVariable String kbId,
             @PathVariable String nodeId,
             @RequestBody RenameRequest request) {
-        String userId = SecurityUtils.getUserId();
+        String userId = currentUserProvider.getUserId();
         knowledgeBaseService.checkOwner(kbId, userId);
         return ApiResult.success(kbFileTreeService.rename(nodeId, request.name()));
     }
@@ -211,7 +212,7 @@ public class KnowledgeBaseController {
             @RequestParam("files") MultipartFile[] files,
             @RequestParam(required = false) String parentId
     ) {
-        String userId = SecurityUtils.getUserId();
+        String userId = currentUserProvider.getUserId();
         knowledgeBaseService.checkOwner(kbId, userId);
 
         List<String> uploadedFileIds = new ArrayList<>();

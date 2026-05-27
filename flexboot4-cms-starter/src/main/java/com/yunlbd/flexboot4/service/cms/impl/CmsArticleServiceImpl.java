@@ -3,6 +3,7 @@ package com.yunlbd.flexboot4.service.cms.impl;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.core.relation.RelationManager;
+import com.yunlbd.flexboot4.auth.CurrentUserProvider;
 import com.yunlbd.flexboot4.config.CmsRenderProperties;
 import com.yunlbd.flexboot4.dto.SearchDto;
 import com.yunlbd.flexboot4.entity.cms.ArticleStatusEnum;
@@ -14,7 +15,6 @@ import com.yunlbd.flexboot4.service.cms.CmsArticleService;
 import com.yunlbd.flexboot4.service.cms.CmsContentSanitizer;
 import com.yunlbd.flexboot4.service.cms.CmsTemplateRenderService;
 import com.yunlbd.flexboot4.service.sys.impl.BaseServiceImpl;
-import com.yunlbd.flexboot4.util.SecurityUtils;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -32,22 +32,25 @@ public class CmsArticleServiceImpl extends BaseServiceImpl<CmsArticleMapper, Cms
     private final CmsTemplateRenderService templateRenderService;
     private final CmsContentSanitizer cmsContentSanitizer;
     private final CmsRenderProperties cmsRenderProperties;
+    private final CurrentUserProvider currentUserProvider;
 
     public CmsArticleServiceImpl(CmsArticleMapper articleMapper,
                                  CmsTemplateRenderService templateRenderService,
                                  CmsContentSanitizer cmsContentSanitizer,
-                                 CmsRenderProperties cmsRenderProperties) {
+                                 CmsRenderProperties cmsRenderProperties,
+                                 CurrentUserProvider currentUserProvider) {
         this.articleMapper = articleMapper;
         this.templateRenderService = templateRenderService;
         this.cmsContentSanitizer = cmsContentSanitizer;
         this.cmsRenderProperties = cmsRenderProperties;
+        this.currentUserProvider = currentUserProvider;
     }
 
     @Override
     @Cacheable(keyGenerator = "versionedQueryKeyGenerator", cacheResolver = "dynamicCacheResolver")
     public Page<CmsArticle> pageWithPermissionFilter(SearchDto searchDto) {
         // 检查用户是否有审核权限（管理员）
-        List<String> permissionCodes = Objects.requireNonNull(SecurityUtils.getLoginUser()).getPermissionCodes();
+        List<String> permissionCodes = currentUserProvider.getPermissionCodes();
         boolean isAdmin = permissionCodes != null && permissionCodes.contains("cms:article:review");
 
         Page<CmsArticle> page = new Page<>(searchDto.getPageNumber(), searchDto.getPageSize());
@@ -57,7 +60,7 @@ public class CmsArticleServiceImpl extends BaseServiceImpl<CmsArticleMapper, Cms
 
         // 如果不是管理员，只查询自己创建的文章
         if (!isAdmin) {
-            String currentUsername = SecurityUtils.getLoginUser().getUsername();
+            String currentUsername = Objects.requireNonNull(currentUserProvider.getUsername(), "current username is required");
             queryWrapper.and(CmsArticle::getCreateBy).eq(currentUsername);
         }
 
@@ -105,7 +108,7 @@ public class CmsArticleServiceImpl extends BaseServiceImpl<CmsArticleMapper, Cms
             throw new IllegalStateException("只有待审核的文章可以审核通过");
         }
 
-        String reviewerId = SecurityUtils.getUserId();
+        String reviewerId = currentUserProvider.getUserId();
         LocalDateTime now = LocalDateTime.now();
 
         CmsArticle update = CmsArticle.builder()
@@ -134,7 +137,7 @@ public class CmsArticleServiceImpl extends BaseServiceImpl<CmsArticleMapper, Cms
             throw new IllegalStateException("只有待审核的文章可以驳回");
         }
 
-        String reviewerId = SecurityUtils.getUserId();
+        String reviewerId = currentUserProvider.getUserId();
         LocalDateTime now = LocalDateTime.now();
 
         CmsArticle update = CmsArticle.builder()

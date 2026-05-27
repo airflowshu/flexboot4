@@ -5,11 +5,13 @@ import org.springframework.boot.env.YamlPropertySourceLoader;
 import org.springframework.boot.context.event.ApplicationEnvironmentPreparedEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.core.env.MapPropertySource;
 import org.springframework.core.env.PropertySource;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.List;
 
 /**
@@ -52,6 +54,20 @@ public class FlexBoot4AdminEnvironmentListener implements ApplicationListener<Ap
         } catch (IOException e) {
             log.error("❌ 加载 Flexboot4 Admin 默认配置失败", e);
         }
+
+        registerFlywayLocations(environment);
+    }
+
+    private void registerFlywayLocations(ConfigurableEnvironment environment) {
+        if (!FlexBoot4FlywayLocations.adminMigrationsEnabled(environment)) {
+            return;
+        }
+        String locations = FlexBoot4FlywayLocations.mergedLocations(environment);
+        environment.getPropertySources().addFirst(new MapPropertySource(
+                "flexboot4-admin-flyway-locations",
+                Map.of(FlexBoot4FlywayLocations.LOCATIONS_PROPERTY, locations)
+        ));
+        log.info("✅ Flexboot4 Admin Flyway 迁移目录已追加: {}", FlexBoot4FlywayLocations.ADMIN_POSTGRESQL_LOCATION);
     }
 }
 

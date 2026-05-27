@@ -47,8 +47,8 @@ public class SysMenu extends BaseEntity {
     @Schema(title = "排序号")
     private Integer orderNo;
 
-    @Schema(title = "是否隐藏菜单")
-    private Boolean hideMenu;
+    @Schema(title = "是否在菜单中隐藏")
+    private Boolean hideInMenu;
 
     @Schema(title = "是否缓存")
     private Boolean keepAlive;
@@ -77,11 +77,11 @@ public class SysMenu extends BaseEntity {
     @Schema(title = "是否在菜单中隐藏子菜单")
     private Boolean hideChildrenInMenu;
 
-    @Schema(title = "是否隐藏面包屑")
-    private Boolean hideBreadcrumb;
+    @Schema(title = "是否在面包屑中隐藏")
+    private Boolean hideInBreadcrumb;
 
-    @Schema(title = "是否隐藏标签页")
-    private Boolean hideTab;
+    @Schema(title = "是否在标签栏中隐藏")
+    private Boolean hideInTab;
 
     @Schema(title = "403时是否显示菜单")
     private Boolean menuVisibleWithForbidden;

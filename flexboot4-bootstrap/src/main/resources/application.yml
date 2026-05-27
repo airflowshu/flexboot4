@@ -66,6 +66,15 @@ cms:
     asset-base-url: ${CMS_TEMPLATE_ASSET_BASE_URL:http://localhost:8080}
     publish-dir: ${CMS_TEMPLATE_PUBLISH_DIR:${cms.render.output-dir}/site-published}
 
+media:
+  enabled: ${MEDIA_ENABLED:true}
+  runtime-check-enabled: ${MEDIA_RUNTIME_CHECK_ENABLED:true}
+
+file:
+  embedding:
+    stream:
+      enabled: ${FILE_EMBEDDING_STREAM_ENABLED:true}
+
 # 日志级别配置
 logging:
   level:

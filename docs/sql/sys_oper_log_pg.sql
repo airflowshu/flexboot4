@@ -1,6 +1,7 @@
 -- 操作日志表
 CREATE TABLE IF NOT EXISTS sys_oper_log (
     id VARCHAR(32) NOT NULL PRIMARY KEY,
+    event_id VARCHAR(128),
     title VARCHAR(50) DEFAULT '',
     business_type INT DEFAULT 0,
     method VARCHAR(100) DEFAULT '',
@@ -29,6 +30,7 @@ CREATE TABLE IF NOT EXISTS sys_oper_log (
 );
 
 COMMENT ON TABLE sys_oper_log IS '操作日志记录';
+COMMENT ON COLUMN sys_oper_log.event_id IS '外部事件幂等ID';
 COMMENT ON COLUMN sys_oper_log.title IS '模块标题';
 COMMENT ON COLUMN sys_oper_log.business_type IS '业务类型';
 COMMENT ON COLUMN sys_oper_log.method IS '方法名称';
@@ -49,6 +51,12 @@ COMMENT ON COLUMN sys_oper_log.cost_time IS '消耗时间';
 
 CREATE INDEX idx_sys_oper_log_bt ON sys_oper_log (business_type, status, create_time);
 CREATE INDEX idx_sys_oper_log_ot ON sys_oper_log (oper_time);
+CREATE UNIQUE INDEX uk_sys_oper_log_event_id ON sys_oper_log (event_id) WHERE event_id IS NOT NULL AND event_id <> '';
 
 -- 示例：2026年Q1分表
 CREATE TABLE IF NOT EXISTS sys_oper_log_2026_q1 (LIKE sys_oper_log INCLUDING ALL);
+
+-- P2 幂等字段补丁（已有环境可单独执行）
+ALTER TABLE sys_oper_log ADD COLUMN IF NOT EXISTS event_id VARCHAR(128);
+COMMENT ON COLUMN sys_oper_log.event_id IS '外部事件幂等ID';
+CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_oper_log_event_id ON sys_oper_log (event_id) WHERE event_id IS NOT NULL AND event_id <> '';

@@ -1,6 +1,7 @@
 package com.yunlbd.flexboot4.security;
 
 import com.yunlbd.flexboot4.auth.jwt.JwtScopes;
+import com.yunlbd.flexboot4.metrics.MetricsRecorder;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
@@ -26,6 +28,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
     private final StringRedisTemplate redisTemplate;
+    private final MetricsRecorder metricsRecorder;
 
     @Override
     @NullMarked
@@ -36,6 +39,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             try {
                 String uri = request.getRequestURI();
                 if (!uri.startsWith("/api/admin/auth") && !jwtUtil.hasScope(token, JwtScopes.ADMIN)) {
+                    metricsRecorder.increment("flexboot4.auth.scope_denied", Map.of("uri", uri, "scope", JwtScopes.ADMIN));
                     response.setStatus(403);
                     return;
                 }
@@ -59,6 +63,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     }
                 }
             } catch (Exception e) {
+                metricsRecorder.increment("flexboot4.auth.token_invalid", Map.of(
+                        "uri", request.getRequestURI(),
+                        "exception", e.getClass().getSimpleName()
+                ));
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 response.setContentType("application/json;charset=UTF-8");
                 response.getWriter().write("{\"code\":401,\"message\":\"未认证或令牌无效/过期\"}");

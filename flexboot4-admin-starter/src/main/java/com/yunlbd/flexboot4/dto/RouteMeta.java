@@ -10,7 +10,7 @@ public class RouteMeta implements Serializable {
     private String title;
     private String icon;
     private String activeIcon;
-    private Boolean hideMenu;
+    private Boolean hideInMenu;
     private Integer order;
     private String badge;
     private String badgeType;
@@ -19,8 +19,8 @@ public class RouteMeta implements Serializable {
     private String iframeSrc;
     private Boolean affixTab;
     private Boolean hideChildrenInMenu;
-    private Boolean hideBreadcrumb;
-    private Boolean hideTab;
+    private Boolean hideInBreadcrumb;
+    private Boolean hideInTab;
     private Boolean keepAlive;
     private List<String> authority;
     private Boolean menuVisibleWithForbidden;

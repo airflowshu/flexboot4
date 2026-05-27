@@ -2,6 +2,8 @@ package com.yunlbd.flexboot4.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yunlbd.flexboot4.listener.OperLogStreamListener;
+import com.yunlbd.flexboot4.lock.DistributedLockService;
+import com.yunlbd.flexboot4.metrics.MetricsRecorder;
 import com.yunlbd.flexboot4.service.ops.SysOperLogService;
 import com.yunlbd.flexboot4.util.UserAgentService;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -22,7 +24,9 @@ public class OperLogStreamConfig {
                                                        SysOperLogService sysOperLogService,
                                                        ObjectMapper objectMapper,
                                                        OperLogStreamProperties properties,
-                                                       UserAgentService userAgentService) {
-        return new OperLogStreamListener(stringRedisTemplate, sysOperLogService, objectMapper, properties, userAgentService);
+                                                       UserAgentService userAgentService,
+                                                       DistributedLockService distributedLockService,
+                                                       MetricsRecorder metricsRecorder) {
+        return new OperLogStreamListener(stringRedisTemplate, sysOperLogService, objectMapper, properties, userAgentService, distributedLockService, metricsRecorder);
     }
 }

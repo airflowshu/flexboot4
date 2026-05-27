@@ -27,7 +27,8 @@ dependencies {
 }
 ```
 
-`flexboot4-sms4j-starter` 会传递 `flexboot4-admin-starter`，无需重复引入基础管理模块。
+`flexboot4-sms4j-starter` 仅传递 `flexboot4-admin-kernel` 以复用公共底座能力。
+如果应用需要 Admin RBAC、菜单、权限拦截与管理台组合运行，请同时引入 `flexboot4-admin-starter`。
 
 ---
 
@@ -85,9 +86,10 @@ sms:
 ## 最小接入清单
 
 1. 在项目中引入 `flexboot4-sms4j-starter`
-2. 执行 `docs/sql/sms4j_config_pg.sql`
-3. 在后台「短信厂商配置」页面维护厂商参数
-4. 通过短信业务接口发起发送（按你当前业务封装）
+2. 管理台应用同时引入 `flexboot4-admin-starter`
+3. 执行 `docs/sql/sms4j_config_pg.sql`
+4. 在后台「短信厂商配置」页面维护厂商参数
+5. 通过短信业务接口发起发送（按你当前业务封装）
 
 ---
 

@@ -4,6 +4,7 @@ import com.mybatisflex.core.query.QueryWrapper;
 import com.yunlbd.flexboot4.entity.sys.SysFile;
 import com.yunlbd.flexboot4.event.SysFileUploadedEvent;
 import com.yunlbd.flexboot4.file.ai.AiParseStatus;
+import com.yunlbd.flexboot4.lock.DistributedLockService;
 import com.yunlbd.flexboot4.service.sys.SysFileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -11,6 +12,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -24,9 +26,14 @@ public class SysFileParseRetryTask {
 
     private final SysFileService sysFileService;
     private final ApplicationEventPublisher eventPublisher;
+    private final DistributedLockService distributedLockService;
 
     @Scheduled(initialDelay = 30000, fixedDelay = 300000)
     public void retryFailedOrStuck() {
+        distributedLockService.executeIfLocked("admin:file-parse:retry", Duration.ofMinutes(10), this::doRetryFailedOrStuck);
+    }
+
+    void doRetryFailedOrStuck() {
         LocalDateTime stuckBefore = LocalDateTime.now().minusMinutes(15);
         List<SysFile> failed = sysFileService.list(QueryWrapper.create()
                 .from(SysFile.class)

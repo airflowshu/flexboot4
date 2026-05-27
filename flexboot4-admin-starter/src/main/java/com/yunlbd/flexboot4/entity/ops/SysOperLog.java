@@ -36,6 +36,9 @@ public class SysOperLog implements Serializable {
     @Schema(accessMode = Schema.AccessMode.READ_ONLY, title = "主键id")
     private String id;
 
+    @Schema(title = "外部事件幂等ID")
+    private String eventId;
+
     @Schema(title = "模块标题")
     private String title;
 

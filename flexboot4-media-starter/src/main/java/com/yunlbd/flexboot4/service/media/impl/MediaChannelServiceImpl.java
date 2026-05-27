@@ -25,7 +25,6 @@ import com.yunlbd.flexboot4.service.media.MediaGatewayService;
 import com.yunlbd.flexboot4.service.media.MediaServerService;
 import com.yunlbd.flexboot4.service.media.MediaStreamSessionService;
 import com.yunlbd.flexboot4.service.sys.impl.BaseServiceImpl;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -40,33 +39,25 @@ import java.util.UUID;
 public class MediaChannelServiceImpl extends BaseServiceImpl<MediaChannelMapper, MediaChannel> implements MediaChannelService {
 
     private final MediaProperties mediaProperties;
-    private MediaDeviceService mediaDeviceService;
+    private final MediaDeviceService mediaDeviceService;
     private final MediaGatewayService mediaGatewayService;
-    private MediaGatewayRuntimeManager mediaGatewayRuntimeManager;
+    private final MediaGatewayRuntimeManager mediaGatewayRuntimeManager;
     private final MediaServerService mediaServerService;
     private final MediaStreamSessionService mediaStreamSessionService;
 
     public MediaChannelServiceImpl(
             MediaProperties mediaProperties,
+            @Lazy MediaDeviceService mediaDeviceService,
             MediaGatewayService mediaGatewayService,
+            @Lazy MediaGatewayRuntimeManager mediaGatewayRuntimeManager,
             MediaServerService mediaServerService,
             MediaStreamSessionService mediaStreamSessionService) {
         this.mediaProperties = mediaProperties;
+        this.mediaDeviceService = mediaDeviceService;
         this.mediaGatewayService = mediaGatewayService;
+        this.mediaGatewayRuntimeManager = mediaGatewayRuntimeManager;
         this.mediaServerService = mediaServerService;
         this.mediaStreamSessionService = mediaStreamSessionService;
-        this.mediaDeviceService = null;
-        this.mediaGatewayRuntimeManager = null;
-    }
-
-    @Autowired
-    public void setMediaDeviceService(@Lazy MediaDeviceService mediaDeviceService) {
-        this.mediaDeviceService = mediaDeviceService;
-    }
-
-    @Autowired
-    public void setMediaGatewayRuntimeManager(@Lazy MediaGatewayRuntimeManager mediaGatewayRuntimeManager) {
-        this.mediaGatewayRuntimeManager = mediaGatewayRuntimeManager;
     }
 
     @Override

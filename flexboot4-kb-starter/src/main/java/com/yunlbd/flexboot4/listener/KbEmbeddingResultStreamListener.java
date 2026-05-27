@@ -7,6 +7,8 @@ import com.yunlbd.flexboot4.service.kb.SysFileChunkService;
 import com.yunlbd.flexboot4.service.sys.SysFileService;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.stream.*;
@@ -22,6 +24,8 @@ import java.util.Objects;
 
 @Slf4j
 @Component
+@ConditionalOnClass(StringRedisTemplate.class)
+@ConditionalOnProperty(prefix = "file.embedding.stream", name = "enabled", havingValue = "true")
 public class KbEmbeddingResultStreamListener {
 
     private static final String GROUP = "kb-embedding-result-group";

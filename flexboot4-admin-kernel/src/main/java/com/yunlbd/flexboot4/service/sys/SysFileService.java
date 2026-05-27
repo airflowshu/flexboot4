@@ -4,4 +4,3 @@ import com.yunlbd.flexboot4.entity.sys.SysFile;
 
 public interface SysFileService extends IExtendedService<SysFile> {
 }
-

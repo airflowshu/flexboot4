@@ -97,17 +97,12 @@ dependencies {
 ```java
 package com.example.yourapp;
 
-import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cache.annotation.EnableCaching;
 
-@SpringBootApplication(scanBasePackages = {
-    "com.yunlbd.flexboot4",  // 扫描 flexboot4 组件
-    "com.example.yourapp"     // 扫描自己的组件
-})
+@SpringBootApplication
 @EnableCaching
-@MapperScan({"com.yunlbd.flexboot4.mapper", "com.example.yourapp.mapper"})
 public class YourApplication {
     public static void main(String[] args) {
         SpringApplication.run(YourApplication.class, args);
@@ -219,27 +214,27 @@ subprojects {
 
 ## 常见问题
 
-### Q1: 编译报错找不到 flexboot4 的类
+### Q1: 启动后找不到 FlexBoot4 的 Bean
 
-**原因**：未正确配置包扫描。
+**原因**：未正确引入对应 starter，或当前 starter 未被 Spring Boot 自动装配发现。
 
-**解决**：确保 `@SpringBootApplication` 包含 `scanBasePackages`:
+**解决**：确认依赖中已加入需要的 starter，并保留 starter 包内的
+`META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports` 资源：
 
-```java
-@SpringBootApplication(scanBasePackages = {
-    "com.yunlbd.flexboot4",
-    "com.example.yourapp"
-})
+```kotlin
+dependencies {
+    implementation("com.yunlbd:flexboot4-admin-starter")
+}
 ```
 
 ### Q2: Mapper 找不到
 
-**原因**：未扫描 flexboot4 的 Mapper。
+**原因**：业务项目自己的 Mapper 未被扫描。
 
-**解决**：在 `@MapperScan` 中包含 flexboot4 的包：
+**解决**：在 `@MapperScan` 中扫描业务包即可；FlexBoot4 内部 Mapper 由 starter 自动装配：
 
 ```java
-@MapperScan({"com.yunlbd.flexboot4.mapper", "com.example.yourapp.mapper"})
+@MapperScan("com.example.yourapp.mapper")
 ```
 
 ### Q3: 数据库连接失败

@@ -1,13 +1,13 @@
 INSERT INTO sys_menu (id, parent_id, path, name, component, title, icon, order_no,
-                      hide_menu, keep_alive, type, status,
+                      hide_in_menu, keep_alive, type, status,
                       create_time, last_modify_time, del_flag, version)
-VALUES ('media_root', null, '/media', 'Media', 'LAYOUT', 'media.title', 'ant-design:video-camera-outlined', 96,
+VALUES ('media_root', null, '/media', 'Media', 'BasicLayout', 'media.title', 'ant-design:video-camera-outlined', 96,
         false, false, 'catalog', 1,
         now(), now(), 0, 0)
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO sys_menu (id, parent_id, path, name, component, title, icon, order_no,
-                      hide_menu, keep_alive, type, auth_code, status,
+                      hide_in_menu, keep_alive, type, auth_code, status,
                       create_time, last_modify_time, del_flag, version)
 VALUES ('media_server_menu', 'media_root', '/media/server', 'MediaServer', '/media/server/index',
         'media.server.title', 'ant-design:cloud-server-outlined', 1,
@@ -16,7 +16,7 @@ VALUES ('media_server_menu', 'media_root', '/media/server', 'MediaServer', '/med
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO sys_menu (id, parent_id, path, name, component, title, icon, order_no,
-                      hide_menu, keep_alive, type, auth_code, status,
+                      hide_in_menu, keep_alive, type, auth_code, status,
                       create_time, last_modify_time, del_flag, version)
 VALUES ('media_gateway_menu', 'media_root', '/media/gateway', 'MediaGateway', '/media/gateway/index',
         'media.gateway.title', 'ant-design:api-outlined', 2,
@@ -25,7 +25,7 @@ VALUES ('media_gateway_menu', 'media_root', '/media/gateway', 'MediaGateway', '/
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO sys_menu (id, parent_id, path, name, component, title, icon, order_no,
-                      hide_menu, keep_alive, type, auth_code, status,
+                      hide_in_menu, keep_alive, type, auth_code, status,
                       create_time, last_modify_time, del_flag, version)
 VALUES ('media_device_menu', 'media_root', '/media/device', 'MediaDevice', '/media/device/index',
         'media.device.title', 'ant-design:deployment-unit-outlined', 3,
@@ -34,7 +34,7 @@ VALUES ('media_device_menu', 'media_root', '/media/device', 'MediaDevice', '/med
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO sys_menu (id, parent_id, path, name, component, title, icon, order_no,
-                      hide_menu, keep_alive, type, auth_code, status,
+                      hide_in_menu, keep_alive, type, auth_code, status,
                       create_time, last_modify_time, del_flag, version)
 VALUES ('media_screen_menu', 'media_root', '/media/screen', 'MediaScreen', '/media/screen/index',
         'media.screen.title', 'ant-design:appstore-outlined', 4,
@@ -43,7 +43,7 @@ VALUES ('media_screen_menu', 'media_root', '/media/screen', 'MediaScreen', '/med
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO sys_menu (id, parent_id, path, name, component, title, icon, order_no,
-                      hide_menu, keep_alive, type, auth_code, status,
+                      hide_in_menu, keep_alive, type, auth_code, status,
                       create_time, last_modify_time, del_flag, version)
 VALUES ('media_cascade_menu', 'media_root', '/media/cascade', 'MediaCascade', '/media/cascade/index',
         'media.cascade.title', 'ant-design:branches-outlined', 5,
@@ -52,7 +52,7 @@ VALUES ('media_cascade_menu', 'media_root', '/media/cascade', 'MediaCascade', '/
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO sys_menu (id, parent_id, path, name, component, title, icon, order_no,
-                      hide_menu, keep_alive, type, auth_code, status,
+                      hide_in_menu, keep_alive, type, auth_code, status,
                       create_time, last_modify_time, del_flag, version)
 VALUES ('media_server_test_btn', 'media_server_menu', '', 'MediaServerTest', '',
         'media.server.test', '', 90,
@@ -61,7 +61,7 @@ VALUES ('media_server_test_btn', 'media_server_menu', '', 'MediaServerTest', '',
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO sys_menu (id, parent_id, path, name, component, title, icon, order_no,
-                      hide_menu, keep_alive, type, auth_code, status,
+                      hide_in_menu, keep_alive, type, auth_code, status,
                       create_time, last_modify_time, del_flag, version)
 VALUES ('media_gateway_reload_btn', 'media_gateway_menu', '', 'MediaGatewayReload', '',
         'media.gateway.reload', '', 91,
@@ -70,7 +70,7 @@ VALUES ('media_gateway_reload_btn', 'media_gateway_menu', '', 'MediaGatewayReloa
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO sys_menu (id, parent_id, path, name, component, title, icon, order_no,
-                      hide_menu, keep_alive, type, auth_code, status,
+                      hide_in_menu, keep_alive, type, auth_code, status,
                       create_time, last_modify_time, del_flag, version)
 VALUES ('media_channel_live_btn', 'media_device_menu', '', 'MediaChannelLive', '',
         'media.device.live', '', 92,
@@ -79,7 +79,7 @@ VALUES ('media_channel_live_btn', 'media_device_menu', '', 'MediaChannelLive', '
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO sys_menu (id, parent_id, path, name, component, title, icon, order_no,
-                      hide_menu, keep_alive, type, auth_code, status,
+                      hide_in_menu, keep_alive, type, auth_code, status,
                       create_time, last_modify_time, del_flag, version)
 VALUES ('media_channel_playback_btn', 'media_device_menu', '', 'MediaChannelPlayback', '',
         'media.device.playback', '', 93,
@@ -88,7 +88,7 @@ VALUES ('media_channel_playback_btn', 'media_device_menu', '', 'MediaChannelPlay
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO sys_menu (id, parent_id, path, name, component, title, icon, order_no,
-                      hide_menu, keep_alive, type, auth_code, status,
+                      hide_in_menu, keep_alive, type, auth_code, status,
                       create_time, last_modify_time, del_flag, version)
 VALUES ('media_channel_ptz_btn', 'media_device_menu', '', 'MediaChannelPtz', '',
         'media.device.ptz', '', 94,
@@ -97,7 +97,7 @@ VALUES ('media_channel_ptz_btn', 'media_device_menu', '', 'MediaChannelPtz', '',
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO sys_menu (id, parent_id, path, name, component, title, icon, order_no,
-                      hide_menu, keep_alive, type, auth_code, status,
+                      hide_in_menu, keep_alive, type, auth_code, status,
                       create_time, last_modify_time, del_flag, version)
 VALUES ('media_screen_save_btn', 'media_screen_menu', '', 'MediaScreenSave', '',
         'media.screen.save', '', 95,
@@ -106,7 +106,7 @@ VALUES ('media_screen_save_btn', 'media_screen_menu', '', 'MediaScreenSave', '',
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO sys_menu (id, parent_id, path, name, component, title, icon, order_no,
-                      hide_menu, keep_alive, type, auth_code, status,
+                      hide_in_menu, keep_alive, type, auth_code, status,
                       create_time, last_modify_time, del_flag, version)
 VALUES ('media_cascade_bind_btn', 'media_cascade_menu', '', 'MediaCascadeBind', '',
         'media.cascade.bind', '', 96,

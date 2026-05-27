@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class UserDetailsServiceImpl implements UserDetailsService {
+public class UserDetailsServiceImpl implements UserDetailsService, UserDetailsCacheService {
 
     private final SysUserService sysUserService;
     private final SysMenuService sysMenuService;
@@ -67,6 +67,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
      * @param username 用户名
      */
     @CacheEvict(value = "userDetails", key = "#username")
+    @Override
     public void evictUserCache(String username) {
         // 仅用于清除缓存，实际方法体不需要任何逻辑
     }

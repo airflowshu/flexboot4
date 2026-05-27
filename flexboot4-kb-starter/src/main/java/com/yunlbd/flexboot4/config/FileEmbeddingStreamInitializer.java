@@ -2,6 +2,8 @@ package com.yunlbd.flexboot4.config;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.redis.connection.RedisConnection;
@@ -17,6 +19,8 @@ import java.util.Objects;
  * 确保 Redis Stream 在应用启动时存在
  */
 @Component
+@ConditionalOnClass(StringRedisTemplate.class)
+@ConditionalOnProperty(prefix = "file.embedding.stream", name = "enabled", havingValue = "true")
 public class FileEmbeddingStreamInitializer {
 
     private static final Logger log = LoggerFactory.getLogger(FileEmbeddingStreamInitializer.class);

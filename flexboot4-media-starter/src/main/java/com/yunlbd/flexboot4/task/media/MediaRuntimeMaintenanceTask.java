@@ -6,6 +6,7 @@ import com.yunlbd.flexboot4.entity.media.MediaDevice;
 import com.yunlbd.flexboot4.entity.media.MediaGateway;
 import com.yunlbd.flexboot4.entity.media.MediaServer;
 import com.yunlbd.flexboot4.entity.media.MediaStreamSession;
+import com.yunlbd.flexboot4.lock.DistributedLockService;
 import com.yunlbd.flexboot4.media.MediaProperties;
 import com.yunlbd.flexboot4.media.enums.MediaAccessType;
 import com.yunlbd.flexboot4.media.enums.MediaGatewayRuntimeStatus;
@@ -22,14 +23,17 @@ import com.yunlbd.flexboot4.service.media.MediaServerService;
 import com.yunlbd.flexboot4.service.media.MediaStreamSessionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
 @Component
+@ConditionalOnProperty(prefix = "media", name = "runtime-check-enabled", havingValue = "true")
 @RequiredArgsConstructor
 public class MediaRuntimeMaintenanceTask {
 
@@ -42,12 +46,17 @@ public class MediaRuntimeMaintenanceTask {
     private final MediaDeviceService mediaDeviceService;
     private final MediaChannelService mediaChannelService;
     private final MediaStreamSessionService mediaStreamSessionService;
+    private final DistributedLockService distributedLockService;
 
     @Scheduled(
             initialDelayString = "${media.runtime-check-initial-delay-millis:30000}",
             fixedDelayString = "${media.runtime-check-fixed-delay-millis:30000}"
     )
     public void reconcileRuntime() {
+        distributedLockService.executeIfLocked("media:runtime-maintenance", Duration.ofMillis(mediaProperties.runtimeCheckFixedDelayMillis()), this::doReconcileRuntime);
+    }
+
+    void doReconcileRuntime() {
         if (!mediaProperties.enabled() || !mediaProperties.runtimeCheckEnabled()) {
             return;
         }
@@ -215,4 +224,3 @@ public class MediaRuntimeMaintenanceTask {
         return null;
     }
 }
-

@@ -24,20 +24,12 @@ dependencies {
 ```java
 package com.example.yourapp;
 
-import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cache.annotation.EnableCaching;
 
-@SpringBootApplication(scanBasePackages = {
-    "com.yunlbd.flexboot4",      // ✅ 扫描 FlexBoot4 组件
-    "com.example.yourapp"         // 扫描自己的组件
-})
+@SpringBootApplication
 @EnableCaching
-@MapperScan({
-    "com.yunlbd.flexboot4.mapper",
-    "com.example.yourapp.mapper"
-})
 public class YourApplication {
     public static void main(String[] args) {
         SpringApplication.run(YourApplication.class, args);
@@ -77,24 +69,25 @@ spring:
 | 需求场景 | 推荐方案 | 说明 |
 |---------|--------|------|
 | **仅需用户管理 + RBAC** | `admin-starter` | 包含用户、角色、菜单、权限管理 |
-| **需要知识库 + RAG** | `kb-starter` | 自动传递 `admin-starter`，支持文档解析与向量化 |
-| **需要媒体处理** | `media-starter` | 自动传递 `admin-starter`，支持视频/音频处理 |
-| **需要短信能力** | `sms4j-starter` | 自动传递 `admin-starter`，支持短信厂商配置与动态刷新 |
+| **需要知识库 + RAG** | `kb-starter` | 依赖 `admin-kernel`，支持文档解析与向量化；管理台组合时显式引入 `admin-starter` |
+| **需要媒体处理** | `media-starter` | 依赖 `admin-kernel`，支持视频/音频处理 |
+| **需要短信能力** | `sms4j-starter` | 依赖 `admin-kernel`，支持短信厂商配置与动态刷新 |
 | **全功能平台** | 所有 Starter | Admin + KB + Media + SMS 完整功能 |
 
-### 依赖自动传递
+### 依赖边界
 
 ```
 flexboot4-core (纯 Java 基础库)
     ↓
-flexboot4-admin-starter (RBAC 内核)
+flexboot4-admin-kernel (starter 公共底座)
     ↓
-├── flexboot4-kb-starter (依赖 admin-starter)
-├── flexboot4-media-starter (依赖 admin-starter)
-└── flexboot4-sms4j-starter (依赖 admin-starter)
+├── flexboot4-admin-starter (RBAC / 系统管理)
+├── flexboot4-kb-starter (知识库)
+├── flexboot4-media-starter (媒体)
+└── flexboot4-sms4j-starter (短信)
 ```
 
-✅ **只需引入最高层的 Starter，低层依赖自动传递**
+✅ **业务能力按需引入；需要后台 RBAC、菜单、权限码、文件管理或用户上下文时，显式组合 `admin-starter`**
 
 ---
 

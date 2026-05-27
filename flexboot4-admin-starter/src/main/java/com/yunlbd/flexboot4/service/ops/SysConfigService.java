@@ -1,6 +1,7 @@
 package com.yunlbd.flexboot4.service.ops;
 
 import com.yunlbd.flexboot4.entity.ops.SysConfig;
+import com.yunlbd.flexboot4.service.sys.ConfigLookupService;
 import com.yunlbd.flexboot4.service.sys.IExtendedService;
 
 /**
@@ -9,7 +10,7 @@ import com.yunlbd.flexboot4.service.sys.IExtendedService;
  * @author Wangts
  * @since 2026年01月29日
  */
-public interface SysConfigService extends IExtendedService<SysConfig> {
+public interface SysConfigService extends IExtendedService<SysConfig>, ConfigLookupService {
 
     /**
      * 根据配置键获取配置值

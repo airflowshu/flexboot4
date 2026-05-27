@@ -9,8 +9,9 @@ import com.yunlbd.flexboot4.dto.ResetPasswordReq;
 import com.yunlbd.flexboot4.entity.sys.SysRole;
 import com.yunlbd.flexboot4.entity.sys.SysUser;
 import com.yunlbd.flexboot4.mapper.SysUserMapper;
+import com.yunlbd.flexboot4.metrics.MetricsRecorder;
 import com.yunlbd.flexboot4.security.JwtUtil;
-import com.yunlbd.flexboot4.security.UserDetailsServiceImpl;
+import com.yunlbd.flexboot4.security.UserDetailsCacheService;
 import com.yunlbd.flexboot4.service.sys.EmailService;
 import com.yunlbd.flexboot4.service.sys.IAuthService;
 import com.yunlbd.flexboot4.service.sys.SysMenuService;
@@ -29,6 +30,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -49,9 +51,10 @@ public class AuthServiceImpl implements IAuthService {
     private final StringRedisTemplate redisTemplate;
     private final SysUserMapper sysUserMapper;
     private final SysMenuService sysMenuService;
-    private final UserDetailsServiceImpl userDetailsService;
+    private final UserDetailsCacheService userDetailsCacheService;
     private final ObjectProvider<EmailService> emailServiceProvider;
     private final SysUserService sysUserService;
+    private final MetricsRecorder metricsRecorder;
 
     @Override
     public List<String> getPermissionCodes(HttpServletRequest request) {
@@ -71,6 +74,7 @@ public class AuthServiceImpl implements IAuthService {
         int attempts = attemptsStr != null ? Integer.parseInt(attemptsStr) : 0;
         if (attempts >= MAX_LOGIN_ATTEMPTS) {
             log.warn("Login locked for user: {} IP: {}", req.getUsername(), clientIp);
+            metricsRecorder.increment("flexboot4.auth.login_locked", Map.of("clientIp", clientIp));
             throw new SecurityException("Too many login attempts. Please try again later.");
         }
 
@@ -91,6 +95,7 @@ public class AuthServiceImpl implements IAuthService {
             String token = jwtUtil.generateToken(userDetails, sysUser.getId(), roles, permissions);
 
             redisTemplate.delete(limitKey);
+            metricsRecorder.increment("flexboot4.auth.login_success", Map.of("clientIp", clientIp));
             log.info("User logged in successfully: {}", req.getUsername());
 
             LoginResp loginResp = new LoginResp();
@@ -103,6 +108,10 @@ public class AuthServiceImpl implements IAuthService {
         } catch (Exception e) {
             redisTemplate.opsForValue().increment(limitKey);
             redisTemplate.expire(limitKey, LOCK_TIME_MINUTES, TimeUnit.MINUTES);
+            metricsRecorder.increment("flexboot4.auth.login_failed", Map.of(
+                    "clientIp", clientIp,
+                    "exception", e.getClass().getSimpleName()
+            ));
             log.warn("Login failed for user: {} IP: {} Reason: {}", req.getUsername(), clientIp, e.getMessage());
             throw e;
         }
@@ -119,7 +128,7 @@ public class AuthServiceImpl implements IAuthService {
 
             String username = jwtUtil.extractUsername(token);
             if (username != null) {
-                userDetailsService.evictUserCache(username);
+                userDetailsCacheService.evictUserCache(username);
             }
         }
         log.info("User logged out");
@@ -215,7 +224,7 @@ public class AuthServiceImpl implements IAuthService {
 
         SysUser user = sysUserService.getById(userId);
         if (user != null) {
-            userDetailsService.evictUserCache(user.getUsername());
+            userDetailsCacheService.evictUserCache(user.getUsername());
         }
 
         log.info("Password reset successfully for user: {}", user == null ? userId : user.getUsername());

@@ -2,6 +2,7 @@ package com.yunlbd.flexboot4.controller.sys;
 
 import com.mybatisflex.core.query.QueryWrapper;
 import com.yunlbd.flexboot4.common.ApiResult;
+import com.yunlbd.flexboot4.common.annotation.RequirePermission;
 import com.yunlbd.flexboot4.config.ApiTagGroup;
 import com.yunlbd.flexboot4.dto.VueRoute;
 import com.yunlbd.flexboot4.entity.sys.SysMenu;
@@ -31,7 +32,9 @@ public class SysMenuController extends BaseController<SysMenuService, SysMenu, S
     public Class<SysMenu> getEntityClass() {
         return SysMenu.class;
     }
+
     @Operation(summary = "获取菜单权限", description = "获取登录认证用户所拥有的所有菜单访问数据")
+    @RequirePermission(skip = true)
     @GetMapping("/all")
     public ApiResult<List<VueRoute>> getAllMenus() {
         String userId = SecurityUtils.getUserId();
@@ -42,6 +45,7 @@ public class SysMenuController extends BaseController<SysMenuService, SysMenu, S
     }
 
     @Operation(summary = "菜单名称是否存在", description = "根据名称检测是否存在其他菜单，更新时可排除自身ID")
+    @RequirePermission("sys:menu:list")
     @GetMapping("/name-exists")
     public ApiResult<Boolean> isMenuNameExists(@RequestParam("name") String name,
                                                @RequestParam(value = "id", required = false) String id) {
@@ -54,6 +58,7 @@ public class SysMenuController extends BaseController<SysMenuService, SysMenu, S
     }
 
     @Operation(summary = "菜单路径是否存在", description = "根据路径检测是否存在其他菜单，更新时可排除自身ID")
+    @RequirePermission("sys:menu:list")
     @GetMapping("/path-exists")
     public ApiResult<Boolean> isMenuPathExists(@RequestParam("path") String path,
                                                @RequestParam(value = "id", required = false) String id) {

@@ -11,6 +11,7 @@
 
 ### Starter 模块（可作为库引入）
 
+- **flexboot4-admin-kernel**: Starter 公共底座，提供跨模块契约、公共模型、用户上下文与基础自动装配
 - **flexboot4-admin-starter**: 提供 RBAC、用户管理、权限控制等基础能力
 - **flexboot4-kb-starter**: 提供知识库功能（文档解析、存储等）
 - **flexboot4-media-starter**: 提供媒体处理能力（视频、音频等）
@@ -42,7 +43,7 @@ dependencies {
     // 引入 BOM，统一版本管理
     implementation(platform("com.yunlbd:flexboot4-bom:0.0.1-SNAPSHOT"))
     
-    // 引入基础 RBAC 能力（必选）
+    // 引入基础 RBAC 能力
     implementation("com.yunlbd:flexboot4-admin-starter")
     
     // 如果需要知识库功能（可选）
@@ -60,7 +61,7 @@ dependencies {
 
 ```kotlin
 dependencies {
-    // 引入基础 RBAC 能力（必选）
+    // 引入基础 RBAC 能力
     implementation("com.yunlbd:flexboot4-admin-starter:0.0.1-SNAPSHOT")
     
     // 如果需要知识库功能（可选）
@@ -110,13 +111,10 @@ dependencies {
 // YourApplication.java
 package com.example.yourapp;
 
-import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.SpringApplication;
 
-@SpringBootApplication(scanBasePackages = {
-    "com.yunlbd.flexboot4",  // 扫描 flexboot4 的组件
-    "com.example.yourapp"     // 扫描自己的组件
-})
+@SpringBootApplication
 public class YourApplication {
     public static void main(String[] args) {
         SpringApplication.run(YourApplication.class, args);
@@ -148,13 +146,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.scheduling.annotation.EnableAsync;
 
-@SpringBootApplication(scanBasePackages = {
-    "com.yunlbd.flexboot4",
-    "com.example.yourapp"
-})
+@SpringBootApplication
 @EnableCaching
 @EnableAsync
-@MapperScan({"com.yunlbd.flexboot4.mapper", "com.example.yourapp.mapper"})
+@MapperScan("com.example.yourapp.mapper")
 public class YourApplication {
     public static void main(String[] args) {
         SpringApplication.run(YourApplication.class, args);
@@ -249,6 +244,7 @@ dependencies {
 flexboot4/
 ├── flexboot4-bom/              # BOM 模块（新增）
 ├── flexboot4-core/             # 核心库（不变）
+├── flexboot4-admin-kernel/     # Starter 公共底座（公共契约与模型）
 ├── flexboot4-admin-starter/    # Admin Starter（原 flexboot4-admin 拆分）
 ├── flexboot4-kb-starter/       # KB Starter（原 flexboot4-kb 重命名）
 ├── flexboot4-media-starter/    # Media Starter（原 flexboot4-media 重命名）
@@ -267,7 +263,7 @@ flexboot4/
 
 ## 注意事项
 
-1. **包扫描**：外部项目需要在 `@SpringBootApplication` 中配置 `scanBasePackages`，包含 `com.yunlbd.flexboot4`
-2. **Mapper 扫描**：如果使用 MyBatis，需要在 `@MapperScan` 中包含 `com.yunlbd.flexboot4.mapper`
+1. **自动装配**：各 starter 已提供 Spring Boot 标准自动装配入口，外部项目不需要手写 `scanBasePackages("com.yunlbd.flexboot4")`
+2. **Mapper 扫描**：如果业务项目有自己的 Mapper，只扫描业务包即可；FlexBoot4 starter 内部 Mapper 由自动装配负责
 3. **配置文件**：Admin Starter 不包含 `application.yml`，外部项目需自行配置
 4. **数据库**：Admin Starter 依赖 PostgreSQL，确保外部项目配置了正确的数据源

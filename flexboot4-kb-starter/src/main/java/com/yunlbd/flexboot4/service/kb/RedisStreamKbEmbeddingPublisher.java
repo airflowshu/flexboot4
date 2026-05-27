@@ -4,6 +4,8 @@ import com.yunlbd.flexboot4.config.FileEmbeddingStreamProperties;
 import com.yunlbd.flexboot4.entity.kb.SysFileChunk;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.redis.connection.stream.MapRecord;
 import org.springframework.data.redis.connection.stream.StreamRecords;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -13,6 +15,8 @@ import java.util.List;
 import java.util.Map;
 
 @Service
+@ConditionalOnClass(StringRedisTemplate.class)
+@ConditionalOnProperty(prefix = "file.embedding.stream", name = "enabled", havingValue = "true")
 public class RedisStreamKbEmbeddingPublisher implements KbEmbeddingPublisher {
 
     private static final Logger log = LoggerFactory.getLogger(RedisStreamKbEmbeddingPublisher.class);

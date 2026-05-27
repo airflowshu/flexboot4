@@ -8,6 +8,7 @@ file:
     max-chunks: ${FILE_PARSE_MAX_CHUNKS:2000}
   embedding:
     stream:
+      enabled: ${FILE_EMBEDDING_STREAM_ENABLED:false}
       key: ${FILE_EMBEDDING_STREAM_KEY:file-embedding:stream}
       group: ${FILE_EMBEDDING_STREAM_GROUP:file-embedding-group}
       consumer: ${FILE_EMBEDDING_STREAM_CONSUMER:${spring.application.name}-1}

@@ -8,7 +8,7 @@ import com.mybatisflex.annotation.Table;
 import com.yunlbd.flexboot4.common.annotation.DictEnum;
 import com.yunlbd.flexboot4.entity.sys.BaseEntity;
 import com.yunlbd.flexboot4.entity.sys.SysFile;
-import com.yunlbd.flexboot4.entity.sys.SysUser;
+import com.yunlbd.flexboot4.entity.sys.UserSummary;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -93,7 +93,7 @@ public class CmsArticle extends BaseEntity {
     @Schema(title = "审核人", accessMode = Schema.AccessMode.READ_ONLY)
     @RelationOneToOne(selfField = "reviewerId", targetField = "id")
     @Column(ignore = true)
-    private SysUser reviewer;
+    private UserSummary reviewer;
 
     @Schema(title = "标签列表", accessMode = Schema.AccessMode.READ_ONLY)
     @RelationManyToMany(

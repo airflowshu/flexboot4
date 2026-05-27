@@ -1,6 +1,10 @@
 package com.yunlbd.flexboot4.util;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 public final class LogDesensitizationUtils {
 
@@ -61,7 +65,7 @@ public final class LogDesensitizationUtils {
         if (value == null || value.isBlank() || key == null) {
             return value;
         }
-        String k = normalizeKey(key);
+        String k = key.toLowerCase().replace("_", "");
         if (containsAny(k, "password", "pwd", "secret")) {
             return "******";
         }
@@ -90,10 +94,6 @@ public final class LogDesensitizationUtils {
             return maskToken(value);
         }
         return value;
-    }
-
-    private static String normalizeKey(String key) {
-        return key.toLowerCase().replace("_", "");
     }
 
     private static boolean containsAny(String key, String... keywords) {
@@ -165,4 +165,3 @@ public final class LogDesensitizationUtils {
         return token.substring(0, 10) + "******";
     }
 }
-

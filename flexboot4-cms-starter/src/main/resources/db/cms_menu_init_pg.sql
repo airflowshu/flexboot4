@@ -1,15 +1,15 @@
 -- CMS 菜单初始化（示例）
 
 INSERT INTO sys_menu (id, parent_id, path, name, component, title, icon, order_no,
-                      hide_menu, keep_alive, type, status,
+                      hide_in_menu, keep_alive, type, status,
                       create_time, last_modify_time, del_flag, version)
-VALUES ('cms_menu_root', '0', '/cms', 'Cms', 'LAYOUT', 'cms.title', 'ant-design:book-outlined', 95,
+VALUES ('cms_menu_root', null, '/cms', 'Cms', 'BasicLayout', 'cms.title', 'ant-design:book-outlined', 95,
         false, false, 'catalog', 1,
         now(), now(), 0, 0)
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO sys_menu (id, parent_id, path, name, component, title, icon, order_no,
-                      hide_menu, keep_alive, type, auth_code, status,
+                      hide_in_menu, keep_alive, type, auth_code, status,
                       create_time, last_modify_time, del_flag, version)
 VALUES ('cms_menu_category', 'cms_menu_root', '/cms/category', 'CmsCategory', '/cms/category/index',
         'cms.category.title', 'ant-design:folder-open-outlined', 1,
@@ -18,7 +18,7 @@ VALUES ('cms_menu_category', 'cms_menu_root', '/cms/category', 'CmsCategory', '/
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO sys_menu (id, parent_id, path, name, component, title, icon, order_no,
-                      hide_menu, keep_alive, type, auth_code, status,
+                      hide_in_menu, keep_alive, type, auth_code, status,
                       create_time, last_modify_time, del_flag, version)
 VALUES ('cms_menu_article', 'cms_menu_root', '/cms/article', 'CmsArticle', '/cms/article/index',
         'cms.article.title', 'ant-design:file-text-outlined', 2,
@@ -27,7 +27,7 @@ VALUES ('cms_menu_article', 'cms_menu_root', '/cms/article', 'CmsArticle', '/cms
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO sys_menu (id, parent_id, path, name, component, title, icon, order_no,
-                      hide_menu, keep_alive, type, auth_code, status,
+                      hide_in_menu, keep_alive, type, auth_code, status,
                       create_time, last_modify_time, del_flag, version)
 VALUES ('cms_menu_tag', 'cms_menu_root', '/cms/tag', 'CmsTag', '/cms/tag/index',
         'cms.tag.title', 'ant-design:tags-outlined', 3,
@@ -36,7 +36,7 @@ VALUES ('cms_menu_tag', 'cms_menu_root', '/cms/tag', 'CmsTag', '/cms/tag/index',
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO sys_menu (id, parent_id, path, name, component, title, icon, order_no,
-                      hide_menu, keep_alive, type, auth_code, status,
+                      hide_in_menu, keep_alive, type, auth_code, status,
                       create_time, last_modify_time, del_flag, version)
 VALUES ('cms_menu_article_file', 'cms_menu_root', '/cms/article-file', 'CmsArticleFile', '/cms/article-file/index',
         'cms.articleFile.title', 'ant-design:paper-clip-outlined', 4,
@@ -45,7 +45,7 @@ VALUES ('cms_menu_article_file', 'cms_menu_root', '/cms/article-file', 'CmsArtic
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO sys_menu (id, parent_id, path, name, component, title, icon, order_no,
-                      hide_menu, keep_alive, type, auth_code, status,
+                      hide_in_menu, keep_alive, type, auth_code, status,
                       create_time, last_modify_time, del_flag, version)
 VALUES ('cms_menu_template', 'cms_menu_root', '/cms/template', 'CmsTemplate', '/cms/template/index',
         'cms.template.title', 'ant-design:layout-outlined', 5,
@@ -54,7 +54,7 @@ VALUES ('cms_menu_template', 'cms_menu_root', '/cms/template', 'CmsTemplate', '/
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO sys_menu (id, parent_id, path, name, component, title, icon, order_no,
-                      hide_menu, keep_alive, type, auth_code, status,
+                      hide_in_menu, keep_alive, type, auth_code, status,
                       create_time, last_modify_time, del_flag, version)
 VALUES ('cms_menu_article_review_btn', 'cms_menu_article', '', 'CmsArticleReview', '',
         'cms.article.review', '', 99,
@@ -63,7 +63,7 @@ VALUES ('cms_menu_article_review_btn', 'cms_menu_article', '', 'CmsArticleReview
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO sys_menu (id, parent_id, path, name, component, title, icon, order_no,
-                      hide_menu, keep_alive, type, auth_code, status,
+                      hide_in_menu, keep_alive, type, auth_code, status,
                       create_time, last_modify_time, del_flag, version)
 VALUES ('cms_menu_template_edit_btn', 'cms_menu_template', '', 'CmsTemplateEdit', '',
         'cms.template.save', '', 98,
@@ -72,11 +72,10 @@ VALUES ('cms_menu_template_edit_btn', 'cms_menu_template', '', 'CmsTemplateEdit'
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO sys_menu (id, parent_id, path, name, component, title, icon, order_no,
-                      hide_menu, keep_alive, type, auth_code, status,
+                      hide_in_menu, keep_alive, type, auth_code, status,
                       create_time, last_modify_time, del_flag, version)
 VALUES ('cms_menu_template_publish_btn', 'cms_menu_template', '', 'CmsTemplatePublish', '',
         'cms.template.publish', '', 99,
         true, false, 'button', 'cms:template:publish', 1,
         now(), now(), 0, 0)
 ON CONFLICT (id) DO NOTHING;
-

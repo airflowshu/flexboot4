@@ -13,7 +13,7 @@ import com.yunlbd.flexboot4.file.parse.FileParser;
 import com.yunlbd.flexboot4.file.parse.ParsedDocument;
 import com.yunlbd.flexboot4.file.parse.TokenEstimator;
 import com.yunlbd.flexboot4.service.kb.SysFileParsedService;
-import com.yunlbd.flexboot4.service.ops.SysConfigService;
+import com.yunlbd.flexboot4.service.sys.ConfigLookupService;
 import com.yunlbd.flexboot4.service.sys.SysFileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,7 +38,7 @@ public class SysFileParseListener {
     private final FileStorage fileStorage;
     private final List<FileParser> parsers;
     private final ApplicationEventPublisher eventPublisher;
-    private final SysConfigService sysConfigService;
+    private final ConfigLookupService configLookupService;
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
@@ -129,7 +129,7 @@ public class SysFileParseListener {
      */
     private boolean isRagSupportedFileType(SysFile file) {
         // 获取支持的文件类型列表，默认包含常见文档类型
-        List<String> supportedTypes = sysConfigService.getConfigValueAs("rag.file.type", "ARRAY");
+        List<String> supportedTypes = configLookupService.getConfigValueAs("rag.file.type", "ARRAY");
 
         if (supportedTypes == null || supportedTypes.isEmpty()) {
             return false;

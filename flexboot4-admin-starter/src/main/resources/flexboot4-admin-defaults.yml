@@ -24,6 +24,11 @@ security:
       - /error
 
 flexboot4:
+  flyway:
+    admin-migrations-enabled: ${FLEXBOOT4_FLYWAY_ADMIN_MIGRATIONS_ENABLED:false}
+  lock:
+    key-prefix: ${FLEXBOOT4_LOCK_KEY_PREFIX:flexboot4:lock:}
+    default-ttl-millis: ${FLEXBOOT4_LOCK_DEFAULT_TTL_MILLIS:60000}
   minio:
     enabled: ${FLEXBOOT4_MINIO_ENABLED:false}
   mail:
@@ -37,7 +42,10 @@ operlog:
     key: ${OPERLOG_STREAM_KEY:operlog:stream}
     group: ${OPERLOG_STREAM_GROUP:operlog-group}
     consumer: ${OPERLOG_STREAM_CONSUMER:${spring.application.name}-1}
-    dedup-ttl-days: ${OPERLOG_STREAM_DEDUP_TTL_DAYS:7}
+    dead-letter-key: ${OPERLOG_STREAM_DEAD_LETTER_KEY:operlog:stream:dead}
+    reclaim-batch-size: ${OPERLOG_STREAM_RECLAIM_BATCH_SIZE:50}
+    reclaim-min-idle-millis: ${OPERLOG_STREAM_RECLAIM_MIN_IDLE_MILLIS:60000}
+    max-delivery-attempts: ${OPERLOG_STREAM_MAX_DELIVERY_ATTEMPTS:10}
 
 springdoc:
   api-docs:

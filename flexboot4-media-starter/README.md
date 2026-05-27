@@ -20,7 +20,8 @@
 
 ## 联调加固与异常恢复
 
-已内置 `MediaRuntimeMaintenanceTask` 定时巡检，默认每 30 秒执行一次：
+已内置 `MediaRuntimeMaintenanceTask` 定时巡检。Starter 默认关闭媒体运行时与巡检任务；显式开启 `media.runtime-check-enabled=true` 后，默认每 30 秒执行一次：
+- 多实例部署时，巡检任务会通过 `DistributedLockService` 加锁；聚合引入 `admin-starter` 且 Redis 可用时自动使用 Redis 锁
 - 网关运行态漂移修复：数据库显示 `RUNNING` 但进程内 runtime 不存在时，按配置自动拉起
 - ZLM hook 超时降级：hook 心跳超时将媒体服务器标记为 `OFFLINE`
 - GB28181 设备心跳超时降级：设备标记离线，通道状态回写为 `OFFLINE/STOPPED`
@@ -61,6 +62,9 @@ media:
   streaming-session-timeout-seconds: 300
   gateway-auto-recover: true
 ```
+
+Starter 默认不会启用媒体运行时能力；需要在业务应用中显式设置
+`media.enabled=true`，并在需要定时巡检时设置 `media.runtime-check-enabled=true`。
 
 ## 联调建议顺序
 

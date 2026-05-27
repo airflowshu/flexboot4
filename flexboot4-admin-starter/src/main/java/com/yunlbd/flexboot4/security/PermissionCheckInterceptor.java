@@ -3,6 +3,7 @@ package com.yunlbd.flexboot4.security;
 import com.yunlbd.flexboot4.common.annotation.RequirePermission;
 import com.yunlbd.flexboot4.config.IgnoreUrlsConfig;
 import com.yunlbd.flexboot4.controller.sys.BaseController;
+import com.yunlbd.flexboot4.metrics.MetricsRecorder;
 import com.yunlbd.flexboot4.util.SecurityUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -12,6 +13,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
+
+import java.util.Map;
 
 /**
  * Permission interceptor.
@@ -27,6 +30,7 @@ import org.springframework.web.servlet.HandlerInterceptor;
 public class PermissionCheckInterceptor implements HandlerInterceptor {
 
     private final IgnoreUrlsConfig ignoreUrlsConfig;
+    private final MetricsRecorder metricsRecorder;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
     @Override
@@ -44,6 +48,7 @@ public class PermissionCheckInterceptor implements HandlerInterceptor {
 
         LoginUser loginUser = SecurityUtils.getLoginUser();
         if (loginUser == null) {
+            metricsRecorder.increment("flexboot4.auth.anonymous_denied", Map.of("uri", uri));
             response.setStatus(401);
             return false;
         }
@@ -71,6 +76,10 @@ public class PermissionCheckInterceptor implements HandlerInterceptor {
         }
 
         if (uri.startsWith("/api/admin/")) {
+            metricsRecorder.increment("flexboot4.permission.denied", Map.of(
+                    "uri", uri,
+                    "reason", "missing_annotation"
+            ));
             return writeForbidden(response, "Missing permission annotation");
         }
 
@@ -86,6 +95,11 @@ public class PermissionCheckInterceptor implements HandlerInterceptor {
                     loginUser.getSysUser().getUsername(),
                     requiredPermission,
                     request.getRequestURI());
+            metricsRecorder.increment("flexboot4.permission.denied", Map.of(
+                    "uri", request.getRequestURI(),
+                    "permission", requiredPermission,
+                    "reason", "missing_permission"
+            ));
             return writeForbidden(response, "Permission denied");
         }
         return true;

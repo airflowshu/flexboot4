@@ -50,14 +50,14 @@ CREATE INDEX IF NOT EXISTS idx_sms4j_config_supplier ON sms4j_config (supplier_t
 -- ============================================================
 
 INSERT INTO sys_menu (id, parent_id, path, name, component, title, icon, order_no,
-                      hide_menu, keep_alive, status,
+                      hide_in_menu, keep_alive, status,
                       create_time, last_modify_time, del_flag, version)
-VALUES ('sms_menu_root', null, '/sms', 'Sms', 'LAYOUT', 'sms.title', 'ant-design:message-outlined', 90,
+VALUES ('sms_menu_root', null, '/sms', 'Sms', 'BasicLayout', 'sms.title', 'ant-design:message-outlined', 90,
         false, false, 1, now(), now(), 0, 0)
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO sys_menu (id, parent_id, path, name, component, title, icon, order_no,
-                      hide_menu, keep_alive, status,
+                      hide_in_menu, keep_alive, status,
                       create_time, last_modify_time, del_flag, version)
 VALUES ('sms_menu_config', 'sms_menu_root', '/sms/config', 'SmsConfig',
         '/sms/config/index', 'sms.config.title', 'ant-design:setting-outlined', 1,
