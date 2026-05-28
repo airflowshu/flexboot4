@@ -4,6 +4,7 @@ import com.yunlbd.flexboot4.BootstrapApplication;
 import com.yunlbd.flexboot4.config.SmsSupplierConfigDataSource;
 import com.yunlbd.flexboot4.entity.sms.Sms4jConfig;
 import com.yunlbd.flexboot4.service.sms.Sms4jConfigService;
+import org.dromara.sms4j.api.entity.SmsResponse;
 import org.dromara.sms4j.core.factory.SmsFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -57,9 +58,9 @@ class CloopenSmsRealSendTest {
 
     @Test
     void shouldSendSmsByCloopenConfig() {
-        // 容联云免费测试模板要求：{1}验证码需6-20位数字，{2}有效分钟数
+        // 当前容联云测试模板要求：{1}验证码需1-4位数字，{2}有效分钟数
         String phone = getEnvOrDefault(TARGET_PHONE_ENV, "15156080627");
-        String param1 = getEnvOrDefault(TEMPLATE_PARAM1_ENV, "888888");  // 6位验证码
+        String param1 = getEnvOrDefault(TEMPLATE_PARAM1_ENV, "8888");    // 4位验证码
         String param2 = getEnvOrDefault(TEMPLATE_PARAM2_ENV, "5");       // 有效分钟数
 
         Sms4jConfig cloopenConfig = sms4jConfigService.listEnabledConfigs().stream()
@@ -77,8 +78,11 @@ class CloopenSmsRealSendTest {
         templateParams.put("2", param2);
 
         // 容联云免费模板(模板ID=1)包含 {1}、{2} 两个占位符，因此传两个模板参数。
-        Object response = smsBlend.sendMessage(phone, cloopenConfig.getTemplateId(), templateParams);
+        SmsResponse response = smsBlend.sendMessage(phone, cloopenConfig.getTemplateId(), templateParams);
         assertThat(response).isNotNull();
+        assertThat(response.isSuccess())
+                .as("容联云发送失败，response=%s", response)
+                .isTrue();
 
         // 便于联调时在测试输出中看到回执信息
         System.out.println("[SMS-REAL-TEST] provider=" + cloopenConfig.getSupplierType()

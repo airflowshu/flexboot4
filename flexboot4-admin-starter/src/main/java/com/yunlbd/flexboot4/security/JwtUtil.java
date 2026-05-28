@@ -29,6 +29,10 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
+    public byte[] getSigningSecretBytes() {
+        return secret.getBytes(StandardCharsets.UTF_8);
+    }
+
     /**
      * Generate Token
      */

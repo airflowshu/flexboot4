@@ -49,6 +49,12 @@ public class GlobalExceptionHandler {
         return ApiResult.error(e.getMessage());
     }
 
+    @ExceptionHandler(IllegalStateException.class)
+    public ApiResult<String> handleIllegalStateException(IllegalStateException e) {
+        log.warn("Invalid State: {}", e.getMessage());
+        return ApiResult.error(e.getMessage());
+    }
+
     @ExceptionHandler(AccessDeniedException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public ApiResult<String> handleAccessDeniedException(AccessDeniedException e) {

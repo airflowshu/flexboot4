@@ -6,6 +6,7 @@ import com.yunlbd.flexboot4.service.sys.SysUserService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -34,8 +35,18 @@ public class SysUserServiceImpl extends BaseServiceImpl<SysUserMapper, SysUser> 
         if (user == null) {
             return false;
         }
-        newPassword = StringUtils.isEmpty(newPassword) ? "111111" : newPassword;
+        newPassword = StringUtils.isEmpty(newPassword) ? "11111111" : newPassword;
         user.setPassword(passwordEncoder.encode(newPassword));
         return updateById(user, true);
+    }
+
+    @Override
+    @CacheEvict(allEntries = true, cacheResolver = "dynamicCacheResolver")
+    public boolean updateCurrentProfile(String id, String realName, String profileFileId, String remark) {
+        boolean ok = mapper.updateCurrentProfile(id, realName, profileFileId, remark) > 0;
+        if (ok) {
+            bumpTableVersion(SysUser.class);
+        }
+        return ok;
     }
 }

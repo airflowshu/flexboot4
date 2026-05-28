@@ -192,6 +192,23 @@ class PermissionCheckInterceptorTest {
         assertThat(allowed).isTrue();
     }
 
+    @Test
+    void authOptionsAndSmsCodeBypassPermissionCheck() throws Exception {
+        boolean optionsAllowed = interceptor.preHandle(
+                request("/api/admin/auth/options"),
+                new MockHttpServletResponse(),
+                handler(AdminEndpoint.class, "unannotated")
+        );
+        boolean smsCodeAllowed = interceptor.preHandle(
+                request("/api/admin/auth/sms-code"),
+                new MockHttpServletResponse(),
+                handler(AdminEndpoint.class, "unannotated")
+        );
+
+        assertThat(optionsAllowed).isTrue();
+        assertThat(smsCodeAllowed).isTrue();
+    }
+
     private MockHttpServletResponse preHandle(String uri, Class<?> beanType, String methodName) throws Exception {
         MockHttpServletResponse response = new MockHttpServletResponse();
         interceptor.preHandle(request(uri), response, handler(beanType, methodName));
@@ -203,7 +220,9 @@ class PermissionCheckInterceptorTest {
         config.setUrls(List.of(
                 "/resources/**",
                 "/static/**",
+                "/api/admin/auth/options",
                 "/api/admin/auth/login",
+                "/api/admin/auth/sms-code",
                 "/api/admin/auth/forget-password",
                 "/api/admin/auth/reset-password",
                 "/v3/api-docs/**",

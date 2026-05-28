@@ -6,10 +6,11 @@
 
 1. [开发者指南](guide.md)
 2. [模块文档索引](modules.md)
-3. [Starter 架构](STARTER_ARCHITECTURE.md)
-4. [权限设计](backend_permission_control_design.md)
-5. [通用查询](Mf基础功能.md)
-6. [CRUD 生成契约](crud_module_generator_contract.md)
+3. [Admin 认证与账号安全](admin-auth-security.md)
+4. [Starter 架构](STARTER_ARCHITECTURE.md)
+5. [权限设计](backend_permission_control_design.md)
+6. [通用查询](Mf基础功能.md)
+7. [CRUD 生成契约](crud_module_generator_contract.md)
 
 ## 核心主题
 
@@ -18,6 +19,7 @@
 | 新 CRUD 范式 | [开发者指南](guide.md) |
 | DTO/VO/MapStruct/ExcelRow | [开发者指南](guide.md) |
 | 权限码与默认拒绝策略 | [权限设计](backend_permission_control_design.md) |
+| 登录、个人中心安全设置与 MFA | [Admin 认证与账号安全](admin-auth-security.md) |
 | SearchDto 与关联查询 | [通用查询](Mf基础功能.md) |
 | vben 菜单路由契约 | [开发者指南](guide.md) |
 | OpenAPI 标签分组 | [OpenAPI 标签分组](API_TAG_GROUP_GUIDE.md) |

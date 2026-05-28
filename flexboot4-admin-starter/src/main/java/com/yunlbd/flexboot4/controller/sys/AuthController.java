@@ -6,10 +6,13 @@ import com.yunlbd.flexboot4.common.annotation.RequirePermission;
 import com.yunlbd.flexboot4.common.enums.BusinessType;
 import com.yunlbd.flexboot4.config.ApiTagGroup;
 import com.yunlbd.flexboot4.dto.AdminResetPasswordReq;
+import com.yunlbd.flexboot4.dto.AuthLoginOptions;
 import com.yunlbd.flexboot4.dto.ForgetPasswordReq;
 import com.yunlbd.flexboot4.dto.LoginReq;
 import com.yunlbd.flexboot4.dto.LoginResp;
+import com.yunlbd.flexboot4.dto.MfaVerifyReq;
 import com.yunlbd.flexboot4.dto.ResetPasswordReq;
+import com.yunlbd.flexboot4.dto.SmsCodeReq;
 import com.yunlbd.flexboot4.security.JwtUtil;
 import com.yunlbd.flexboot4.service.sys.IAuthService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -39,6 +42,20 @@ public class AuthController {
 
     private final IAuthService authService;
 
+    @Operation(summary = "Login options", description = "Fetch public login method options")
+    @RequirePermission(skip = true)
+    @GetMapping("/options")
+    public ApiResult<AuthLoginOptions> options() {
+        return ApiResult.success(authService.getLoginOptions());
+    }
+
+    @Operation(summary = "Send SMS code", description = "Send SMS verification code for phone login")
+    @RequirePermission(skip = true)
+    @PostMapping("/sms-code")
+    public ApiResult<String> sendSmsCode(@Valid @RequestBody SmsCodeReq req, HttpServletRequest request) {
+        return ApiResult.success(authService.sendSmsCode(req, JwtUtil.getClientIp(request)));
+    }
+
     @Operation(summary = "User login", description = "Authenticate user and return JWT token")
     @OperLog(title = "User Login", businessType = BusinessType.LOGIN)
     @PostMapping("/login")
@@ -48,14 +65,20 @@ public class AuthController {
         String clientIp = JwtUtil.getClientIp(request);
         LoginResp loginResp = authService.login(req, clientIp);
 
-        Cookie cookie = new Cookie("access_token", loginResp.getAccessToken());
-        cookie.setHttpOnly(true);
-        cookie.setSecure(request.isSecure());
-        cookie.setPath("/");
-        cookie.setMaxAge((int) Duration.ofHours(TOKEN_VALIDITY_HOURS).getSeconds());
-        cookie.setAttribute("SameSite", "Strict");
-        response.addCookie(cookie);
+        addAccessTokenCookieIfPresent(request, response, loginResp);
 
+        return ApiResult.success(loginResp);
+    }
+
+    @Operation(summary = "Verify MFA challenge", description = "Verify second-factor code and return JWT token")
+    @OperLog(title = "Verify MFA Login", businessType = BusinessType.LOGIN)
+    @RequirePermission(skip = true)
+    @PostMapping("/mfa/verify")
+    public ApiResult<LoginResp> verifyMfa(@Valid @RequestBody MfaVerifyReq req,
+                                          HttpServletRequest request,
+                                          HttpServletResponse response) {
+        LoginResp loginResp = authService.verifyMfa(req, JwtUtil.getClientIp(request));
+        addAccessTokenCookieIfPresent(request, response, loginResp);
         return ApiResult.success(loginResp);
     }
 
@@ -122,5 +145,20 @@ public class AuthController {
             return ApiResult.success(List.of());
         }
         return ApiResult.success(codes);
+    }
+
+    private void addAccessTokenCookieIfPresent(HttpServletRequest request,
+                                               HttpServletResponse response,
+                                               LoginResp loginResp) {
+        if (loginResp.getAccessToken() == null || loginResp.getAccessToken().isBlank()) {
+            return;
+        }
+        Cookie cookie = new Cookie("access_token", loginResp.getAccessToken());
+        cookie.setHttpOnly(true);
+        cookie.setSecure(request.isSecure());
+        cookie.setPath("/");
+        cookie.setMaxAge((int) Duration.ofHours(TOKEN_VALIDITY_HOURS).getSeconds());
+        cookie.setAttribute("SameSite", "Strict");
+        response.addCookie(cookie);
     }
 }

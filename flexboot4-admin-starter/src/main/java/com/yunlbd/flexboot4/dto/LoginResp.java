@@ -12,4 +12,8 @@ public class LoginResp {
     private String password; // Not recommended for security, but requested by requirement
     private String accessToken;
     private List<String> roles;
+    private Boolean mfaRequired;
+    private String mfaChallengeToken;
+    private List<String> mfaMethods;
+    private Long expiresIn;
 }

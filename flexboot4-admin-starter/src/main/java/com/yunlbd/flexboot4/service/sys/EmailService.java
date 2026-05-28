@@ -63,6 +63,27 @@ public class EmailService {
     }
 
     /**
+     * Send a verification code email for account security flows.
+     */
+    public void sendVerificationCodeEmail(String email, String code, int expirationMinutes) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setFrom(String.format("%s <%s>", mailProperties.getSenderName(), mailUsername));
+            helper.setTo(email);
+            helper.setSubject("Security email verification code - FlexBoot4");
+            helper.setText(buildVerificationCodeEmailContent(code, expirationMinutes), true);
+
+            mailSender.send(message);
+            log.info("Security email verification code sent to: {}", maskEmail(email));
+        } catch (MessagingException e) {
+            log.error("Failed to send security email verification code to: {}", maskEmail(email), e);
+            throw new RuntimeException("Failed to send verification email", e);
+        }
+    }
+
+    /**
      * Validate reset token and return associated user ID.
      */
     public String validateResetToken(String token) {
@@ -120,5 +141,38 @@ public class EmailService {
             </body>
             </html>
             """.formatted(resetLink, resetLink, expirationMinutes);
+    }
+
+    private String buildVerificationCodeEmailContent(String code, int expirationMinutes) {
+        return """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset=\"UTF-8\">
+            </head>
+            <body style=\"font-family: Arial, sans-serif; line-height: 1.6; color: #333;\">
+                <div style=\"max-width: 600px; margin: 0 auto; padding: 20px;\">
+                    <h2 style=\"color: #2563eb;\">Verify your security email</h2>
+                    <p>Use the verification code below to bind or change your backup email:</p>
+                    <p style=\"font-size: 28px; font-weight: 700; letter-spacing: 4px; color: #111827; margin: 24px 0;\">%s</p>
+                    <p style=\"color: #666; font-size: 14px;\">This code expires in %d minutes.</p>
+                    <hr style=\"border: none; border-top: 1px solid #eee; margin: 30px 0;\">
+                    <p style=\"color: #999; font-size: 12px;\">If you did not request this, please ignore this email.</p>
+                </div>
+            </body>
+            </html>
+            """.formatted(code, expirationMinutes);
+    }
+
+    private static String maskEmail(String email) {
+        if (email == null || email.isBlank()) {
+            return email;
+        }
+        int at = email.indexOf('@');
+        if (at <= 0) {
+            return email;
+        }
+        int visibleLength = at > 3 ? 3 : 1;
+        return email.substring(0, visibleLength) + "***" + email.substring(at);
     }
 }

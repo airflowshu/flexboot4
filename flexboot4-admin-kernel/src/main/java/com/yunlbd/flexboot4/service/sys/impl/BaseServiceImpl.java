@@ -218,6 +218,10 @@ public class BaseServiceImpl<M extends BaseMapper<T>, T extends BaseEntity> exte
         return Collections.emptyList();
     }
 
+    protected void bumpTableVersion(Class<?> entityClass) {
+        bumpVersionsOnWrite(entityClass);
+    }
+
     private void bumpVersionsOnWrite(Class<?> entityClass) {
         String base = tableName(entityClass);
         if (base != null && !base.isBlank()) {

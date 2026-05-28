@@ -34,6 +34,12 @@ class AdminAutoConfigurationMetadataTest {
                 .contains("sys:user:reset-password");
         assertThat(resourceAsString("/db/migration/flexboot4/admin/postgresql/V2__operlog_event_id_reliability.sql"))
                 .contains("uk_sys_oper_log_event_id");
+        assertThat(resourceAsString("/db/migration/flexboot4/admin/postgresql/V4__auth_sms_login_options.sql"))
+                .contains("auth.login.options")
+                .contains("uk_sys_user_phone_alive");
+        assertThat(resourceAsString("/db/migration/flexboot4/admin/postgresql/V6__sys_user_mfa.sql"))
+                .contains("sys_user_mfa")
+                .contains("uk_sys_user_mfa_enabled_totp");
     }
 
     private static String resourceAsString(String path) throws IOException {

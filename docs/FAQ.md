@@ -65,10 +65,10 @@ WARN - Authentication failed: Null key returned for cache operation...
 
 **A:** 
 
-| 用户名 | 密码 | 角色 | 说明 |
-|--------|------|------|------|
+| 用户名 | 密码         | 角色 | 说明 |
+|--------|------------|------|------|
 | `admin` | `admin123` | 管理员 | 完整权限 |
-| `super` | `123456` | 超级管理员 | 系统管理员 |
+| `super` | `11111111` | 超级管理员 | 系统管理员 |
 
 **首次登录后请立即修改密码！**
 
@@ -92,6 +92,34 @@ Authorization: Bearer <your-token>
 ```
 
 或前端清除本地存储的 token。
+
+### Q6.1: MFA 的密钥应该如何配置？
+
+**A:** MFA 使用标准 TOTP。用户绑定认证器时生成的 TOTP secret 会加密保存到 `sys_user_mfa.secret_ciphertext`，加密密钥来自：
+
+```yaml
+flexboot4:
+  security:
+    mfa-secret-key: ${FLEXBOOT4_SECURITY_MFA_SECRET_KEY}
+```
+
+生产环境建议通过环境变量、Docker Secret、Kubernetes Secret 或外部配置中心注入，不要写入仓库：
+
+```bash
+export FLEXBOOT4_SECURITY_MFA_SECRET_KEY="$(openssl rand -base64 32)"
+```
+
+同一环境的所有后端实例必须使用同一个值，并且跨容器重建保持不变。修改该密钥后，已有 MFA 绑定无法解密，需要用户重新绑定或执行专门迁移。详细说明见 [Admin 认证与账号安全](admin-auth-security.md)。
+
+### Q6.2: 开发环境新增了前端依赖，需要手动 pnpm install 吗？
+
+**A:** 如果当前工作区已经执行过 `pnpm install` 并且 `pnpm-lock.yaml` 已更新，不需要重复执行。其他开发者拉取代码、CI 或新环境首次运行时，应按锁文件安装：
+
+```bash
+pnpm install --frozen-lockfile
+```
+
+本次 MFA 二维码功能依赖 `@vueuse/integrations` 与 `qrcode`。
 
 ---
 

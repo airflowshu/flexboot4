@@ -8,6 +8,16 @@ import java.util.List;
 public interface IAuthService {
 
     /**
+     * Get public login method options
+     */
+    AuthLoginOptions getLoginOptions();
+
+    /**
+     * Send SMS login code
+     */
+    String sendSmsCode(SmsCodeReq req, String clientIp);
+
+    /**
      * Get permission codes for current user
      */
     List<String> getPermissionCodes(HttpServletRequest request);
@@ -16,6 +26,11 @@ public interface IAuthService {
      * User login
      */
     LoginResp login(LoginReq req, String clientIp);
+
+    /**
+     * Verify second-factor login challenge
+     */
+    LoginResp verifyMfa(MfaVerifyReq req, String clientIp);
 
     /**
      * User logout

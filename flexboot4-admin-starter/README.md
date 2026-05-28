@@ -15,6 +15,7 @@ Admin Starter 提供了 flexboot4 的核心 RBAC（基于角色的访问控制�
 - **轻量指标接口**：通过 `MetricsRecorder` 记录认证、权限、OperLog Stream、分布式锁等关键事件，默认 Noop，支持业务项目替换实现
 - **登录日志**：用户登录追踪
 - **安全认证**：JWT Token 认证，`/api/admin/**` 未声明权限的接口默认拒绝
+- **账号安全**：个人中心支持密保手机、备用邮箱和标准 TOTP MFA 设备绑定
 - **Redis 缓存**：高性能缓存支持
 - **API 文档**：集成 SpringDoc（Scalar UI）
 
@@ -100,6 +101,8 @@ flexboot4:
   jwt:
     secret: your-secret-key-at-least-256-bits-long
     expiration: 86400000 # 24小时
+  security:
+    mfa-secret-key: ${FLEXBOOT4_SECURITY_MFA_SECRET_KEY}
 
 operlog:
   stream:
@@ -110,6 +113,8 @@ operlog:
 ```
 
 `operlog.stream.dead-letter-key` 默认值为 `operlog:stream:dead`。超过最大投递次数的 pending 消息，或 payload 无法解析的消息，会写入死信流并在写入成功后 ack 原消息，便于人工排查与重放。
+
+`flexboot4.security.mfa-secret-key` 用于加密保存用户 TOTP MFA secret。生产环境必须通过环境变量、Secret 管理或外部配置注入稳定随机值，不要提交到仓库。同一环境多实例必须保持一致；修改该密钥会导致已绑定 MFA 的 secret 无法解密。更多说明见 [Admin 认证与账号安全](../docs/admin-auth-security.md)。
 
 ## 核心 API
 
@@ -213,11 +218,13 @@ P0 安全收口后，Admin 接口应显式声明 `@RequirePermission`；`/api/ad
 2. 外部项目需要配置数据库连接、Redis 连接等信息
 3. 确保数据库已创建相应的表结构与权限数据（可参考 `../docs/sql/` 目录，P0 权限码补丁见 `../docs/sql/admin_permission_p0_patch_pg.sql`，P2 操作日志幂等补丁见 `../docs/sql/admin_operlog_p2_reliability_pg.sql`）
 4. JWT Secret 建议使用至少 256 位的随机字符串
-5. `flexboot4-admin-kernel` 仅承载公共底座类，不会自动启用 RBAC/运维 Bean；kb/media/sms/cms starter 已按 kernel 解耦。kb/cms 如需使用默认文件管理、配置读取、用户上下文与后台管理能力，请在应用中显式引入 `admin-starter`，或提供等价 Bean 实现
+5. MFA Secret 建议使用独立于 JWT Secret 的稳定随机字符串，生产环境通过 `FLEXBOOT4_SECURITY_MFA_SECRET_KEY` 注入
+6. `flexboot4-admin-kernel` 仅承载公共底座类，不会自动启用 RBAC/运维 Bean；kb/media/sms/cms starter 已按 kernel 解耦。kb/cms 如需使用默认文件管理、配置读取、用户上下文与后台管理能力，请在应用中显式引入 `admin-starter`，或提供等价 Bean 实现
 
 ## 相关文档
 
 - [完整架构说明](../docs/STARTER_ARCHITECTURE.md)
+- [Admin 认证与账号安全](../docs/admin-auth-security.md)
 - [权限控制设计](../docs/backend_permission_control_design.md)
 - [API 分组指南](../docs/API_TAG_GROUP_GUIDE.md)
 
