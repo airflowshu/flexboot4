@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -44,6 +45,15 @@ class StarterArchitectureRulesTest {
     );
     private static final Pattern IMPL_CONSTRUCTOR_PARAMETER = Pattern.compile(
             ".*public\\s+\\w+\\s*\\([^)]*\\w+Impl\\s+\\w+.*"
+    );
+    private static final Pattern PUBLIC_METHOD = Pattern.compile(
+            "public\\s+[\\w<>?,\\s.]+\\s+(\\w+)\\s*\\(.*"
+    );
+    private static final Set<String> CRUD_AUTO_PERMISSION_METHODS = Set.of(
+            "create", "update", "remove", "removeBatch", "get", "page", "list", "exportGet", "exportPost", "importExcel"
+    );
+    private static final Set<String> AUTH_WHITELIST_METHODS = Set.of(
+            "login", "forgetPassword", "resetPassword"
     );
 
     @Test
@@ -101,6 +111,64 @@ class StarterArchitectureRulesTest {
         assertThat(violations).isEmpty();
     }
 
+    @Test
+    void productionCodeDoesNotExtendLegacyBaseController() throws IOException {
+        List<String> violations = javaFiles().stream()
+                .filter(file -> contains(file, "extends BaseController<")
+                        || contains(file, "import com.yunlbd.flexboot4.controller.sys.BaseController"))
+                .map(StarterArchitectureRulesTest::relative)
+                .toList();
+
+        assertThat(violations).isEmpty();
+    }
+
+    @Test
+    void highRiskModulesDoNotUseIdentityCrudMapper() throws IOException {
+        List<String> highRiskResources = List.of(
+                "SysUser", "SysRole", "SysMenu", "SysConfig", "AiApiKey", "SysFile"
+        );
+        List<String> violations = javaFiles().stream()
+                .filter(file -> {
+                    String source = read(file);
+                    return source.contains("IdentityCrudMapper")
+                            && highRiskResources.stream().anyMatch(source::contains);
+                })
+                .map(StarterArchitectureRulesTest::relative)
+                .toList();
+
+        assertThat(violations).isEmpty();
+    }
+
+    @Test
+    void dtoAndVoDoNotUsePersistenceAnnotations() throws IOException {
+        List<String> violations = javaFiles().stream()
+                .filter(file -> {
+                    String path = relative(file);
+                    return path.contains("/dto/") || path.contains("/vo/");
+                })
+                .filter(file -> {
+                    String source = read(file);
+                    return source.contains("@Table")
+                            || source.contains("@Column")
+                            || source.contains("@Relation");
+                })
+                .map(StarterArchitectureRulesTest::relative)
+                .toList();
+
+        assertThat(violations).isEmpty();
+    }
+
+    @Test
+    void adminControllerMethodsDeclarePermissionOrUseCrudConvention() throws IOException {
+        List<String> violations = javaFiles().stream()
+                .filter(file -> relative(file).contains("/controller/"))
+                .filter(file -> !relative(file).endsWith("BaseCrudController.java"))
+                .flatMap(file -> missingPermissionMappings(file).stream())
+                .toList();
+
+        assertThat(violations).isEmpty();
+    }
+
     private static List<Path> javaFiles() throws IOException {
         try (var paths = PRODUCTION_SOURCE_DIRS.stream()
                 .map(ROOT::resolve)
@@ -137,6 +205,73 @@ class StarterArchitectureRulesTest {
 
     private static String relative(Path path) {
         return ROOT.relativize(path).toString().replace('\\', '/');
+    }
+
+    private static List<String> missingPermissionMappings(Path file) {
+        String source = read(file);
+        if (!source.contains("@RequestMapping(\"/api/admin")) {
+            return List.of();
+        }
+        String path = relative(file);
+        boolean crudController = source.contains("extends BaseCrudController")
+                || source.contains("extends EntityCrudController");
+        List<String> lines = source.lines().toList();
+        List<String> violations = new ArrayList<>();
+        for (int i = 0; i < lines.size(); i++) {
+            if (!isHttpMapping(lines.get(i))) {
+                continue;
+            }
+            int methodLine = findPublicMethodLine(lines, i);
+            if (methodLine < 0) {
+                continue;
+            }
+            String methodName = methodName(lines.get(methodLine));
+            if (methodName == null) {
+                continue;
+            }
+            if (hasRequirePermission(lines, i, methodLine)
+                    || (crudController && CRUD_AUTO_PERMISSION_METHODS.contains(methodName))
+                    || (path.endsWith("AuthController.java") && AUTH_WHITELIST_METHODS.contains(methodName))) {
+                continue;
+            }
+            violations.add(path + ":" + (i + 1) + " " + methodName + " must declare @RequirePermission");
+        }
+        return violations;
+    }
+
+    private static boolean isHttpMapping(String line) {
+        return line.contains("@GetMapping")
+                || line.contains("@PostMapping")
+                || line.contains("@PutMapping")
+                || line.contains("@DeleteMapping")
+                || line.contains("@PatchMapping");
+    }
+
+    private static int findPublicMethodLine(List<String> lines, int mappingLine) {
+        int end = Math.min(lines.size(), mappingLine + 16);
+        for (int i = mappingLine + 1; i < end; i++) {
+            String line = lines.get(i).strip();
+            if (line.startsWith("public ")) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private static String methodName(String line) {
+        var matcher = PUBLIC_METHOD.matcher(line.strip());
+        return matcher.matches() ? matcher.group(1) : null;
+    }
+
+    private static boolean hasRequirePermission(List<String> lines, int mappingLine, int methodLine) {
+        int start = Math.max(0, mappingLine - 8);
+        for (int i = start; i <= methodLine; i++) {
+            String line = lines.get(i).stripLeading();
+            if (!line.startsWith("//") && line.contains("@RequirePermission")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static Path findRoot() {

@@ -33,7 +33,7 @@ public final class SearchDtoUtils {
         if (dto == null || rootEntityClass == null || records == null || records.isEmpty()) {
             return;
         }
-        if (!hasRelationPaths(dto)) {
+        if (!hasRelationPaths(dto, rootEntityClass)) {
             return;
         }
         RelationQueryBuilder.RelationContext ctx = RelationQueryBuilder.prepare(rootEntityClass, dto);
@@ -76,15 +76,22 @@ public final class SearchDtoUtils {
     }
 
     public static boolean hasRelationPaths(SearchDto dto) {
+        return hasRelationPaths(dto, null);
+    }
+
+    public static boolean hasRelationPaths(SearchDto dto, Class<?> rootEntityClass) {
         if (dto == null) return false;
+        RelationQueryBuilder.RelationContext ctx = rootEntityClass == null
+                ? null
+                : RelationQueryBuilder.prepare(rootEntityClass, dto);
         if (dto.getItems() != null) {
             for (SearchDto.SearchItem it : dto.getItems()) {
-                if (containsRelationPath(it)) return true;
+                if (containsRelationPath(it, ctx)) return true;
             }
         }
         if (dto.getOrders() != null) {
             for (SearchDto.OrderItem od : dto.getOrders()) {
-                if (od.getColumn() != null && od.getColumn().contains(".")) return true;
+                if (isRelationPath(od.getColumn(), ctx)) return true;
             }
         }
         return false;
@@ -312,13 +319,28 @@ public final class SearchDtoUtils {
     private record LeafCondition(String prop, String op, Object val) {
     }
 
-    private static boolean containsRelationPath(SearchDto.SearchItem it) {
-        if (it.getField() != null && it.getField().contains(".")) return true;
+    private static boolean containsRelationPath(SearchDto.SearchItem it, RelationQueryBuilder.RelationContext ctx) {
+        if (isRelationPath(it.getField(), ctx)) return true;
         if (it.getChildren() != null) {
             for (SearchDto.SearchItem c : it.getChildren()) {
-                if (containsRelationPath(c)) return true;
+                if (containsRelationPath(c, ctx)) return true;
             }
         }
         return false;
+    }
+
+    private static boolean isRelationPath(String fieldPath, RelationQueryBuilder.RelationContext ctx) {
+        if (fieldPath == null || !fieldPath.contains(".")) {
+            return false;
+        }
+        if (ctx == null) {
+            return true;
+        }
+        String[] parts = fieldPath.split("\\.", -1);
+        if (parts.length != 2 || parts[0].isBlank()) {
+            return true;
+        }
+        String relKey = normalizeRel(ctx, parts[0]);
+        return relKey != null && !relKey.isEmpty() && ctx.relationFieldByName.containsKey(relKey);
     }
 }

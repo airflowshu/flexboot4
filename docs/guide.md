@@ -1,597 +1,360 @@
-# 接入指南
+# FlexBoot4 开发者指南
 
-## 🚀 5 分钟快速开始
+本文档是 FlexBoot4 当前后端框架范式的主入口，面向使用和扩展本工程的开发者。旧的 Entity 直通式 CRUD 已经不再作为推荐方式，当前标准是 DTO/VO 安全边界、MapStruct 显式转换、权限码自动推导和可低代码生成。
 
-### Step 1: 添加依赖
+## 1. 模块分层
 
-在 `build.gradle.kts` 中：
+```text
+flexboot4-core
+  基础 DTO、枚举、工具，不依赖 Spring。
 
-```kotlin
-dependencies {
-    // 使用 BOM 统一版本管理
-    implementation(platform("com.yunlbd:flexboot4-bom:0.0.1-SNAPSHOT"))
+flexboot4-admin-kernel
+  Starter 公共底座，提供 BaseCrudController、EntityCrudController、
+  CrudFieldPolicy、CrudExcelSupport、DefaultCrudMapper、查询构建器等。
 
-    // 选择你需要的 Starter
-    implementation("com.yunlbd:flexboot4-admin-starter")
-    // implementation("com.yunlbd:flexboot4-kb-starter")      // 可选：知识库
-    // implementation("com.yunlbd:flexboot4-media-starter")   // 可选：媒体处理
-    // implementation("com.yunlbd:flexboot4-sms4j-starter")   // 可选：短信能力
-}
+flexboot4-admin-starter
+  Admin/RBAC/系统管理/运维能力，包含用户、角色、菜单、配置、文件、API Key 等。
+
+业务 starter
+  CMS、Media、SMS4J、KB 等按需引入，原则上只依赖 admin-kernel。
+
+flexboot4-bootstrap
+  内部开发聚合应用，用于本仓库联调。
+
+flexboot4-ai
+  AI Gateway 独立服务。
 ```
 
-### Step 2: 创建启动类
+更多模块文档见 [模块文档索引](modules.md)。
 
-```java
-package com.example.yourapp;
+## 2. CRUD 范式
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.cache.annotation.EnableCaching;
+### 标准类型
 
-@SpringBootApplication
-@EnableCaching
-public class YourApplication {
-    public static void main(String[] args) {
-        SpringApplication.run(YourApplication.class, args);
-    }
-}
+每个可管理资源应显式区分请求、响应、Excel 与实体模型：
+
+```text
+dto/{domain}/{Entity}CreateReq
+dto/{domain}/{Entity}UpdateReq
+vo/{domain}/{Entity}ListVO
+vo/{domain}/{Entity}DetailVO
+excel/{domain}/{Entity}ExportRow
+excel/{domain}/{Entity}ImportRow   # 仅开启导入时提供
+converter/{domain}/{Entity}CrudMapper
 ```
 
-### Step 3: 配置数据库（PostgreSQL）
+Req 不允许包含：
 
-在 `application.yml` 中：
+- `id`
+- `version`
+- `delFlag`
+- `createTime`
+- `lastModifyTime`
+- `createBy`
+- `lastModifyBy`
+- Entity 关系对象
 
-```yaml
-spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/flexboot4
-    username: postgres
-    password: password
-  jpa:
-    hibernate:
-      ddl-auto: update
+ListVO 和 DetailVO 是 API 输出契约，不直接复用 Entity。DetailVO 可以包含关系数据，但必须是安全 VO。
 
-# 其他配置...
-```
+### 高风险模块
 
-### Step 4: 启动应用
+以下模块必须使用显式 DTO/VO/ExcelRow/MapStruct，不允许使用默认身份映射：
 
-```bash
-./gradlew bootRun
-```
+- `SysUser`
+- `SysRole`
+- `SysMenu`
+- `SysConfig`
+- `AiApiKey`
+- `SysFile`
 
-访问 API 文档：http://localhost:8080/scalar
-
----
-
-## 📦 模块选择指南
-
-| 需求场景 | 推荐方案 | 说明 |
-|---------|--------|------|
-| **仅需用户管理 + RBAC** | `admin-starter` | 包含用户、角色、菜单、权限管理 |
-| **需要知识库 + RAG** | `kb-starter` | 依赖 `admin-kernel`，支持文档解析与向量化；管理台组合时显式引入 `admin-starter` |
-| **需要媒体处理** | `media-starter` | 依赖 `admin-kernel`，支持视频/音频处理 |
-| **需要短信能力** | `sms4j-starter` | 依赖 `admin-kernel`，支持短信厂商配置与动态刷新 |
-| **全功能平台** | 所有 Starter | Admin + KB + Media + SMS 完整功能 |
-
-### 依赖边界
-
-```
-flexboot4-core (纯 Java 基础库)
-    ↓
-flexboot4-admin-kernel (starter 公共底座)
-    ↓
-├── flexboot4-admin-starter (RBAC / 系统管理)
-├── flexboot4-kb-starter (知识库)
-├── flexboot4-media-starter (媒体)
-└── flexboot4-sms4j-starter (短信)
-```
-
-✅ **业务能力按需引入；需要后台 RBAC、菜单、权限码、文件管理或用户上下文时，显式组合 `admin-starter`**
-
----
-
-## 🎯 核心功能速览
-
-### 1. RBAC 权限管理
-
-#### 系统已预置的数据表
-```
-sys_user          # 用户表
-sys_role          # 角色表
-sys_user_role     # 用户-角色关联表
-sys_menu          # 菜单表
-sys_role_menu     # 角色-菜单关联表
-sys_permission    # 权限编码表
-```
-
-#### 快速创建用户
+示例：
 
 ```java
 @RestController
-@RequestMapping("/api/users")
-@RequiredArgsConstructor
-public class UserController extends BaseController<SysUserService, SysUser, String> {
+@RequestMapping("/api/admin/user")
+public class SysUserController extends BaseCrudController<SysUserService, SysUser, String,
+        SysUserCreateReq, SysUserUpdateReq, SysUserListVO, SysUserDetailVO> {
 
-    private final PasswordEncoder passwordEncoder;
+    public SysUserController(SysUserService service, SysUserCrudMapper mapper) {
+        super(service, mapper);
+    }
 
-    @PostMapping
-    @OperLog(title = "新建用户", businessType = BusinessType.INSERT)
-    public ApiResult<Boolean> createUser(@RequestBody SysUser user) {
-        user.setPassword(passwordEncoder.encode("123456"));
-        return ApiResult.success(service.save(user));
+    @Override
+    public Class<SysUser> getEntityClass() {
+        return SysUser.class;
     }
 }
 ```
 
-#### 权限控制注解
+### 普通基础表
+
+低风险、基础配置类表可以使用 `EntityCrudController` 快速接入，但泛型仍必须是 DTO/VO：
 
 ```java
-@PostMapping("/sensitive-operation")
-@RequirePermission("sys:user:delete")  // 需要删除权限
-public ApiResult<Boolean> deleteUser(@RequestParam String userId) {
-    return ApiResult.success(service.removeById(userId));
+public class SysDictTypeController extends EntityCrudController<SysDictTypeService, SysDictType, String,
+        SysDictTypeCreateReq, SysDictTypeUpdateReq, SysDictTypeListVO, SysDictTypeDetailVO> {
+
+    public SysDictTypeController(SysDictTypeService service) {
+        super(service, SysDictType.class, SysDictTypeListVO.class, SysDictTypeDetailVO.class);
+    }
 }
 ```
 
-### 2. 通用查询 API
+`EntityCrudController` 内部使用 `DefaultCrudMapper`，只适合低风险模块。它会忽略 Entity 上多出来但 VO 未声明的字段，避免关系对象污染列表响应。
 
-所有 Controller 自动支持 `/page` 和 `/list` 端点，支持复杂查询：
+### 不适合通用 CRUD 的场景
 
-#### 单表查询
+纯关系表或流程型接口不要暴露通用 CRUD，应收口为明确业务接口：
 
-```bash
-curl -X POST http://localhost:8080/api/admin/user/page \
-  -H "Content-Type: application/json" \
-  -d '{
-    "pageNumber": 1,
-    "pageSize": 10,
-    "items": [
-      { "field": "status", "op": "eq", "val": 1 },
-      { "field": "realName", "op": "like", "val": "张三" }
-    ],
-    "orders": [
-      { "column": "createTime", "asc": false }
-    ]
-  }'
-```
+- 用户分配角色
+- 角色分配菜单
+- 文章绑定/解绑标签
+- 审核、发布、重置密码等流程动作
 
-#### 多表联合查询
+## 3. CRUD 接口
+
+`BaseCrudController` 固定提供：
+
+| 方法 | 路径 | 说明 | 权限动作 |
+| --- | --- | --- | --- |
+| `POST` | `/` | 新增 | `add` |
+| `PUT` | `/{id}` | 修改 | `edit` |
+| `DELETE` | `/{id}` | 删除 | `delete` |
+| `DELETE` | `/` | 批量删除 | `delete` |
+| `GET` | `/{id}` | 详情 | `list` |
+| `POST` | `/page` | 分页查询 | `list` |
+| `POST` | `/list` | 列表查询 | `list` |
+| `GET/POST` | `/export` | 导出 | `export` |
+| `POST` | `/import` | 导入，默认关闭 | `import` |
+
+## 4. 查询与排序
+
+查询入参统一使用 `SearchDto`：
 
 ```json
 {
   "pageNumber": 1,
   "pageSize": 10,
+  "logic": "AND",
   "items": [
-    { "field": "dept.deptName", "op": "like", "val": "技术部" }
-  ]
-}
-```
-
-#### 嵌套条件查询
-
-```json
-{
-  "items": [
-    { "field": "status", "op": "eq", "val": 1 },
+    { "field": "sysUser.status", "op": "eq", "val": 1 },
     {
       "logic": "OR",
       "children": [
-        { "field": "type", "op": "eq", "val": "A" },
-        { "field": "type", "op": "eq", "val": "B" }
+        { "field": "sysUser.username", "op": "like", "val": "admin" },
+        { "field": "sysUser.realName", "op": "like", "val": "管理员" }
       ]
     }
+  ],
+  "orders": [
+    { "column": "sysUser.createTime", "asc": false }
   ]
 }
 ```
 
-### 3. 操作日志（动态分表）
+字段命名规则：
 
-系统自动按季度分表存储操作日志，支持跨季度查询：
+- 根表字段可以使用裸字段，如 `createTime`。
+- 根表字段也可以使用根实体别名或表名驼峰前缀，如 `sysUser.createTime`、`sysDictType.code`。
+- 关系字段使用关系属性名、目标实体名驼峰或目标表名驼峰，如 `dept.deptName`、`sysDept.deptName`。
+- 查询和排序字段必须通过 `CrudFieldPolicy` 白名单。
+- 关系字段必须由 Controller 显式开放，不能因为同名根字段存在就自动放行。
 
-```
-sys_oper_log_2026_q1  # 第一季度
-sys_oper_log_2026_q2  # 第二季度
-...
-```
-
-#### 查询操作日志
-
-```bash
-curl -X POST http://localhost:8080/api/oper-log/page \
-  -H "Authorization: Bearer ${TOKEN}" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "pageNumber": 1,
-    "pageSize": 10,
-    "items": [
-      { "field": "operName", "op": "like", "val": "admin" }
-    ]
-  }'
-```
-
-#### 自动记录操作
+高风险模块应显式声明字段白名单：
 
 ```java
-@PostMapping
-@OperLog(title = "新建用户", businessType = BusinessType.INSERT)
-public ApiResult<Boolean> create(@RequestBody SysUser user) {
-    return ApiResult.success(service.save(user));
-}
-
-// 自动记录：操作人、IP、User-Agent、执行时间、请求参数、响应数据等
-```
-
-### 4. 数据脱敏
-
-```java
-// 自动脱敏 8 种敏感信息
-// 手机、身份证、银行卡、邮箱、地址、姓名、车牌、IP
-
-@GetMapping("/{id}")
-public ApiResult<SysUser> getUserInfo(@PathVariable String id) {
-    return ApiResult.success(service.getById(id));
-}
-
-// 响应自动脱敏敏感字段
-```
-
-### 5. 知识库 & RAG（可选）
-
-```gradle
-dependencies {
-    implementation("com.yunlbd:flexboot4-kb-starter")
+@Override
+protected CrudFieldPolicy fieldPolicy() {
+    return CrudFieldPolicy.same(List.of(
+            "id", "username", "realName", "email", "phone",
+            "deptId", "status", "remark", "createTime", "lastModifyTime"
+    )).withQueryFields("dept.deptName", "roles.roleValue", "roles.roleName");
 }
 ```
 
-#### 上传文档
+更多查询细节见 [通用查询构建与使用说明](Mf基础功能.md)。
 
-```bash
-curl -X POST http://localhost:8080/api/kb/documents/upload \
-  -F "file=@/path/to/document.pdf" \
-  -H "Authorization: Bearer ${TOKEN}"
+## 5. 权限设计
+
+权限码统一使用：
+
+```text
+{domain}:{resource}:list
+{domain}:{resource}:add
+{domain}:{resource}:edit
+{domain}:{resource}:delete
+{domain}:{resource}:export
+{domain}:{resource}:import
 ```
 
-#### 文档智能检索
+示例：
 
-```bash
-curl -X POST http://localhost:8080/api/kb/search \
-  -H "Content-Type: application/json" \
-  -d '{
-    "query": "如何使用 FlexBoot4？",
-    "topK": 5
-  }'
+```text
+sys:user:list
+sys:user:add
+sys:user:edit
+sys:user:delete
+sys:user:export
+sys:user:import
 ```
 
-### 6. AI 网关（独立部署）
+规则：
 
-#### 独立启动 AI 网关
+- `/api/admin/**` 默认拒绝无权限声明的接口。
+- 继承 `BaseCrudController` 的通用方法由 `PermissionCheckInterceptor` 自动推导权限码。
+- 自定义接口必须显式使用 `@RequirePermission("xxx")`。
+- 登录、OpenAPI、静态资源、路由接口等少量接口可使用 `@RequirePermission(skip = true)` 或白名单。
+- 超级管理员用户仍可跳过权限码校验。
 
-```bash
-./gradlew :flexboot4-ai:bootRun
-```
+更多细节见 [后端权限控制设计](backend_permission_control_design.md)。
 
-访问：http://localhost:9090
+## 6. vben 路由与菜单
 
-#### AI 网关特性
+后端菜单与 vben 5.7.x 的契约保持一致：
 
-- ✅ 高性能 WebFlux（Reactor 响应式）
-- ✅ 离线 API Key 鉴权（无需 RPC）
-- ✅ 流式响应支持（SSE）
-- ✅ 配额管理与限流
-- ✅ 日志汇聚（Redis Stream）
+- 后端路由接口只返回 catalog/menu 路由树。
+- button 节点不进入路由树，只作为按钮权限码进入 `/admin/auth/codes`。
+- `RouteMeta` 字段使用 vben 标准命名：`hideInMenu`、`hideInTab`、`hideInBreadcrumb`。
+- 布局组件使用前端 `layoutMap` 支持的值，例如 `BasicLayout`、`IFrameView`。
+- 根菜单 parentId 统一使用 `NULL`，不要混用 `"0"`。
 
-### 7. SMS4J 短信模块（可选）
+菜单 SQL 应包含：
 
-```gradle
-dependencies {
-    implementation("com.yunlbd:flexboot4-sms4j-starter")
-}
-```
+- 菜单路由节点
+- 按钮权限节点
+- `authCode`
+- vben meta 字段
+- 对应 `sys_role_menu` 授权数据
 
-#### 初始化配置表
+已有开发数据不需要兼容旧格式，旧数据不符合规范时直接用 SQL 修正。
 
-```bash
-psql -U postgres -d flexboot4 -f docs/sql/sms4j_config_pg.sql
-```
+## 7. 文件存储
 
-#### 短信厂商配置管理接口
-
-- `POST /api/admin/sms/config`
-- `PUT /api/admin/sms/config/{id}`
-- `POST /api/admin/sms/config/page`
-
-更多见：[SMS4J Starter 接入说明](../flexboot4-sms4j-starter/SMS4J_STARTER.md)
-
----
-
-## 🔌 自定义业务 Controller
-
-基于 FlexBoot4，快速开发自己的业务 Controller：
-
-### 创建实体
-
-```java
-import com.mybatisflex.annotation.Table;
-import com.yunlbd.flexboot4.entity.sys.BaseEntity;
-
-@Table("t_product")
-public class Product extends BaseEntity {
-    private String name;
-    private BigDecimal price;
-    private String description;
-}
-```
-
-### 创建 Mapper
-
-```java
-import com.mybatisflex.core.BaseMapper;
-
-public interface ProductMapper extends BaseMapper<Product> {
-}
-```
-
-### 创建 Service
-
-```java
-import com.yunlbd.flexboot4.service.sys.IExtendedService;
-
-public interface ProductService extends IExtendedService<Product> {
-}
-
-@Service
-@CacheConfig(cacheNames = "product")
-public class ProductServiceImpl extends BaseServiceImpl<ProductMapper, Product> 
-    implements ProductService {
-}
-```
-
-### 创建 Controller
-
-```java
-import com.yunlbd.flexboot4.controller.sys.BaseController;
-
-@RestController
-@RequestMapping("/api/products")
-@RequiredArgsConstructor
-@Tag(name = "产品管理")
-public class ProductController extends BaseController<ProductService, Product, String> {
-
-    @Override
-    public Class<Product> getEntityClass() {
-        return Product.class;
-    }
-
-    // 自动继承：GET /{id}, POST, PUT /{id}, DELETE /{id}, POST /page, POST /list 等
-    // 可按需添加自定义方法
-
-    @PostMapping("/batch-update-price")
-    @RequirePermission("product:update")
-    @OperLog(title = "批量更新产品价格", businessType = BusinessType.UPDATE)
-    public ApiResult<Boolean> batchUpdatePrice(@RequestBody List<Product> products) {
-        return ApiResult.success(service.updateBatch(products));
-    }
-}
-```
-
-### 自动获得的能力
-
-```
-✅ CRUD 操作        (Create, Read, Update, Delete)
-✅ 分页查询          (/page)
-✅ 列表查询          (/list)
-✅ 批量操作          (/batch)
-✅ 复杂查询构建      (SearchDto 支持)
-✅ 权限控制          (@RequirePermission)
-✅ 操作日志          (@OperLog)
-✅ 缓存管理          (@CacheConfig)
-✅ OpenAPI 文档      (自动生成)
-```
-
----
-
-## 🔧 常见配置
-
-### application.yml
+文件管理统一通过 `FileStorage` 抽象接入，默认使用本地存储。新上传文件的存储类型由 `flexboot4.file-storage.type` 决定，历史文件按 `sys_file.storage_type` 路由读取。因此 `type: local` 只表示新上传走本地；如果库里仍有 `storage_type=MINIO` 的历史文件，仍需保留可用的 `minio.*` 连接参数，让 MinIO 存储实现被装配用于读取历史文件。
 
 ```yaml
-spring:
-  application:
-    name: my-flexboot4-app
-  
-  datasource:
-    url: jdbc:postgresql://localhost:5432/flexboot4
-    username: postgres
-    password: password
-  
-  redis:
-    host: localhost
-    port: 6379
-    password: ''
-  
-  mail:
-    host: smtp.qq.com
-    port: 465
-    username: your-email@qq.com
-    password: your-password
-  
-  jackson:
-    serialization:
-      write-dates-as-timestamps: false
-      indent-output: true
-
-# FlexBoot4 配置
 flexboot4:
-  # JWT 配置
-  jwt:
-    secret: your-secret-key
-    expiration: 86400  # 1 day
-  
-  # 权限配置
-  permission:
-    enabled: true
-  
-  # 操作日志配置
-  oper-log:
-    enabled: true
-    cooling-period-days: 90  # 日志保留期
-  
-  # 数据脱敏配置
-  desensitization:
-    enabled: true
+  file-storage:
+    type: local # local | minio
+    local:
+      root-dir: ${user.home}/flexboot4-files
+      bucket: local
 ```
 
----
+切换到 MinIO 时设置：
 
-## 📚 项目结构
+```yaml
+flexboot4:
+  file-storage:
+    type: minio
 
-```
-your-app/
-├── src/
-│   ├── main/
-│   │   ├── java/
-│   │   │   └── com/example/yourapp/
-│   │   │       ├── YourApplication.java       # 启动类
-│   │   │       ├── entity/
-│   │   │       │   └── Product.java
-│   │   │       ├── mapper/
-│   │   │       │   └── ProductMapper.java
-│   │   │       ├── service/
-│   │   │       │   ├── ProductService.java
-│   │   │       │   └── impl/
-│   │   │       │       └── ProductServiceImpl.java
-│   │   │       └── controller/
-│   │   │           └── ProductController.java
-│   │   └── resources/
-│   │       └── application.yml
-│   └── test/
-│       └── java/
-│           └── com/example/yourapp/
-│               └── ProductControllerTest.java
-└── build.gradle.kts
+minio:
+  endpoint: http://127.0.0.1:9000
+  access-key: minioadmin
+  secret-key: minioadmin
+  bucket: flexboot4-files
 ```
 
----
+本地存储不会暴露静态目录。`/api/admin/file/{id}/access-url` 会返回短期签名 URL，实际下载入口为 `/api/admin/file/access/{token}`，该入口在安全白名单中，但会校验 HMAC token 与过期时间。
 
-## 🧪 测试示例
+权限边界按业务场景区分：
 
-### Controller 测试
+- 系统文件管理页使用 `/api/admin/file/**`，下载/预览需要 `sys:file:download`。
+- 当前用户头像上传使用 `/api/admin/user/avatar/upload`，接口会直接写回当前用户 `profileFileId` 并返回头像访问 URL。
+- CMS 封面和附件使用 `/api/admin/cms/file/upload` 与 `/api/admin/cms/file/{id}/access-url`，权限归属 `cms:file:upload`。
+
+前端不得再拼接 `endpoint/bucket/objectKey` 作为文件直链，必须通过对应业务接口或系统文件管理接口获取访问 URL。
+
+物理删除文件后不再复活软删除的 `sys_file` 记录。若数据库存在仅基于 `file_hash` 的全局唯一索引，应调整为只约束未删除记录，或直接删除该唯一索引，避免同 hash 文件重新上传时撞库。
+
+## 8. Excel
+
+Excel 不再从 Entity 注解上承载所有语义，标准做法是：
+
+- 导出使用独立 `ExportRow`。
+- 导入使用独立 `ImportRow`。
+- `BaseCrudController` 默认导出 `ExportRow`。
+- `/import` 默认关闭，只有 Controller 显式开启导入能力时才允许访问。
+- Entity 上历史 Excel 注解应逐步迁移到 Row 类。
+
+## 9. OpenAPI 分组
+
+Controller 应同时声明：
 
 ```java
-@SpringBootTest
-class ProductControllerTest {
-
-    @Autowired
-    private TestRestTemplate restTemplate;
-
-    @Test
-    void testCreateProduct() {
-        Product product = Product.builder()
-            .name("产品1")
-            .price(BigDecimal.valueOf(99.99))
-            .build();
-
-        ResponseEntity<ApiResult<Boolean>> response = restTemplate.postForEntity(
-            "/api/products",
-            product,
-            new ParameterizedTypeReference<ApiResult<Boolean>>() {}
-        );
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody().isSuccess()).isTrue();
-    }
-
-    @Test
-    void testPageQuery() {
-        SearchDto searchDto = SearchDto.builder()
-            .pageNumber(1)
-            .pageSize(10)
-            .build();
-
-        ResponseEntity<ApiResult<Page<Product>>> response = restTemplate.postForEntity(
-            "/api/products/page",
-            searchDto,
-            new ParameterizedTypeReference<ApiResult<Page<Product>>>() {}
-        );
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    }
-}
+@Tag(name = "用户管理", description = "SysUser - 用户管理")
+@ApiTagGroup(group = "系统管理")
 ```
 
----
+应用启动时会扫描 `@ApiTagGroup` 并生成 Scalar/OpenAPI 分组。更多细节见 [OpenAPI 标签分组使用指南](API_TAG_GROUP_GUIDE.md)。
 
-## 🆘 常见问题
+## 10. 低代码生成契约
 
-### Q: 如何自定义权限码？
+新增业务资源建议先准备元数据：
 
-**A:** 在数据库中添加权限记录：
-
-```sql
-INSERT INTO sys_permission (id, permission_code, permission_name) 
-VALUES ('1', 'product:export', '导出产品');
+```yaml
+domain: sys
+resource: user
+entity: SysUser
+basePath: /api/admin/user
+permissionPrefix: sys:user
+menu:
+  parentId: sys_menu_system
+  title: system.user.title
+  icon: carbon:user
 ```
 
-然后在 Controller 中使用：
+生成内容应包含：
 
-```java
-@PostMapping("/export")
-@RequirePermission("product:export")
-public void export(HttpServletResponse response) { ... }
+- DTO/VO/ExcelRow
+- MapStruct mapper 或低风险默认 mapper
+- Service/Controller
+- 权限码
+- 菜单 SQL
+- 前端 API
+- vben 列表页、表单抽屉、权限按钮
+
+详细契约见 [CRUD Module Generator Contract](crud_module_generator_contract.md)。
+
+## 11. 测试与架构约束
+
+后端回归：
+
+```powershell
+.\gradlew.bat compileJava test
 ```
 
-### Q: 如何扩展操作日志字段？
+前端回归：
 
-**A:** 继承 `SysOperLog` 或在事件监听器中自定义：
-
-```java
-@Component
-@EventListener
-public void onOperLog(SysOperLogEvent event) {
-    SysOperLog log = event.getSysOperLog();
-    // 添加自定义字段
-    log.setRemark("自定义备注");
-}
+```powershell
+pnpm -F @vben/web-antd typecheck
 ```
 
-### Q: 如何在第三方模块中接收事件？
+本地后端启动后执行接口冒烟：
 
-**A:** 实现 `Hook` 接口：
-
-```java
-@Component
-public class MyCustomHook implements UserDeaccountHook {
-    @Override
-    public String getModuleName() {
-        return "my-module";
-    }
-
-    @Override
-    public void onDeaccountConfirmed(String userId) {
-        // 在用户注销时执行自定义逻辑
-    }
-}
+```powershell
+.\scripts\admin-smoke.ps1 -BaseUrl "http://localhost:8080" -Username admin -Password admin123
 ```
 
----
+需要验证通用 CRUD 写入链路时追加 `-Crud`，脚本会创建并清理临时字典数据。
 
-## 📖 更多文档
+架构约束：
 
-- [Starter 架构设计](./STARTER_ARCHITECTURE.md)
-- [权限控制实现](./backend_permission_control_design.md)
-- [用户注销方案](../plan-userDeaccount.prompt.md)
-- [快速参考](./QUICKSTART.md)
+- 生产代码 `extends BaseController` 数量必须为 0。
+- 高风险模块禁止使用 `IdentityCrudMapper`。
+- DTO/VO 不允许出现 `@Table`、`@Column`、`@Relation*`。
+- Controller 不直接返回 Entity。
+- 自定义 Admin 接口必须有明确权限声明。
 
----
+## 12. 新模块接入清单
 
-## 🤝 贡献指南
-
-欢迎提交 Issue 和 Pull Request！
-
----
-
-## 📄 许可证
-
-Apache License 2.0
-
+1. 明确模块元数据：`domain`、`resource`、`basePath`、`permissionPrefix`。
+2. 建 Entity 和表结构。
+3. 建 `CreateReq`、`UpdateReq`、`ListVO`、`DetailVO`。
+4. 高风险模块建 MapStruct `CrudMapper`。
+5. 建 Controller，继承 `BaseCrudController` 或 `EntityCrudController`。
+6. 配置 `CrudFieldPolicy`。
+7. 配置 Excel `ExportRow`，必要时启用 `ImportRow`。
+8. 写菜单和按钮权限 SQL。
+9. 写前端 API、列表页、表单页。
+10. 跑后端和前端回归。

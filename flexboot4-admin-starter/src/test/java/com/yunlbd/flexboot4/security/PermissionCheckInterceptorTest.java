@@ -2,7 +2,8 @@ package com.yunlbd.flexboot4.security;
 
 import com.yunlbd.flexboot4.common.annotation.RequirePermission;
 import com.yunlbd.flexboot4.config.IgnoreUrlsConfig;
-import com.yunlbd.flexboot4.controller.sys.BaseController;
+import com.yunlbd.flexboot4.controller.sys.BaseCrudController;
+import com.yunlbd.flexboot4.converter.IdentityCrudMapper;
 import com.yunlbd.flexboot4.entity.sys.BaseEntity;
 import com.yunlbd.flexboot4.entity.sys.SysUser;
 import com.yunlbd.flexboot4.metrics.MetricsRecorder;
@@ -101,13 +102,66 @@ class PermissionCheckInterceptorTest {
     }
 
     @Test
-    void baseControllerCreateUsesAddPermissionCode() throws Exception {
+    void baseCrudControllerCreateUsesAddPermissionCode() throws Exception {
         setLoginUser("user-1", "alice", List.of("test:entity:add"));
 
         boolean allowed = interceptor.preHandle(
                 request("/api/admin/test-entity"),
                 new MockHttpServletResponse(),
                 handler(TestEntityController.class, "create", Object.class)
+        );
+
+        assertThat(allowed).isTrue();
+    }
+
+    @Test
+    void baseCrudControllerUpdateUsesEditPermissionCode() throws Exception {
+        setLoginUser("user-1", "alice", List.of("test:entity:edit"));
+
+        boolean allowed = interceptor.preHandle(
+                request("/api/admin/test-entity/1"),
+                new MockHttpServletResponse(),
+                handler(TestEntityController.class, "update", java.io.Serializable.class, Object.class)
+        );
+
+        assertThat(allowed).isTrue();
+    }
+
+    @Test
+    void baseCrudControllerDeleteUsesDeletePermissionCode() throws Exception {
+        setLoginUser("user-1", "alice", List.of("test:entity:delete"));
+
+        boolean allowed = interceptor.preHandle(
+                request("/api/admin/test-entity/1"),
+                new MockHttpServletResponse(),
+                handler(TestEntityController.class, "remove", java.io.Serializable.class)
+        );
+
+        assertThat(allowed).isTrue();
+    }
+
+    @Test
+    void baseCrudControllerExportUsesExportPermissionCode() throws Exception {
+        setLoginUser("user-1", "alice", List.of("test:entity:export"));
+
+        boolean allowed = interceptor.preHandle(
+                request("/api/admin/test-entity/export"),
+                new MockHttpServletResponse(),
+                handler(TestEntityController.class, "exportPost", com.yunlbd.flexboot4.dto.SearchDto.class,
+                        jakarta.servlet.http.HttpServletRequest.class, jakarta.servlet.http.HttpServletResponse.class)
+        );
+
+        assertThat(allowed).isTrue();
+    }
+
+    @Test
+    void baseCrudControllerImportUsesImportPermissionCode() throws Exception {
+        setLoginUser("user-1", "alice", List.of("test:entity:import"));
+
+        boolean allowed = interceptor.preHandle(
+                request("/api/admin/test-entity/import"),
+                new MockHttpServletResponse(),
+                handler(TestEntityController.class, "importExcel")
         );
 
         assertThat(allowed).isTrue();
@@ -167,7 +221,7 @@ class PermissionCheckInterceptorTest {
 
     private static HandlerMethod handler(Class<?> beanType, String methodName) throws Exception {
         Object bean = beanType.getDeclaredConstructor().newInstance();
-        Method method = beanType.getDeclaredMethod(methodName);
+        Method method = beanType.getMethod(methodName);
         return new HandlerMethod(bean, method);
     }
 
@@ -218,10 +272,10 @@ class PermissionCheckInterceptorTest {
     static class TestEntity extends BaseEntity {
     }
 
-    static class TestEntityController extends BaseController<IExtendedService<TestEntity>, TestEntity, String> {
+    static class TestEntityController extends BaseCrudController<IExtendedService<TestEntity>, TestEntity, String, TestEntity, TestEntity, TestEntity, TestEntity> {
         @SuppressWarnings("unchecked")
         TestEntityController() {
-            super((IExtendedService<TestEntity>) mock(IExtendedService.class));
+            super((IExtendedService<TestEntity>) mock(IExtendedService.class), new IdentityCrudMapper<>());
         }
 
         @Override

@@ -40,5 +40,15 @@ public class SysRoleMenuServiceImpl extends BaseServiceImpl<SysRoleMenuMapper, S
         super.saveBatch(roleMenus);
         return true;
     }
+
+    @Override
+    public List<String> listMenuIdsByRoleId(String roleId) {
+        QueryWrapper wrapper = QueryWrapper.create()
+                .select(SysRoleMenuTableDef.SYS_ROLE_MENU.MENU_ID)
+                .where(SysRoleMenuTableDef.SYS_ROLE_MENU.ROLE_ID.eq(roleId));
+        return super.list(wrapper).stream()
+                .map(SysRoleMenu::getMenuId)
+                .toList();
+    }
 }
 

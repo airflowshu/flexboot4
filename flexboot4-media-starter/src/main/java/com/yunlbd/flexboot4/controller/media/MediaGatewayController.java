@@ -3,10 +3,14 @@ package com.yunlbd.flexboot4.controller.media;
 import com.yunlbd.flexboot4.common.ApiResult;
 import com.yunlbd.flexboot4.common.annotation.RequirePermission;
 import com.yunlbd.flexboot4.config.ApiTagGroup;
-import com.yunlbd.flexboot4.controller.sys.BaseController;
+import com.yunlbd.flexboot4.controller.sys.EntityCrudController;
+import com.yunlbd.flexboot4.dto.media.MediaGatewayCreateReq;
+import com.yunlbd.flexboot4.dto.media.MediaGatewayUpdateReq;
 import com.yunlbd.flexboot4.entity.media.MediaGateway;
 import com.yunlbd.flexboot4.media.dto.GatewayReloadRequest;
 import com.yunlbd.flexboot4.service.media.MediaGatewayService;
+import com.yunlbd.flexboot4.vo.media.MediaGatewayDetailVO;
+import com.yunlbd.flexboot4.vo.media.MediaGatewayListVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
@@ -15,10 +19,11 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/admin/media/gateway")
 @Tag(name = "视频网关", description = "MediaGateway - 视频网关")
 @ApiTagGroup(group = "视频中心")
-public class MediaGatewayController extends BaseController<MediaGatewayService, MediaGateway, String> {
+public class MediaGatewayController extends EntityCrudController<MediaGatewayService, MediaGateway, String,
+        MediaGatewayCreateReq, MediaGatewayUpdateReq, MediaGatewayListVO, MediaGatewayDetailVO> {
 
     public MediaGatewayController(MediaGatewayService service) {
-        super(service);
+        super(service, MediaGateway.class, MediaGatewayListVO.class, MediaGatewayDetailVO.class);
     }
 
     @Override

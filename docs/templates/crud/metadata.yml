@@ -1,0 +1,29 @@
+# Example metadata for a generated FlexBoot4 CRUD resource.
+domain: sys
+resource: user
+entity: SysUser
+basePath: /api/admin/user
+permissionPrefix: sys:user
+risk: high
+packageBase: com.yunlbd.flexboot4
+idType: String
+menu:
+  parentId: sys_menu_system
+  idPrefix: sys_menu_user
+  path: /system/user
+  name: SystemUser
+  component: /system/user/list
+  title: system.user.title
+  icon: carbon:user
+fields:
+  query:
+    - id
+    - username
+    - realName
+    - status
+    - createTime
+  order:
+    - id
+    - createTime
+  relationQuery:
+    - dept.deptName

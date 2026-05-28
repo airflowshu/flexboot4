@@ -3,6 +3,7 @@ package com.yunlbd.flexboot4.controller.media;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yunlbd.flexboot4.common.ApiResult;
+import com.yunlbd.flexboot4.common.annotation.RequirePermission;
 import com.yunlbd.flexboot4.entity.media.MediaServer;
 import com.yunlbd.flexboot4.entity.media.MediaStreamSession;
 import com.yunlbd.flexboot4.media.core.MediaHookValidator;
@@ -26,6 +27,7 @@ public class MediaZlmHookController {
     private final MediaStreamSessionService mediaStreamSessionService;
     private final ObjectMapper objectMapper;
 
+    @RequirePermission(skip = true)
     @PostMapping("/on_stream_changed")
     public ApiResult<Boolean> onStreamChanged(@RequestBody String rawBody, @RequestHeader Map<String, String> headers) {
         Map<String, Object> body = parseBody(rawBody);
@@ -69,6 +71,7 @@ public class MediaZlmHookController {
         return ApiResult.success(true);
     }
 
+    @RequirePermission(skip = true)
     @PostMapping("/on_stream_none_reader")
     public ApiResult<Boolean> onStreamNoneReader(@RequestBody String rawBody, @RequestHeader Map<String, String> headers) {
         Map<String, Object> body = parseBody(rawBody);
@@ -89,6 +92,7 @@ public class MediaZlmHookController {
         return ApiResult.success(true);
     }
 
+    @RequirePermission(skip = true)
     @PostMapping("/on_server_keepalive")
     public ApiResult<Boolean> onServerKeepalive(@RequestBody String rawBody, @RequestHeader Map<String, String> headers) {
         Map<String, Object> body = parseBody(rawBody);
@@ -106,6 +110,7 @@ public class MediaZlmHookController {
         return ApiResult.success(true);
     }
 
+    @RequirePermission(skip = true)
     @PostMapping("/on_rtp_server_timeout")
     public ApiResult<Boolean> onRtpServerTimeout(@RequestBody String rawBody, @RequestHeader Map<String, String> headers) {
         Map<String, Object> body = parseBody(rawBody);

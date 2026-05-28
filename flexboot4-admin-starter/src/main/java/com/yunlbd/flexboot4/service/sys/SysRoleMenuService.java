@@ -12,5 +12,7 @@ public interface SysRoleMenuService extends IExtendedService<SysRoleMenu> {
      * @param menuIds 菜单ID列表
      */
     boolean assignMenusToRole(String roleId, List<String> menuIds);
+
+    List<String> listMenuIdsByRoleId(String roleId);
 }
 

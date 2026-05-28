@@ -16,6 +16,7 @@
 - **flexboot4-kb-starter**: 提供知识库功能（文档解析、存储等）
 - **flexboot4-media-starter**: 提供媒体处理能力（视频、音频等）
 - **flexboot4-sms4j-starter**: 提供短信发送与厂商配置管理能力（基于 sms4j）
+- **flexboot4-cms-starter**: 提供 CMS 内容管理、模板管理与静态发布能力
 
 ### 应用模块（可独立运行）
 
@@ -33,10 +34,8 @@
 
 ```kotlin
 plugins {
-    id("org.springframework.boot") version "3.4.1"
+    id("org.springframework.boot") version "4.0.3"
     id("io.spring.dependency-management") version "1.1.7"
-    kotlin("jvm") version "2.1.0"
-    kotlin("plugin.spring") version "2.1.0"
 }
 
 dependencies {
@@ -54,6 +53,9 @@ dependencies {
 
     // 如果需要短信能力（可选）
     implementation("com.yunlbd:flexboot4-sms4j-starter")
+
+    // 如果需要 CMS 能力（可选）
+    implementation("com.yunlbd:flexboot4-cms-starter")
 }
 ```
 
@@ -72,6 +74,9 @@ dependencies {
 
     // 如果需要短信能力（可选）
     implementation("com.yunlbd:flexboot4-sms4j-starter:0.0.1-SNAPSHOT")
+
+    // 如果需要 CMS 能力（可选）
+    implementation("com.yunlbd:flexboot4-cms-starter:0.0.1-SNAPSHOT")
 }
 ```
 
@@ -93,6 +98,7 @@ dependencies {
     implementation("com.yunlbd:flexboot4-kb-starter")
     implementation("com.yunlbd:flexboot4-media-starter")
     implementation("com.yunlbd:flexboot4-sms4j-starter")
+    implementation("com.yunlbd:flexboot4-cms-starter")
 }
 ```
 
@@ -133,6 +139,7 @@ dependencies {
     implementation("com.yunlbd:flexboot4-kb-starter")
     implementation("com.yunlbd:flexboot4-media-starter")
     implementation("com.yunlbd:flexboot4-sms4j-starter")
+    implementation("com.yunlbd:flexboot4-cms-starter")
 }
 ```
 

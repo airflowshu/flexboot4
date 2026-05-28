@@ -2,8 +2,10 @@ package com.yunlbd.flexboot4.controller.cms;
 
 import com.yunlbd.flexboot4.common.ApiResult;
 import com.yunlbd.flexboot4.common.annotation.OperLog;
+import com.yunlbd.flexboot4.common.annotation.RequirePermission;
 import com.yunlbd.flexboot4.common.enums.BusinessType;
 import com.yunlbd.flexboot4.config.ApiTagGroup;
+import com.yunlbd.flexboot4.file.FileAccessDescriptor;
 import com.yunlbd.flexboot4.file.FileObject;
 import com.yunlbd.flexboot4.service.sys.FileManagerService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,6 +32,7 @@ public class CmsFileController {
 
     @Operation(summary = "CMS文件上传", description = "上传CMS文件到公共桶（自动设置bizType=cms, bucket=flexboot4-public）")
     @OperLog(title = "CMS文件上传", businessType = BusinessType.UPLOAD)
+    @RequirePermission("cms:file:upload")
     @PostMapping(value = "/upload", produces = MediaType.APPLICATION_JSON_VALUE)
     public ApiResult<FileObject> upload(
             @Parameter(description = "要上传的文件", required = true, schema = @Schema(type = "string", format = "binary"))
@@ -41,5 +44,14 @@ public class CmsFileController {
         FileObject obj = fileManagerService.upload(file, tenantId, "cms", bizId);
         return ApiResult.success(obj);
     }
-}
 
+    @Operation(summary = "获取CMS文件访问地址", description = "生成CMS文件的短期签名访问 URL")
+    @OperLog(title = "获取CMS文件访问地址", businessType = BusinessType.OTHER)
+    @RequirePermission("cms:file:upload")
+    @GetMapping("/{id}/access-url")
+    public ApiResult<FileAccessDescriptor> accessUrl(@PathVariable("id") String id,
+                                                     @RequestParam(value = "ttlSeconds", defaultValue = "600") long ttlSeconds,
+                                                     @RequestParam(value = "attachment", defaultValue = "false") boolean attachment) {
+        return ApiResult.success(fileManagerService.access(id, ttlSeconds, attachment));
+    }
+}

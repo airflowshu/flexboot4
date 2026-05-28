@@ -65,6 +65,33 @@ ON CONFLICT (id) DO NOTHING;
 INSERT INTO sys_menu (id, parent_id, path, name, component, title, icon, order_no,
                       hide_in_menu, keep_alive, type, auth_code, status,
                       create_time, last_modify_time, del_flag, version)
+VALUES ('cms_menu_article_submit_btn', 'cms_menu_article', '', 'CmsArticleSubmit', '',
+        '提交审核', '', 96,
+        true, false, 'button', 'cms:article:submit', 1,
+        now(), now(), 0, 0)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO sys_menu (id, parent_id, path, name, component, title, icon, order_no,
+                      hide_in_menu, keep_alive, type, auth_code, status,
+                      create_time, last_modify_time, del_flag, version)
+VALUES ('cms_menu_article_preview_btn', 'cms_menu_article', '', 'CmsArticlePreview', '',
+        '文章预览', '', 97,
+        true, false, 'button', 'cms:article:preview', 1,
+        now(), now(), 0, 0)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO sys_menu (id, parent_id, path, name, component, title, icon, order_no,
+                      hide_in_menu, keep_alive, type, auth_code, status,
+                      create_time, last_modify_time, del_flag, version)
+VALUES ('cms_menu_file_upload_btn', 'cms_menu_article_file', '', 'CmsFileUpload', '',
+        'CMS文件上传', '', 97,
+        true, false, 'button', 'cms:file:upload', 1,
+        now(), now(), 0, 0)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO sys_menu (id, parent_id, path, name, component, title, icon, order_no,
+                      hide_in_menu, keep_alive, type, auth_code, status,
+                      create_time, last_modify_time, del_flag, version)
 VALUES ('cms_menu_template_edit_btn', 'cms_menu_template', '', 'CmsTemplateEdit', '',
         '模板保存', '', 98,
         true, false, 'button', 'cms:template:edit', 1,

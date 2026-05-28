@@ -14,6 +14,7 @@ dependencies {
 
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
+    annotationProcessor(libs.mapstructProcessor)
 
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
     implementation("org.jsoup:jsoup:1.18.3")

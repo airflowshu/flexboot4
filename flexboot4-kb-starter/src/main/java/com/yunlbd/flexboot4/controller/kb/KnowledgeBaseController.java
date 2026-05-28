@@ -9,6 +9,7 @@ import com.yunlbd.flexboot4.dto.SearchDto;
 import com.yunlbd.flexboot4.entity.kb.KbFileTree;
 import com.yunlbd.flexboot4.entity.kb.KbMember;
 import com.yunlbd.flexboot4.entity.kb.KnowledgeBase;
+import com.yunlbd.flexboot4.entity.sys.SysFile;
 import com.yunlbd.flexboot4.file.FileObject;
 import com.yunlbd.flexboot4.service.kb.KbFileTreeService;
 import com.yunlbd.flexboot4.service.kb.KbMemberService;
@@ -25,6 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/admin/kb")
@@ -42,16 +44,16 @@ public class KnowledgeBaseController {
 
     @Operation(summary = "创建知识库")
     @OperLog(title = "创建知识库", businessType = BusinessType.INSERT)
-    // @RequirePermission("kb:manage:create")
+    @RequirePermission("kb:manage:add")
     @PostMapping
-    public ApiResult<Boolean> create(@RequestBody KnowledgeBase kb) {
+    public ApiResult<KnowledgeBase> create(@RequestBody KnowledgeBase kb) {
         String userId = currentUserProvider.getUserId();
         return ApiResult.success(knowledgeBaseService.createKnowledgeBase(kb, userId));
     }
 
     @Operation(summary = "更新知识库")
     @OperLog(title = "更新知识库", businessType = BusinessType.UPDATE)
-    // @RequirePermission("kb:manage:update")
+    @RequirePermission("kb:manage:edit")
     @PutMapping("/{id}")
     public ApiResult<Boolean> update(@PathVariable String id, @RequestBody KnowledgeBase kb) {
         String userId = currentUserProvider.getUserId();
@@ -60,7 +62,7 @@ public class KnowledgeBaseController {
 
     @Operation(summary = "删除知识库")
     @OperLog(title = "删除知识库", businessType = BusinessType.DELETE)
-    // @RequirePermission("kb:manage:delete")
+    @RequirePermission("kb:manage:delete")
     @DeleteMapping("/{id}")
     public ApiResult<Boolean> delete(@PathVariable String id) {
         String userId = currentUserProvider.getUserId();
@@ -69,7 +71,7 @@ public class KnowledgeBaseController {
 
     @Operation(summary = "知识库详情")
     @OperLog(title = "知识库详情", businessType = BusinessType.QUERY, isSaveResponseData = false)
-    // @RequirePermission("kb:manage:view")
+    @RequirePermission("kb:manage:list")
     @GetMapping("/{id}")
     public ApiResult<KnowledgeBase> get(@PathVariable String id) {
         String userId = currentUserProvider.getUserId();
@@ -79,7 +81,7 @@ public class KnowledgeBaseController {
 
     @Operation(summary = "知识库分页")
     @OperLog(title = "知识库分页", businessType = BusinessType.QUERY, isSaveResponseData = false)
-    // @RequirePermission("kb:manage:view")
+    @RequirePermission("kb:manage:list")
     @PostMapping("/page")
     public ApiResult<?> page(@RequestBody SearchDto searchDto) {
         String userId = currentUserProvider.getUserId();
@@ -88,7 +90,7 @@ public class KnowledgeBaseController {
 
     @Operation(summary = "知识库列表")
     @OperLog(title = "知识库列表", businessType = BusinessType.QUERY, isSaveResponseData = false)
-    // @RequirePermission("kb:manage:view")
+    @RequirePermission("kb:manage:list")
     @PostMapping("/list")
     public ApiResult<List<KnowledgeBase>> list(@RequestBody SearchDto searchDto) {
         String userId = currentUserProvider.getUserId();
@@ -99,7 +101,7 @@ public class KnowledgeBaseController {
 
     @Operation(summary = "列出知识库成员")
     @OperLog(title = "列出知识库成员", businessType = BusinessType.QUERY, isSaveResponseData = false)
-    // @RequirePermission("kb:member:view")
+    @RequirePermission("kb:member:list")
     @GetMapping("/{kbId}/members")
     public ApiResult<List<KbMember>> listMembers(@PathVariable String kbId) {
         String userId = currentUserProvider.getUserId();
@@ -114,28 +116,28 @@ public class KnowledgeBaseController {
     @Operation(summary = "添加知识库成员")
     @OperLog(title = "添加知识库成员", businessType = BusinessType.INSERT)
     @RequirePermission("kb:member:add")
-    // @PostMapping("/{kbId}/members")
-    public ApiResult<Boolean> addMembers(@PathVariable String kbId, @RequestBody Collection<String> userIds) {
+    @PostMapping("/{kbId}/members")
+    public ApiResult<Boolean> addMembers(@PathVariable String kbId, @RequestBody MemberIdsRequest request) {
         String userId = currentUserProvider.getUserId();
         knowledgeBaseService.checkOwner(kbId, userId);
-        return ApiResult.success(kbMemberService.addMembers(kbId, userIds));
+        return ApiResult.success(kbMemberService.addMembers(kbId, request.userIds()));
     }
 
     @Operation(summary = "移除知识库成员")
     @OperLog(title = "移除知识库成员", businessType = BusinessType.DELETE)
-    // @RequirePermission("kb:member:remove")
+    @RequirePermission("kb:member:delete")
     @DeleteMapping("/{kbId}/members")
-    public ApiResult<Boolean> removeMembers(@PathVariable String kbId, @RequestBody Collection<String> userIds) {
+    public ApiResult<Boolean> removeMembers(@PathVariable String kbId, @RequestBody MemberIdsRequest request) {
         String userId = currentUserProvider.getUserId();
         knowledgeBaseService.checkOwner(kbId, userId);
-        return ApiResult.success(kbMemberService.removeMembers(kbId, userIds));
+        return ApiResult.success(kbMemberService.removeMembers(kbId, request.resolvedUserIds()));
     }
 
     // ========== 手动触发索引 ==========
 
     @Operation(summary = "手动触发知识库索引")
     @OperLog(title = "手动触发知识库索引", businessType = BusinessType.UPDATE)
-    // @RequirePermission("kb:index")
+    @RequirePermission("kb:index:run")
     @PostMapping("/{kbId}/index")
     public ApiResult<Integer> index(@PathVariable String kbId, @RequestBody(required = false) Collection<String> fileTreeIds) {
         String userId = currentUserProvider.getUserId();
@@ -146,7 +148,7 @@ public class KnowledgeBaseController {
 
     @Operation(summary = "获取知识库目录层级对应数据")
     @OperLog(title = "获取知识库目录层级对应数据", businessType = BusinessType.QUERY, isSaveResponseData = false)
-    // @RequirePermission("kb:file:list")
+    @RequirePermission("kb:file:list")
     @GetMapping("/{kbId}/fs/list")
     public ApiResult<List<KbFileTree>> fsList(
             @PathVariable String kbId,
@@ -158,7 +160,7 @@ public class KnowledgeBaseController {
 
     @Operation(summary = "创建目录")
     @OperLog(title = "创建目录", businessType = BusinessType.INSERT)
-    // @RequirePermission("kb:file:add")
+    @RequirePermission("kb:file:add")
     @PostMapping("/{kbId}/fs/folder")
     public ApiResult<Boolean> createFolder(
             @PathVariable String kbId,
@@ -170,7 +172,7 @@ public class KnowledgeBaseController {
 
     @Operation(summary = "删除目录或文件节点")
     @OperLog(title = "删除目录或文件节点", businessType = BusinessType.DELETE)
-    // @RequirePermission("kb:file:remove")
+    @RequirePermission("kb:file:delete")
     @DeleteMapping("/{kbId}/fs/delete/{nodeId}")
     public ApiResult<Boolean> deleteNode(@PathVariable String kbId, @PathVariable String nodeId) {
         String userId = currentUserProvider.getUserId();
@@ -178,9 +180,35 @@ public class KnowledgeBaseController {
         return ApiResult.success(kbFileTreeService.deleteNode(nodeId));
     }
 
+    @Operation(summary = "重命名文件/目录")
+    @OperLog(title = "重命名文件/目录", businessType = BusinessType.UPDATE)
+    @RequirePermission("kb:file:edit")
+    @PutMapping("/{kbId}/fs/rename/{nodeId}")
+    public ApiResult<Boolean> renameFsNode(
+            @PathVariable String kbId,
+            @PathVariable String nodeId,
+            @RequestBody RenameRequest request) {
+        String userId = currentUserProvider.getUserId();
+        knowledgeBaseService.checkOwner(kbId, userId);
+        return ApiResult.success(kbFileTreeService.rename(nodeId, request.name()));
+    }
+
     @Operation(summary = "移动文件/目录")
     @OperLog(title = "移动文件/目录", businessType = BusinessType.UPDATE)
-    // @RequirePermission("kb:file:update")
+    @RequirePermission("kb:file:edit")
+    @PostMapping("/{kbId}/fs/move/{nodeId}")
+    public ApiResult<Boolean> moveFsNode(
+            @PathVariable String kbId,
+            @PathVariable String nodeId,
+            @RequestBody MoveOneRequest request) {
+        String userId = currentUserProvider.getUserId();
+        knowledgeBaseService.checkOwner(kbId, userId);
+        return ApiResult.success(kbFileTreeService.move(kbId, List.of(nodeId), request.targetParentId()));
+    }
+
+    @Operation(summary = "移动文件/目录")
+    @OperLog(title = "移动文件/目录", businessType = BusinessType.UPDATE)
+    @RequirePermission("kb:file:edit")
     @PutMapping("/{kbId}/tree/nodes/move")
     public ApiResult<Boolean> moveNodes(
             @PathVariable String kbId,
@@ -192,7 +220,7 @@ public class KnowledgeBaseController {
 
     @Operation(summary = "重命名文件/目录")
     @OperLog(title = "重命名文件/目录", businessType = BusinessType.UPDATE)
-    // @RequirePermission("kb:file:update")
+    @RequirePermission("kb:file:edit")
     @PutMapping("/{kbId}/tree/nodes/{nodeId}/rename")
     public ApiResult<Boolean> renameNode(
             @PathVariable String kbId,
@@ -205,7 +233,7 @@ public class KnowledgeBaseController {
 
     @Operation(summary = "批量上传文件到知识库")
     @OperLog(title = "批量上传文件到知识库", businessType = BusinessType.INSERT)
-    // @RequirePermission("kb:file:add")
+    @RequirePermission("kb:file:add")
     @PostMapping("/{kbId}/files/upload")
     public ApiResult<List<String>> uploadFiles(
             @PathVariable String kbId,
@@ -230,11 +258,71 @@ public class KnowledgeBaseController {
         return ApiResult.success(uploadedFileIds);
     }
 
+    @Operation(summary = "获取知识库关联文件列表")
+    @OperLog(title = "获取知识库关联文件列表", businessType = BusinessType.QUERY, isSaveResponseData = false)
+    @RequirePermission("kb:file:list")
+    @GetMapping("/{kbId}/files")
+    public ApiResult<List<KbFileRelationVO>> listFiles(@PathVariable String kbId) {
+        String userId = currentUserProvider.getUserId();
+        knowledgeBaseService.checkVisible(kbId, userId);
+        return ApiResult.success(kbFileTreeService.fileList(kbId).stream()
+                .map(this::toFileRelation)
+                .filter(Objects::nonNull)
+                .toList());
+    }
+
     // ========== 请求对象 ==========
+
+    public record MemberIdsRequest(List<String> userIds, String userId) {
+        Collection<String> resolvedUserIds() {
+            if (userIds != null) {
+                return userIds;
+            }
+            return userId == null || userId.isBlank() ? List.of() : List.of(userId);
+        }
+    }
 
     public record CreateFolderRequest(String parentId, String name) {}
 
     public record MoveRequest(List<String> ids, String targetParentId) {}
 
+    public record MoveOneRequest(String targetParentId) {}
+
     public record RenameRequest(String name) {}
+
+    public record KbFileRelationVO(
+            String id,
+            String fileId,
+            String fileName,
+            Long fileSize,
+            String fileType,
+            boolean indexed,
+            String status,
+            String remark,
+            Object createTime
+    ) {}
+
+    private KbFileRelationVO toFileRelation(KbFileTree node) {
+        if (node == null) {
+            return null;
+        }
+        SysFile file = node.getSysFile();
+        String fileName = file != null ? file.getFileName() : node.getName();
+        String fileType = file != null ? file.getFileExt() : null;
+        Long fileSize = file != null ? file.getFileSize() : null;
+        String status = file != null ? file.getAiStatus() : null;
+        boolean indexed = file != null && "SUCCESS".equalsIgnoreCase(file.getAiEmbedStatus());
+        String remark = file != null ? file.getRemark() : node.getRemark();
+        return new KbFileRelationVO(
+                node.getId(),
+                node.getFileId(),
+                fileName,
+                fileSize,
+                fileType,
+                indexed,
+                status,
+                remark,
+                node.getCreateTime()
+        );
+    }
 }

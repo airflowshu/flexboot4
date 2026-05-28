@@ -41,7 +41,8 @@ FlexBoot4 Admin 现已支持使用 `@ApiTagGroup` 注解直接在 Controller 类
 @RequiredArgsConstructor
 @Tag(name = "用户管理", description = "SysUser - 用户管理")
 @ApiTagGroup(group = "系统管理")
-public class SysUserController extends BaseController<SysUserService, SysUser, String> {
+public class SysUserController extends BaseCrudController<SysUserService, SysUser, String,
+        SysUserCreateReq, SysUserUpdateReq, SysUserListVO, SysUserDetailVO> {
     // ...
 }
 ```
@@ -64,7 +65,8 @@ public class SysUserController extends BaseController<SysUserService, SysUser, S
 @RequiredArgsConstructor
 @Tag(name = "角色管理", description = "SysRole - 角色管理")
 @ApiTagGroup(group = "系统管理")
-public class SysRoleController extends BaseController<SysRoleService, SysRole, String> {
+public class SysRoleController extends BaseCrudController<SysRoleService, SysRole, String,
+        SysRoleCreateReq, SysRoleUpdateReq, SysRoleListVO, SysRoleDetailVO> {
 
     @Override
     public Class<SysRole> getEntityClass() {

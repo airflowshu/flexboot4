@@ -4,6 +4,7 @@ import com.yunlbd.flexboot4.common.GlobalExceptionHandler;
 import com.yunlbd.flexboot4.config.CacheConfig;
 import com.yunlbd.flexboot4.config.DictConfiguration;
 import com.yunlbd.flexboot4.config.DistributedLockConfig;
+import com.yunlbd.flexboot4.config.FileStorageConfig;
 import com.yunlbd.flexboot4.config.IgnoreUrlsConfig;
 import com.yunlbd.flexboot4.config.JacksonConfig;
 import com.yunlbd.flexboot4.config.MailProperties;
@@ -25,6 +26,7 @@ import org.springframework.context.annotation.Import;
         CacheConfig.class,
         DictConfiguration.class,
         DistributedLockConfig.class,
+        FileStorageConfig.class,
         GlobalExceptionHandler.class,
         IgnoreUrlsConfig.class,
         JacksonConfig.class,

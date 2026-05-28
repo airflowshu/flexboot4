@@ -12,7 +12,7 @@ public interface KnowledgeBaseService extends IExtendedService<KnowledgeBase> {
     /**
      * 创建知识库
      */
-    boolean createKnowledgeBase(KnowledgeBase kb, String userId);
+    KnowledgeBase createKnowledgeBase(KnowledgeBase kb, String userId);
 
     /**
      * 更新知识库（验证 owner）

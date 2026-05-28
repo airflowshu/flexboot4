@@ -5,13 +5,18 @@ import com.yunlbd.flexboot4.common.annotation.OperLog;
 import com.yunlbd.flexboot4.common.enums.BusinessType;
 import com.yunlbd.flexboot4.config.ApiTagGroup;
 import com.yunlbd.flexboot4.config.SmsSupplierConfigDataSource;
-import com.yunlbd.flexboot4.controller.sys.BaseController;
+import com.yunlbd.flexboot4.controller.sys.EntityCrudController;
+import com.yunlbd.flexboot4.dto.sms.Sms4jConfigCreateReq;
+import com.yunlbd.flexboot4.dto.sms.Sms4jConfigUpdateReq;
 import com.yunlbd.flexboot4.entity.sms.Sms4jConfig;
 import com.yunlbd.flexboot4.service.sms.Sms4jConfigService;
+import com.yunlbd.flexboot4.vo.sms.Sms4jConfigDetailVO;
+import com.yunlbd.flexboot4.vo.sms.Sms4jConfigListVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collection;
 import java.util.UUID;
 
 /**
@@ -25,10 +30,11 @@ import java.util.UUID;
 @RequestMapping("/api/admin/sms/config")
 @Tag(name = "短信厂商配置", description = "Sms4jConfig - 短信厂商配置管理")
 @ApiTagGroup(group = "短信管理")
-public class Sms4jConfigController extends BaseController<Sms4jConfigService, Sms4jConfig, String> {
+public class Sms4jConfigController extends EntityCrudController<Sms4jConfigService, Sms4jConfig, String,
+        Sms4jConfigCreateReq, Sms4jConfigUpdateReq, Sms4jConfigListVO, Sms4jConfigDetailVO> {
 
     public Sms4jConfigController(Sms4jConfigService service, SmsSupplierConfigDataSource smsSupplierConfigDataSource) {
-        super(service);
+        super(service, Sms4jConfig.class, Sms4jConfigListVO.class, Sms4jConfigDetailVO.class);
         this.smsSupplierConfigDataSource = smsSupplierConfigDataSource;
     }
 
@@ -48,7 +54,8 @@ public class Sms4jConfigController extends BaseController<Sms4jConfigService, Sm
     @Operation(summary = "新增厂商配置", description = "新增短信厂商配置，configId 未填时自动生成。")
     @OperLog(title = "短信厂商配置", businessType = BusinessType.INSERT)
     @PostMapping
-    public ApiResult<Boolean> create(@RequestBody Sms4jConfig entity) {
+    public ApiResult<Boolean> create(@RequestBody Sms4jConfigCreateReq request) {
+        Sms4jConfig entity = crudMapper.toEntity(request);
         if (entity.getConfigId() == null || entity.getConfigId().isBlank()) {
             entity.setConfigId(UUID.randomUUID().toString().replace("-", ""));
         }
@@ -61,19 +68,46 @@ public class Sms4jConfigController extends BaseController<Sms4jConfigService, Sm
 
     /**
      * 更新厂商配置
-     * <p>configId 字段不允许修改，始终保留原值。保存成功后按 configId 热刷新对应实例。</p>
+     * <p>configId 字段不允许修改，始终保留原值。保存成功后触发全量热刷新。</p>
      */
     @Override
     @Operation(summary = "更新厂商配置", description = "更新短信厂商配置，configId 不可变更。")
     @OperLog(title = "短信厂商配置", businessType = BusinessType.UPDATE)
     @PutMapping("/{id}")
-    public ApiResult<Boolean> update(@PathVariable String id, @RequestBody Sms4jConfig entity) {
-        entity.setId(id);
+    public ApiResult<Boolean> update(@PathVariable String id, @RequestBody Sms4jConfigUpdateReq request) {
+        Sms4jConfig entity = service.getById(id);
+        if (entity == null) {
+            throw new IllegalArgumentException("数据不存在: " + id);
+        }
+        crudMapper.updateEntity(request, entity);
         // configId 不允许通过更新接口变更，强制置空让 updateById ignoreNulls 保留原值
         entity.setConfigId(null);
         boolean ok = service.updateById(entity, true);
         if (ok) {
-            //SmsFactory重新完整加载可用厂商实例配置
+            smsSupplierConfigDataSource.reloadAll();
+        }
+        return ApiResult.success(ok);
+    }
+
+    @Override
+    @Operation(summary = "删除厂商配置", description = "删除短信厂商配置，保存后触发全量热刷新。")
+    @OperLog(title = "短信厂商配置", businessType = BusinessType.DELETE)
+    @DeleteMapping("/{id}")
+    public ApiResult<Boolean> remove(@PathVariable String id) {
+        boolean ok = service.removeById(id);
+        if (ok) {
+            smsSupplierConfigDataSource.reloadAll();
+        }
+        return ApiResult.success(ok);
+    }
+
+    @Override
+    @Operation(summary = "批量删除厂商配置", description = "批量删除短信厂商配置，保存后触发全量热刷新。")
+    @OperLog(title = "短信厂商配置", businessType = BusinessType.DELETE)
+    @DeleteMapping
+    public ApiResult<Boolean> removeBatch(@RequestBody Collection<String> ids) {
+        boolean ok = service.removeByIds(ids);
+        if (ok) {
             smsSupplierConfigDataSource.reloadAll();
         }
         return ApiResult.success(ok);

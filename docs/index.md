@@ -1,40 +1,37 @@
----
-layout: home
+# FlexBoot4 文档中心
 
-hero:
-  name: "FlexBoot4"
-  text: "现代化企业级 AI 中台与后台管理聚合系统"
-  tagline: Spring Boot 4 + MyBatis-Flex + AI Gateway | 开箱即用的 Starter 模块化架构
-  actions:
-    - theme: brand
-      text: 快速开始
-      link: /guide
-    - theme: alt
-      text: GitHub
-      link: https://github.com/yunlbd/flexboot4
+欢迎来到 FlexBoot4 文档中心。当前工程已经完成新的后端框架范式调整，开发时请优先阅读下面几篇文档。
 
-features:
-  - icon: 🛡️
-    title: RBAC 权限管理
-    details: 基于 Spring Security + JWT 的完整权限系统，支持方法级权限控制、角色管理、菜单权限配置。
+## 推荐阅读顺序
 
-  - icon: 📚
-    title: 知识库 & RAG
-    details: 开箱即用的知识库模块，支持 PDF、Word、Excel 等多种文档格式解析、向量化、智能检索。
+1. [开发者指南](guide.md)
+2. [模块文档索引](modules.md)
+3. [Starter 架构](STARTER_ARCHITECTURE.md)
+4. [权限设计](backend_permission_control_design.md)
+5. [通用查询](Mf基础功能.md)
+6. [CRUD 生成契约](crud_module_generator_contract.md)
 
-  - icon: 🤖
-    title: AI 智能网关
-    details: 高性能 WebFlux 网关，支持 API 流式响应、离线鉴权、配额管理、日志汇聚，轻松应对高并发。
+## 核心主题
 
-  - icon: 📊
-    title: 动态分表审计
-    details: 操作日志自动按季度分表，支持跨季度查询，内置数据脱敏、User-Agent 解析、执行时间追踪。
+| 主题 | 文档 |
+| --- | --- |
+| 新 CRUD 范式 | [开发者指南](guide.md) |
+| DTO/VO/MapStruct/ExcelRow | [开发者指南](guide.md) |
+| 权限码与默认拒绝策略 | [权限设计](backend_permission_control_design.md) |
+| SearchDto 与关联查询 | [通用查询](Mf基础功能.md) |
+| vben 菜单路由契约 | [开发者指南](guide.md) |
+| OpenAPI 标签分组 | [OpenAPI 标签分组](API_TAG_GROUP_GUIDE.md) |
+| 低代码生成模板 | [CRUD 生成契约](crud_module_generator_contract.md) |
+| 业务模块入口 | [模块文档索引](modules.md) |
 
-  - icon: ⚙️
-    title: 模块化 Starter
-    details: Admin、KB、Media、SMS4J 等功能独立封装为 Starter，按需加载，外部项目轻松集成，零配置开箱即用。
+## 模块入口
 
-  - icon: 🔄
-    title: 事件驱动架构
-    details: 基于 Spring Event 的异步处理框架，内置操作日志、文件上传、用户注销等全生命周期事件 Hook。
----
+- [Admin Starter](../flexboot4-admin-starter/README.md)
+- [CMS Starter](../flexboot4-cms-starter/README.md)
+- [Media Starter](../flexboot4-media-starter/README.md)
+- [SMS4J Starter](../flexboot4-sms4j-starter/SMS4J_STARTER.md)
+- [AI Gateway](../flexboot4-ai/struc.md)
+
+## SQL
+
+SQL 脚本集中在 [sql](sql/) 目录。当前项目处于开发阶段，旧数据不符合新契约时优先用 SQL 修正，不保留旧兼容逻辑。

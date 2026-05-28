@@ -19,6 +19,7 @@ security:
       - /api/admin/auth/login
       - /api/admin/auth/forget-password
       - /api/admin/auth/reset-password
+      - /api/admin/file/access/**
       - /v3/api-docs/**
       - /scalar/**
       - /error
@@ -29,8 +30,13 @@ flexboot4:
   lock:
     key-prefix: ${FLEXBOOT4_LOCK_KEY_PREFIX:flexboot4:lock:}
     default-ttl-millis: ${FLEXBOOT4_LOCK_DEFAULT_TTL_MILLIS:60000}
-  minio:
-    enabled: ${FLEXBOOT4_MINIO_ENABLED:false}
+  file-storage:
+    type: ${FLEXBOOT4_FILE_STORAGE_TYPE:local}
+    access-token-secret: ${FLEXBOOT4_FILE_ACCESS_TOKEN_SECRET:${jwt.secret:thisIsASecretKeyThatIsLongEnoughForHmacSha256SecurityRequirement}}
+    access-url-path: ${FLEXBOOT4_FILE_ACCESS_URL_PATH:/api/admin/file/access}
+    local:
+      root-dir: ${FLEXBOOT4_LOCAL_STORAGE_ROOT:${user.home}/flexboot4-files}
+      bucket: ${FLEXBOOT4_LOCAL_STORAGE_BUCKET:local}
   mail:
     enabled: ${FLEXBOOT4_MAIL_ENABLED:false}
   schedule:

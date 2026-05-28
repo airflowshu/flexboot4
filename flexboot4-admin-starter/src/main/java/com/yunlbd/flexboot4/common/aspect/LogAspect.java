@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yunlbd.flexboot4.common.annotation.OperLog;
 import com.yunlbd.flexboot4.common.constant.SysConstant;
-import com.yunlbd.flexboot4.controller.sys.BaseController;
+import com.yunlbd.flexboot4.controller.sys.BaseCrudController;
 import com.yunlbd.flexboot4.entity.ops.SysOperLog;
 import com.yunlbd.flexboot4.event.SysOperLogEvent;
 import com.yunlbd.flexboot4.util.IpUtils;
@@ -221,26 +221,29 @@ public class LogAspect {
             return tag.name();
         }
         
-        // 2. 尝试获取 BaseController 的 Entity Class
-        if (target instanceof BaseController<?, ?, ?> baseController) {
-            try {
-                Class<?> entityClass = baseController.getEntityClass();
-                if (entityClass != null) {
-                    Schema schema = entityClass.getAnnotation(Schema.class);
-                    if (schema != null && StringUtils.isNotEmpty(schema.title())) {
-                        return schema.title();
-                    }
-                    if (schema != null && StringUtils.isNotEmpty(schema.name())) {
-                         return schema.name();
-                    }
-                    return entityClass.getSimpleName();
-                }
-            } catch (Exception e) {
-                // ignore
+        // 2. 尝试获取通用 CRUD 基类的 Entity Class
+        if (target instanceof BaseCrudController<?, ?, ?, ?, ?, ?, ?> baseCrudController) {
+            String title = parseEntityTitle(baseCrudController.getEntityClass());
+            if (title != null) {
+                return title;
             }
         }
-        
+
         return targetClass.getSimpleName();
+    }
+
+    private String parseEntityTitle(Class<?> entityClass) {
+        if (entityClass == null) {
+            return null;
+        }
+        Schema schema = entityClass.getAnnotation(Schema.class);
+        if (schema != null && StringUtils.isNotEmpty(schema.title())) {
+            return schema.title();
+        }
+        if (schema != null && StringUtils.isNotEmpty(schema.name())) {
+            return schema.name();
+        }
+        return entityClass.getSimpleName();
     }
 
     /**

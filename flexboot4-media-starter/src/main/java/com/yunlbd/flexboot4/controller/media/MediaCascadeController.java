@@ -3,10 +3,14 @@ package com.yunlbd.flexboot4.controller.media;
 import com.yunlbd.flexboot4.common.ApiResult;
 import com.yunlbd.flexboot4.common.annotation.RequirePermission;
 import com.yunlbd.flexboot4.config.ApiTagGroup;
-import com.yunlbd.flexboot4.controller.sys.BaseController;
+import com.yunlbd.flexboot4.controller.sys.EntityCrudController;
+import com.yunlbd.flexboot4.dto.media.MediaCascadePlatformCreateReq;
+import com.yunlbd.flexboot4.dto.media.MediaCascadePlatformUpdateReq;
 import com.yunlbd.flexboot4.entity.media.MediaCascadePlatform;
 import com.yunlbd.flexboot4.media.dto.CascadeBindRequest;
 import com.yunlbd.flexboot4.service.media.MediaCascadePlatformService;
+import com.yunlbd.flexboot4.vo.media.MediaCascadePlatformDetailVO;
+import com.yunlbd.flexboot4.vo.media.MediaCascadePlatformListVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
@@ -15,10 +19,11 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/admin/media/cascade")
 @Tag(name = "国标级联", description = "MediaCascadePlatform - 国标级联")
 @ApiTagGroup(group = "视频中心")
-public class MediaCascadeController extends BaseController<MediaCascadePlatformService, MediaCascadePlatform, String> {
+public class MediaCascadeController extends EntityCrudController<MediaCascadePlatformService, MediaCascadePlatform, String,
+        MediaCascadePlatformCreateReq, MediaCascadePlatformUpdateReq, MediaCascadePlatformListVO, MediaCascadePlatformDetailVO> {
 
     public MediaCascadeController(MediaCascadePlatformService service) {
-        super(service);
+        super(service, MediaCascadePlatform.class, MediaCascadePlatformListVO.class, MediaCascadePlatformDetailVO.class);
     }
 
     @Override

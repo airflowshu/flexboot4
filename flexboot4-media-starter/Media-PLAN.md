@@ -3,7 +3,7 @@
 ## 摘要
 - 目标是在 `flexboot4-media-starter` 内嵌实现 JetLinks 风格视频中心首期完整版，保持当前 starter 架构，不新增独立服务。
 - 功能闭环按 `流媒体服务 -> GB28181 视频网关 -> 视频设备/通道 -> 实时预览 -> 录像回放 -> 云台控制 -> 分屏展示 -> 国标级联` 落地，并按真实 ZLMediaKit、GB28181 设备、RTSP 样例和上级平台联调验收。
-- 适配原则是不复刻 JetLinks 的通用产品/网络组件平台层，而是在 FlexBoot4 中收敛为视频专用模型；公共 CRUD 底座复用 `admin-kernel` 的 BaseController/BaseServiceImpl/MyBatis-Flex 能力，管理台组合运行时再接入 `admin-starter` 的 RBAC、Redis、MinIO 和现有 Vue 管理台。
+- 适配原则是不复刻 JetLinks 的通用产品/网络组件平台层，而是在 FlexBoot4 中收敛为视频专用模型；公共 CRUD 底座复用 `admin-kernel` 的 BaseCrudController/BaseServiceImpl/MyBatis-Flex 能力，管理台组合运行时再接入 `admin-starter` 的 RBAC、Redis、MinIO 和现有 Vue 管理台。
 
 ## 关键变更
 - 在 `flexboot4-media-starter` 新增持久化模型：`MediaServer`、`MediaGateway`、`MediaDevice`、`MediaChannel`、`MediaStreamSession`、`MediaScreen`、`MediaScreenSlot`、`MediaCascadePlatform`、`MediaCascadeBinding`。

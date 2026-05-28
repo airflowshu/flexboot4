@@ -67,7 +67,7 @@ public class CmsArticleServiceImpl extends BaseServiceImpl<CmsArticleMapper, Cms
         Page<CmsArticle> result = super.page(page, queryWrapper);
 
         // 加载关系数据
-        if (SearchDtoUtils.hasRelationPaths(searchDto)) {
+        if (SearchDtoUtils.hasRelationPaths(searchDto, CmsArticle.class)) {
             RelationManager.queryRelations(getMapper(), result.getRecords());
             SearchDtoUtils.filterRelationCollections(searchDto, CmsArticle.class, result.getRecords());
         } else {

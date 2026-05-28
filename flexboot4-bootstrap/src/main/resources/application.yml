@@ -91,3 +91,10 @@ logging:
 scalar:
   enabled: true
   path: /scalar
+
+
+flexboot4:
+  file-storage:
+    type: ${FLEXBOOT4_FILE_STORAGE_TYPE:minio}
+    local:
+      root-dir: ${FLEXBOOT4_LOCAL_STORAGE_ROOT:${user.home}/flexboot4-files}

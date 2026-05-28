@@ -1,16 +1,11 @@
 package com.yunlbd.flexboot4.service.sys;
 
 import com.yunlbd.flexboot4.cache.TableVersions;
-import com.yunlbd.flexboot4.config.MinioProperties;
 import com.yunlbd.flexboot4.entity.sys.SysFile;
 import com.yunlbd.flexboot4.file.*;
 import com.yunlbd.flexboot4.file.ai.AiParseStatus;
 import com.yunlbd.flexboot4.mapper.SysFileMapper;
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
-import org.springframework.cache.annotation.CacheConfig;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
+import com.yunlbd.flexboot4.storage.FileStorageRegistry;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -25,21 +20,16 @@ import java.util.HexFormat;
 import java.util.UUID;
 
 @Service
-@CacheConfig(cacheNames = "fileAccess")
 public class FileManagerServiceImpl implements FileManagerService {
 
-    private final FileStorage fileStorage;
+    private final FileStorageRegistry fileStorageRegistry;
     private final SysFileService sysFileService;
     private final SysFileMapper sysFileMapper;
-    private final MinioProperties minioProperties;
-    private final CacheManager cacheManager;
 
-    public FileManagerServiceImpl(FileStorage fileStorage, SysFileService sysFileService, SysFileMapper sysFileMapper, MinioProperties minioProperties, CacheManager cacheManager) {
-        this.fileStorage = fileStorage;
+    public FileManagerServiceImpl(FileStorageRegistry fileStorageRegistry, SysFileService sysFileService, SysFileMapper sysFileMapper) {
+        this.fileStorageRegistry = fileStorageRegistry;
         this.sysFileService = sysFileService;
         this.sysFileMapper = sysFileMapper;
-        this.minioProperties = minioProperties;
-        this.cacheManager = cacheManager;
     }
 
     @Override
@@ -79,7 +69,8 @@ public class FileManagerServiceImpl implements FileManagerService {
         String fileName = getFileName(file, id);
         String contentType = getContentType(file, fileName);
 
-        FileLocation location = new FileLocation(StorageType.MINIO, null, null, null, null);
+        FileStorage fileStorage = fileStorageRegistry.active();
+        FileLocation location = new FileLocation(fileStorage.storageType(), null, null, null, null);
         FileObject meta = new FileObject(
                 id, tenantId, bizType, bizId,
                 fileName, null, contentType, size, hash,
@@ -107,7 +98,8 @@ public class FileManagerServiceImpl implements FileManagerService {
                     return handleExistingFile(dup, tenantId, bizType, bizId);
                 }
             }
-            throw e;
+            fileStorage.delete(stored.location());
+            throw new IllegalStateException("sys_file.file_hash 唯一索引未按文件存储规范调整，请执行 docs/sql/admin_sys_file_hash_alive_unique_pg.sql", e);
         }
 
         return stored;
@@ -119,22 +111,14 @@ public class FileManagerServiceImpl implements FileManagerService {
     private FileObject handleExistingFile(SysFile existing, String tenantId, String bizType, String bizId) {
         boolean changed = false;
 
-        // 恢复已删除的文件（使用原生 SQL 绕过 TableLogic）
-        if (existing.getDelFlag() != null && existing.getDelFlag() != 0) {
-            existing.setDelFlag(0);
-            existing.setLastModifyTime(LocalDateTime.now());
-            changed = true;
-        }
         // 更新空字段
         changed = updateIfBlank(existing::getBizType, existing::setBizType, bizType) || changed;
         changed = updateIfBlank(existing::getBizId, existing::setBizId, bizId) || changed;
         changed = updateIfBlank(existing::getTenantId, existing::setTenantId, tenantId) || changed;
 
         if (changed) {
-            // 使用 Mapper 更新其他字段
-            sysFileMapper.restoreById(existing.getId());
-            // 清除缓存
-            clearFileCaches(existing.getId());
+            existing.setLastModifyTime(LocalDateTime.now());
+            sysFileService.updateById(existing, true);
         }
 
         return toFileObject(existing);
@@ -217,38 +201,35 @@ public class FileManagerServiceImpl implements FileManagerService {
     }
 
     @Override
-    @Cacheable(key = "#fileId + ':' + #attachment", unless = "#result == null")
     public FileAccessDescriptor access(String fileId, long ttlSeconds, boolean attachment) {
         SysFile entity = sysFileService.getById(fileId);
         if (entity == null || entity.getDelFlag() != null && entity.getDelFlag() != 0) {
             throw new IllegalArgumentException("file not found");
         }
-        FileLocation location = new FileLocation(
-                StorageType.valueOf(entity.getStorageType()),
-                entity.getBucketName(),
-                entity.getObjectKey(),
-                null,
-                null
-        );
-        return fileStorage.generateAccessUrl(location, Duration.ofSeconds(ttlSeconds), attachment);
+        FileObject fileObject = toFileObject(entity);
+        return fileStorageRegistry.get(fileObject.location().storageType())
+                .generateAccessUrl(fileObject, Duration.ofSeconds(ttlSeconds), attachment);
     }
 
     @Override
-    @CacheEvict(cacheNames = "fileAccess", allEntries = true)
+    public InputStream load(String fileId) {
+        SysFile entity = sysFileService.getById(fileId);
+        if (entity == null || entity.getDelFlag() != null && entity.getDelFlag() != 0) {
+            throw new IllegalArgumentException("file not found");
+        }
+        FileObject fileObject = toFileObject(entity);
+        return fileStorageRegistry.get(fileObject.location().storageType()).load(fileObject.location());
+    }
+
+    @Override
     public void delete(String fileId) {
-        // 这里先注释掉,暂不真物理删除minIO中的文件
-        // SysFile entity = sysFileService.getById(fileId);
-        // if (entity == null) {
-        //     return;
-        // }
-        // FileLocation location = new FileLocation(
-        //         StorageType.valueOf(entity.getStorageType()),
-        //         entity.getBucketName(),
-        //         entity.getObjectKey(),
-        //         null,
-        //         null
-        // );
-        // fileStorage.delete(location);
+        SysFile entity = sysFileService.getById(fileId);
+        if (entity == null || entity.getStorageType() == null || entity.getStorageType().isBlank()) {
+            return;
+        }
+        FileObject fileObject = toFileObject(entity);
+        fileStorageRegistry.get(fileObject.location().storageType()).delete(fileObject.location());
+        bumpFileTableVersion();
     }
 
     private HashResult sha256AndCount(InputStream in) throws IOException {
@@ -275,12 +256,6 @@ public class FileManagerServiceImpl implements FileManagerService {
      * 构建 FileObject
      */
     private FileObject toFileObject(SysFile f) {
-        boolean isPublic = minioProperties.publicBucket() != null
-                && minioProperties.publicBucket().equals(f.getBucketName());
-        String endpoint = isPublic && minioProperties.publicEndpoint() != null && !minioProperties.publicEndpoint().isBlank()
-                ? minioProperties.publicEndpoint()
-                : minioProperties.endpoint();
-
         FileLocation location = null;
         if (f.getStorageType() != null && !f.getStorageType().isBlank()) {
             location = new FileLocation(
@@ -288,7 +263,7 @@ public class FileManagerServiceImpl implements FileManagerService {
                     f.getBucketName(),
                     f.getObjectKey(),
                     null,
-                    endpoint
+                    null
             );
         }
         return new FileObject(
@@ -312,14 +287,7 @@ public class FileManagerServiceImpl implements FileManagerService {
     /**
      * 清除文件相关缓存
      */
-    private void clearFileCaches(String fileId) {
-        // 清除 fileAccess 缓存（访问链接缓存）
-        Cache fileAccessCache = cacheManager.getCache("fileAccess");
-        if (fileAccessCache != null) {
-            fileAccessCache.evict(fileId + ":false");
-            fileAccessCache.evict(fileId + ":true");
-        }
-        // 通过 bumpVersion 让 sysFile 表的版本化缓存失效（与 BaseServiceImpl 保持一致）
+    private void bumpFileTableVersion() {
         TableVersions.bumpVersion("sys_file");
     }
 }

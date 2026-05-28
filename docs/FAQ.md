@@ -59,7 +59,7 @@ WARN - Authentication failed: Null key returned for cache operation...
 2. 重新编译：`./gradlew clean build`
 3. 重启应用
 
-详见：[LOGIN_401_FIX.md](./LOGIN_401_FIX.md)
+认证与权限链路说明见：[权限设计](backend_permission_control_design.md)
 
 ### Q4: 默认的登录账号是什么？
 
@@ -392,6 +392,8 @@ http://localhost:8080/scalar/index.html
 
 | 文档 | 说明 |
 |------|------|
+| [开发者指南](guide.md) | 当前 CRUD、权限、vben 菜单路由与测试约束 |
+| [模块文档索引](modules.md) | Admin、CMS、Media、SMS、KB、AI 文档入口 |
 | [STARTER_ARCHITECTURE.md](STARTER_ARCHITECTURE.md) | Starter 架构设计 |
 | [QUICKSTART.md](QUICKSTART.md) | 快速开始指南 |
 | [SMS4J_STARTER.md](../flexboot4-sms4j-starter/SMS4J_STARTER.md) | SMS4J Starter 接入说明 |

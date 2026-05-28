@@ -17,6 +17,8 @@ dependencies {
     annotationProcessor("org.projectlombok:lombok")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
+    api(libs.mapstruct)
+    annotationProcessor(libs.mapstructProcessor)
     api(libs.mybatisFlexStarter)
     api(libs.postgresqlJdbc)
     implementation(libs.mybatisFlexCodegen)

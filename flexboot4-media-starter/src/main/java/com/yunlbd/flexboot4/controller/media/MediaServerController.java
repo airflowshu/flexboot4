@@ -3,11 +3,15 @@ package com.yunlbd.flexboot4.controller.media;
 import com.yunlbd.flexboot4.common.ApiResult;
 import com.yunlbd.flexboot4.common.annotation.RequirePermission;
 import com.yunlbd.flexboot4.config.ApiTagGroup;
-import com.yunlbd.flexboot4.controller.sys.BaseController;
+import com.yunlbd.flexboot4.controller.sys.EntityCrudController;
+import com.yunlbd.flexboot4.dto.media.MediaServerCreateReq;
+import com.yunlbd.flexboot4.dto.media.MediaServerUpdateReq;
 import com.yunlbd.flexboot4.entity.media.MediaServer;
 import com.yunlbd.flexboot4.media.dto.MediaServerTestRequest;
 import com.yunlbd.flexboot4.media.dto.MediaServerTestResult;
 import com.yunlbd.flexboot4.service.media.MediaServerService;
+import com.yunlbd.flexboot4.vo.media.MediaServerDetailVO;
+import com.yunlbd.flexboot4.vo.media.MediaServerListVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
@@ -19,10 +23,11 @@ import java.util.Map;
 @RequestMapping("/api/admin/media/server")
 @Tag(name = "流媒体服务", description = "MediaServer - 流媒体服务")
 @ApiTagGroup(group = "视频中心")
-public class MediaServerController extends BaseController<MediaServerService, MediaServer, String> {
+public class MediaServerController extends EntityCrudController<MediaServerService, MediaServer, String,
+        MediaServerCreateReq, MediaServerUpdateReq, MediaServerListVO, MediaServerDetailVO> {
 
     public MediaServerController(MediaServerService service) {
-        super(service);
+        super(service, MediaServer.class, MediaServerListVO.class, MediaServerDetailVO.class);
     }
 
     @Override

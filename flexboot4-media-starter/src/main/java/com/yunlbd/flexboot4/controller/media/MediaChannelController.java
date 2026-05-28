@@ -3,10 +3,14 @@ package com.yunlbd.flexboot4.controller.media;
 import com.yunlbd.flexboot4.common.ApiResult;
 import com.yunlbd.flexboot4.common.annotation.RequirePermission;
 import com.yunlbd.flexboot4.config.ApiTagGroup;
-import com.yunlbd.flexboot4.controller.sys.BaseController;
+import com.yunlbd.flexboot4.controller.sys.EntityCrudController;
+import com.yunlbd.flexboot4.dto.media.MediaChannelCreateReq;
+import com.yunlbd.flexboot4.dto.media.MediaChannelUpdateReq;
 import com.yunlbd.flexboot4.entity.media.MediaChannel;
 import com.yunlbd.flexboot4.media.dto.*;
 import com.yunlbd.flexboot4.service.media.MediaChannelService;
+import com.yunlbd.flexboot4.vo.media.MediaChannelDetailVO;
+import com.yunlbd.flexboot4.vo.media.MediaChannelListVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
@@ -17,10 +21,11 @@ import java.util.List;
 @RequestMapping("/api/admin/media/channel")
 @Tag(name = "视频通道", description = "MediaChannel - 视频通道")
 @ApiTagGroup(group = "视频中心")
-public class MediaChannelController extends BaseController<MediaChannelService, MediaChannel, String> {
+public class MediaChannelController extends EntityCrudController<MediaChannelService, MediaChannel, String,
+        MediaChannelCreateReq, MediaChannelUpdateReq, MediaChannelListVO, MediaChannelDetailVO> {
 
     public MediaChannelController(MediaChannelService service) {
-        super(service);
+        super(service, MediaChannel.class, MediaChannelListVO.class, MediaChannelDetailVO.class);
     }
     @Override
     public Class<MediaChannel> getEntityClass() {

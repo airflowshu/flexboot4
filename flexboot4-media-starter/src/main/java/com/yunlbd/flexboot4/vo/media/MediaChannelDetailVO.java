@@ -1,0 +1,10 @@
+package com.yunlbd.flexboot4.vo.media;
+
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+@Data
+@EqualsAndHashCode(callSuper = true)
+public class MediaChannelDetailVO extends MediaChannelListVO {
+    private MediaDeviceListVO device;
+}

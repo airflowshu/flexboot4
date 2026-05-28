@@ -5,6 +5,8 @@ import java.time.Duration;
 
 public interface FileStorage {
 
+    StorageType storageType();
+
     FileObject store(InputStream data,
                      long size,
                      String fileName,
@@ -15,7 +17,7 @@ public interface FileStorage {
 
     void delete(FileLocation location);
 
-    FileAccessDescriptor generateAccessUrl(FileLocation location,
+    FileAccessDescriptor generateAccessUrl(FileObject fileObject,
                                            Duration ttl,
                                            boolean attachment);
 }

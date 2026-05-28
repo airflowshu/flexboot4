@@ -13,6 +13,11 @@ public interface KbFileTreeService extends IExtendedService<KbFileTree> {
     List<KbFileTree> fsList(String kbId, String parentId);
 
     /**
+     * 获取知识库下的全部文件节点
+     */
+    List<KbFileTree> fileList(String kbId);
+
+    /**
      * 添加文件节点到目录
      */
     boolean addFile(String kbId, String parentId, String fileId);

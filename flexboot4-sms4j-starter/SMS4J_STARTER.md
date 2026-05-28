@@ -34,7 +34,7 @@ dependencies {
 
 ## 初始化数据库
 
-执行脚本：`docs/sql/sms4j_config_pg.sql`
+执行脚本：`flexboot4-sms4j-starter/src/main/resources/db/sms4j_config_pg.sql`
 
 该脚本包含：
 
@@ -45,7 +45,7 @@ dependencies {
 示例：
 
 ```bash
-psql -U postgres -d flexboot4 -f docs/sql/sms4j_config_pg.sql
+psql -U postgres -d flexboot4 -f flexboot4-sms4j-starter/src/main/resources/db/sms4j_config_pg.sql
 ```
 
 ---
@@ -78,8 +78,19 @@ sms:
 主要行为：
 
 - `POST /api/admin/sms/config`: 新增配置，未传 `configId` 时自动生成并触发全量刷新
-- `PUT /api/admin/sms/config/{id}`: 更新配置，`configId` 不允许修改，保存后按 `configId` 精准刷新
-- 继承 `BaseController`，支持通用列表/分页查询能力
+- `PUT /api/admin/sms/config/{id}`: 更新配置，`configId` 不允许修改，保存后触发全量刷新
+- `DELETE /api/admin/sms/config/{id}`: 删除配置，保存后触发全量刷新
+- 继承 `EntityCrudController<S,E,ID,CreateReq,UpdateReq,ListVO,DetailVO>`，支持 DTO/VO 化的通用列表/分页查询能力
+
+权限码由通用 CRUD 推导生成，初始化 SQL 会写入对应菜单和按钮权限：
+
+```text
+sms4j:config:list
+sms4j:config:add
+sms4j:config:edit
+sms4j:config:delete
+sms4j:config:export
+```
 
 ---
 
@@ -87,7 +98,7 @@ sms:
 
 1. 在项目中引入 `flexboot4-sms4j-starter`
 2. 管理台应用同时引入 `flexboot4-admin-starter`
-3. 执行 `docs/sql/sms4j_config_pg.sql`
+3. 执行 `flexboot4-sms4j-starter/src/main/resources/db/sms4j_config_pg.sql`
 4. 在后台「短信厂商配置」页面维护厂商参数
 5. 通过短信业务接口发起发送（按你当前业务封装）
 

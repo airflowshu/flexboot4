@@ -35,6 +35,17 @@ public class KbFileTreeServiceImpl extends BaseServiceImpl<KbFileTreeMapper, KbF
     }
 
     @Override
+    public List<KbFileTree> fileList(String kbId) {
+        QueryWrapper qw = QueryWrapper.create()
+                .from(KbFileTree.class)
+                .where(KbFileTreeTableDef.KB_FILE_TREE.KB_ID.eq(kbId))
+                .and(KbFileTreeTableDef.KB_FILE_TREE.TYPE.eq("FILE"))
+                .and(KbFileTreeTableDef.KB_FILE_TREE.DEL_FLAG.eq(0));
+        qw.orderBy(KbFileTree::getSortOrder);
+        return kbFileTreeMapper.selectListWithRelationsByQuery(qw);
+    }
+
+    @Override
     public boolean addFile(String kbId, String parentId, String fileId) {
         KbFileTree node = KbFileTree.builder()
                 .kbId(kbId)

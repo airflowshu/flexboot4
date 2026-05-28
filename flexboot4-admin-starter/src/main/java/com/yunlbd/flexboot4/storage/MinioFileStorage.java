@@ -6,8 +6,6 @@ import io.minio.*;
 import io.minio.http.Method;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
@@ -18,10 +16,8 @@ import java.util.Map;
 import java.util.UUID;
 
 @Component
-@Primary
 @ConditionalOnClass(MinioClient.class)
 @ConditionalOnBean(MinioClient.class)
-@ConditionalOnProperty(prefix = "flexboot4.minio", name = "enabled", havingValue = "true")
 public class MinioFileStorage implements FileStorage {
 
     private final MinioClient minioClient;
@@ -30,6 +26,11 @@ public class MinioFileStorage implements FileStorage {
     public MinioFileStorage(MinioClient minioClient, MinioProperties properties) {
         this.minioClient = minioClient;
         this.properties = properties;
+    }
+
+    @Override
+    public StorageType storageType() {
+        return StorageType.MINIO;
     }
 
     @Override
@@ -150,8 +151,9 @@ public class MinioFileStorage implements FileStorage {
     }
 
     @Override
-    public FileAccessDescriptor generateAccessUrl(FileLocation location, Duration ttl, boolean attachment) {
+    public FileAccessDescriptor generateAccessUrl(FileObject fileObject, Duration ttl, boolean attachment) {
         try {
+            FileLocation location = fileObject.location();
             GetPresignedObjectUrlArgs args = GetPresignedObjectUrlArgs.builder()
                     .bucket(location.bucket())
                     .object(location.objectKey())

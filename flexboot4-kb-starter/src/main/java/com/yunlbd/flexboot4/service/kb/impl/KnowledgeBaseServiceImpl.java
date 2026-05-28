@@ -28,9 +28,9 @@ public class KnowledgeBaseServiceImpl extends BaseServiceImpl<KnowledgeBaseMappe
     private final KbMemberService kbMemberService;
 
     @Override
-    public boolean createKnowledgeBase(KnowledgeBase kb, String userId) {
+    public KnowledgeBase createKnowledgeBase(KnowledgeBase kb, String userId) {
         if (kb == null) {
-            return false;
+            return null;
         }
         kb.setOwnerId(userId);
         if (kb.getType() == null || kb.getType().isBlank()) {
@@ -44,7 +44,7 @@ public class KnowledgeBaseServiceImpl extends BaseServiceImpl<KnowledgeBaseMappe
             KbMember member = KbMember.builder().kbId(kb.getId()).userId(userId).build();
             kbMemberService.save(member);
         }
-        return ok;
+        return ok ? kb : null;
     }
 
     @Override

@@ -16,7 +16,6 @@ Admin Starter 提供了 flexboot4 的核心 RBAC（基于角色的访问控制�
 - **登录日志**：用户登录追踪
 - **安全认证**：JWT Token 认证，`/api/admin/**` 未声明权限的接口默认拒绝
 - **Redis 缓存**：高性能缓存支持
-- **数据权限**：基于注解的数据权限控制
 - **API 文档**：集成 SpringDoc（Scalar UI）
 
 ## 依赖
@@ -165,18 +164,18 @@ MetricsRecorder metricsRecorder() {
 
 ```java
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/admin/example-users")
 public class UserController {
     
     @RequirePermission("sys:user:list")
-    @GetMapping
-    public List<SysUser> list() {
+    @GetMapping("/{id}")
+    public ApiResult<SysUserDetailVO> get(@PathVariable String id) {
         // ...
     }
     
     @RequirePermission("sys:user:add")
     @PostMapping
-    public void add(@RequestBody SysUser user) {
+    public ApiResult<Boolean> add(@RequestBody SysUserCreateReq request) {
         // ...
     }
 }
@@ -192,16 +191,8 @@ P0 安全收口后，Admin 接口应显式声明 `@RequirePermission`；`/api/ad
 
 ### 数据权限
 
-```java
-@Service
-public class YourService {
-    
-    @DataScope(deptAlias = "d", userAlias = "u")
-    public List<YourEntity> list() {
-        // 自动根据用户数据权限过滤
-    }
-}
-```
+数据权限仍处于设计规划阶段，当前主线只启用接口级 RBAC。相关草案见
+`../docs/TODO 实现基于注解和 MyBatis 拦截器的数据权限控制.md`。
 
 ## 默认账号
 
@@ -213,7 +204,7 @@ public class YourService {
 如果需要扩展 Admin Starter 的功能，可以：
 
 1. **添加自定义 Controller**：在自己的包下创建 Controller
-2. **扩展实体类**：继承 Admin Starter 的实体类并添加字段
+2. **新增业务资源**：按 DTO/VO/Mapper/Controller 契约新增业务模块
 3. **自定义认证逻辑**：实现 `UserDetailsService` 接口
 
 ## 注意事项

@@ -4,9 +4,6 @@ import com.yunlbd.flexboot4.entity.kb.SysFileParsed;
 import com.yunlbd.flexboot4.entity.sys.SysFile;
 import com.yunlbd.flexboot4.event.SysFileParsedEvent;
 import com.yunlbd.flexboot4.event.SysFileUploadedEvent;
-import com.yunlbd.flexboot4.file.FileLocation;
-import com.yunlbd.flexboot4.file.FileStorage;
-import com.yunlbd.flexboot4.file.StorageType;
 import com.yunlbd.flexboot4.file.ai.AiParseStatus;
 import com.yunlbd.flexboot4.file.ai.AiStatus;
 import com.yunlbd.flexboot4.file.parse.FileParser;
@@ -14,6 +11,7 @@ import com.yunlbd.flexboot4.file.parse.ParsedDocument;
 import com.yunlbd.flexboot4.file.parse.TokenEstimator;
 import com.yunlbd.flexboot4.service.kb.SysFileParsedService;
 import com.yunlbd.flexboot4.service.sys.ConfigLookupService;
+import com.yunlbd.flexboot4.service.sys.FileManagerService;
 import com.yunlbd.flexboot4.service.sys.SysFileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,7 +33,7 @@ public class SysFileParseListener {
 
     private final SysFileService sysFileService;
     private final SysFileParsedService sysFileParsedService;
-    private final FileStorage fileStorage;
+    private final FileManagerService fileManagerService;
     private final List<FileParser> parsers;
     private final ApplicationEventPublisher eventPublisher;
     private final ConfigLookupService configLookupService;
@@ -79,7 +77,7 @@ public class SysFileParseListener {
         file.setAiParseStatus(AiParseStatus.RUNNING.name());
         sysFileService.updateById(file, true);
 
-        try (InputStream in = fileStorage.load(new FileLocation(StorageType.valueOf(file.getStorageType()), file.getBucketName(), file.getObjectKey(), null, null))) {
+        try (InputStream in = fileManagerService.load(fileId)) {
             ParsedDocument doc = parse(fileId, file.getMimeType(), file.getFileName(), in);
 
             SysFileParsed parsed = sysFileParsedService.getOne(com.mybatisflex.core.query.QueryWrapper.create()

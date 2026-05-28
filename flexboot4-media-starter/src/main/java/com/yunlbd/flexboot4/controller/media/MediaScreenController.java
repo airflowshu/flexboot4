@@ -3,11 +3,15 @@ package com.yunlbd.flexboot4.controller.media;
 import com.yunlbd.flexboot4.common.ApiResult;
 import com.yunlbd.flexboot4.common.annotation.RequirePermission;
 import com.yunlbd.flexboot4.config.ApiTagGroup;
-import com.yunlbd.flexboot4.controller.sys.BaseController;
+import com.yunlbd.flexboot4.controller.sys.EntityCrudController;
+import com.yunlbd.flexboot4.dto.media.MediaScreenCreateReq;
+import com.yunlbd.flexboot4.dto.media.MediaScreenUpdateReq;
 import com.yunlbd.flexboot4.entity.media.MediaScreen;
 import com.yunlbd.flexboot4.media.dto.MediaScreenDetail;
 import com.yunlbd.flexboot4.media.dto.ScreenSaveRequest;
 import com.yunlbd.flexboot4.service.media.MediaScreenService;
+import com.yunlbd.flexboot4.vo.media.MediaScreenDetailVO;
+import com.yunlbd.flexboot4.vo.media.MediaScreenListVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
@@ -16,10 +20,11 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/admin/media/screen")
 @Tag(name = "分屏展示", description = "MediaScreen - 分屏展示")
 @ApiTagGroup(group = "视频中心")
-public class MediaScreenController extends BaseController<MediaScreenService, MediaScreen, String> {
+public class MediaScreenController extends EntityCrudController<MediaScreenService, MediaScreen, String,
+        MediaScreenCreateReq, MediaScreenUpdateReq, MediaScreenListVO, MediaScreenDetailVO> {
 
     public MediaScreenController(MediaScreenService service) {
-        super(service);
+        super(service, MediaScreen.class, MediaScreenListVO.class, MediaScreenDetailVO.class);
     }
 
     @Override

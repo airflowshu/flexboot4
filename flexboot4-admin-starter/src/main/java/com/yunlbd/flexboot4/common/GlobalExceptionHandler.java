@@ -3,6 +3,7 @@ package com.yunlbd.flexboot4.common;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 
@@ -59,6 +61,14 @@ public class GlobalExceptionHandler {
     public ApiResult<String> handleIOException(IOException e) {
         log.error("IO Error", e);
         return ApiResult.error("文件操作失败: " + e.getMessage());
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ApiResult<String>> handleResponseStatusException(ResponseStatusException e) {
+        log.warn("Response status exception: {}", e.getReason());
+        String message = e.getReason() == null || e.getReason().isBlank() ? e.getStatusCode().toString() : e.getReason();
+        return ResponseEntity.status(e.getStatusCode())
+                .body(ApiResult.error(e.getStatusCode().value(), message));
     }
 
     @ExceptionHandler(Exception.class)

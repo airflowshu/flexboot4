@@ -2,7 +2,7 @@ package com.yunlbd.flexboot4.security;
 
 import com.yunlbd.flexboot4.common.annotation.RequirePermission;
 import com.yunlbd.flexboot4.config.IgnoreUrlsConfig;
-import com.yunlbd.flexboot4.controller.sys.BaseController;
+import com.yunlbd.flexboot4.controller.sys.BaseCrudController;
 import com.yunlbd.flexboot4.metrics.MetricsRecorder;
 import com.yunlbd.flexboot4.util.SecurityUtils;
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,7 +21,7 @@ import java.util.Map;
  *
  * Rule:
  * 1. If method has @RequirePermission, obey it.
- * 2. If method is inherited from BaseController, auto-resolve permission code.
+ * 2. If method is inherited from BaseCrudController, auto-resolve permission code.
  * 3. For /api/admin/**, methods without annotation are denied by default.
  */
 @Slf4j
@@ -68,13 +68,12 @@ public class PermissionCheckInterceptor implements HandlerInterceptor {
         }
 
         Object controller = handlerMethod.getBean();
-        if (controller instanceof BaseController<?, ?, ?> baseController) {
-            String requiredPermission = buildPermissionFromRequest(handlerMethod, baseController);
+        if (controller instanceof BaseCrudController<?, ?, ?, ?, ?, ?, ?> baseCrudController) {
+            String requiredPermission = buildPermissionFromRequest(handlerMethod, baseCrudController);
             if (requiredPermission != null) {
                 return checkPermission(loginUser, requiredPermission, request, response);
             }
         }
-
         if (uri.startsWith("/api/admin/")) {
             metricsRecorder.increment("flexboot4.permission.denied", Map.of(
                     "uri", uri,
@@ -117,24 +116,25 @@ public class PermissionCheckInterceptor implements HandlerInterceptor {
     }
 
     /**
-     * Build permission from BaseController method name.
+     * Build permission from BaseCrudController method name.
      * Format: {entity}:{operation}
      */
-    private String buildPermissionFromRequest(HandlerMethod handlerMethod, BaseController<?, ?, ?> controller) {
+    private String buildPermissionFromRequest(HandlerMethod handlerMethod, BaseCrudController<?, ?, ?, ?, ?, ?, ?> controller) {
         String method = handlerMethod.getMethod().getName();
         String entityName = getEntityName(controller);
 
         return switch (method) {
-            case "create", "saveBatch" -> entityName + ":add";
+            case "create" -> entityName + ":add";
             case "update" -> entityName + ":edit";
             case "remove", "removeBatch" -> entityName + ":delete";
             case "get", "page", "list" -> entityName + ":list";
             case "exportGet", "exportPost" -> entityName + ":export";
+            case "importExcel" -> entityName + ":import";
             default -> null;
         };
     }
 
-    private String getEntityName(BaseController<?, ?, ?> controller) {
+    private String getEntityName(BaseCrudController<?, ?, ?, ?, ?, ?, ?> controller) {
         Class<?> entityClass = controller.getEntityClass();
         if (entityClass == null) {
             return "unknown";

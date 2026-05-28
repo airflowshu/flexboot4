@@ -15,3 +15,14 @@
 
 - 避免与 APT 的 Mapper 生成冲突
 - 保持 JDK 版本为 25
+# Legacy Enjoy Templates
+
+This directory contains the original MyBatis-Flex codegen templates used by
+older experiments. New CRUD module generation should follow the current
+DTO/VO-oriented contract in:
+
+- `docs/crud_module_generator_contract.md`
+- `docs/templates/crud/`
+
+Production code must not generate controllers that expose Entity as the API
+contract or extend the removed `BaseController`.

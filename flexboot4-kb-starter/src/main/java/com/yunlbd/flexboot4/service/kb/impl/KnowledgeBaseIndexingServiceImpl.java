@@ -7,9 +7,6 @@ import com.yunlbd.flexboot4.entity.kb.SysFileChunk;
 import com.yunlbd.flexboot4.entity.kb.SysFileParsed;
 import com.yunlbd.flexboot4.entity.kb.table.KbFileTreeTableDef;
 import com.yunlbd.flexboot4.entity.sys.SysFile;
-import com.yunlbd.flexboot4.file.FileLocation;
-import com.yunlbd.flexboot4.file.FileStorage;
-import com.yunlbd.flexboot4.file.StorageType;
 import com.yunlbd.flexboot4.file.ai.AiParseStatus;
 import com.yunlbd.flexboot4.file.ai.AiStatus;
 import com.yunlbd.flexboot4.file.parse.FileParser;
@@ -18,6 +15,7 @@ import com.yunlbd.flexboot4.file.parse.TokenEstimator;
 import com.yunlbd.flexboot4.mapper.KbFileTreeMapper;
 import com.yunlbd.flexboot4.service.kb.*;
 import com.yunlbd.flexboot4.service.sys.ConfigLookupService;
+import com.yunlbd.flexboot4.service.sys.FileManagerService;
 import com.yunlbd.flexboot4.service.sys.SysFileService;
 import org.springframework.stereotype.Service;
 
@@ -35,7 +33,7 @@ public class KnowledgeBaseIndexingServiceImpl implements KnowledgeBaseIndexingSe
     private final SysFileChunkService sysFileChunkService;
     private final FileChunkingService fileChunkingService;
     private final KbEmbeddingPublisher kbEmbeddingPublisher;
-    private final FileStorage fileStorage;
+    private final FileManagerService fileManagerService;
     private final List<FileParser> parsers;
     private final ConfigLookupService configLookupService;
 
@@ -46,7 +44,7 @@ public class KnowledgeBaseIndexingServiceImpl implements KnowledgeBaseIndexingSe
                                             SysFileChunkService sysFileChunkService,
                                             FileChunkingService fileChunkingService,
                                             KbEmbeddingPublisher kbEmbeddingPublisher,
-                                            FileStorage fileStorage,
+                                            FileManagerService fileManagerService,
                                             List<FileParser> parsers,
                                             ConfigLookupService configLookupService) {
         this.knowledgeBaseService = knowledgeBaseService;
@@ -56,7 +54,7 @@ public class KnowledgeBaseIndexingServiceImpl implements KnowledgeBaseIndexingSe
         this.sysFileChunkService = sysFileChunkService;
         this.fileChunkingService = fileChunkingService;
         this.kbEmbeddingPublisher = kbEmbeddingPublisher;
-        this.fileStorage = fileStorage;
+        this.fileManagerService = fileManagerService;
         this.parsers = parsers;
         this.configLookupService = configLookupService;
     }
@@ -134,7 +132,7 @@ public class KnowledgeBaseIndexingServiceImpl implements KnowledgeBaseIndexingSe
         file.setAiParseStatus(AiParseStatus.RUNNING.name());
         sysFileService.updateById(file, true);
 
-        try (InputStream in = fileStorage.load(new FileLocation(StorageType.valueOf(file.getStorageType()), file.getBucketName(), file.getObjectKey(), null, null))) {
+        try (InputStream in = fileManagerService.load(fileId)) {
             ParsedDocument doc = parse(fileId, file.getMimeType(), file.getFileName(), in);
 
             SysFileParsed parsed = sysFileParsedService.getOne(QueryWrapper.create()

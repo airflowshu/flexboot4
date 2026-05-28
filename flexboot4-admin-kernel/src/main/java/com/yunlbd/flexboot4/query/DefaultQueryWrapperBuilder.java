@@ -45,7 +45,7 @@ public class DefaultQueryWrapperBuilder extends AbstractQueryWrapperBuilder {
         RelationQueryBuilder.buildJoins(qw, ctx);
         List<SearchDto.SearchItem> items = dto.getItems() == null ? Collections.emptyList() : dto.getItems();
         String rootLogic = dto.getLogic() == null ? "AND" : dto.getLogic().trim().toUpperCase(Locale.ROOT);
-        boolean relationPresent = SearchDtoUtils.hasRelationPaths(dto);
+        boolean relationPresent = SearchDtoUtils.hasRelationPaths(dto, entityClass);
         for (SearchDto.SearchItem it : items) {
             if (relationPresent && it.getField() != null && !it.getField().contains(".") && (it.getChildren() == null || it.getChildren().isEmpty())) {
                 throw new IllegalArgumentException("Ambiguous field '" + it.getField() + "' in relation query. Use table prefix like 'dept.status' or 'roles.createTime'.");

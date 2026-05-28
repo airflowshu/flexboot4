@@ -1,495 +1,171 @@
-# 后端接口权限控制实现方案
+# 后端权限控制设计
 
-## 1. 需求背景
+本文档描述 FlexBoot4 当前 Admin 权限体系。旧版 `BaseController` 已经退出生产代码，当前权限推导围绕 `BaseCrudController` 和显式 `@RequirePermission` 展开。
 
-### 当前架构
-- **BaseController**：通用 CRUD 控制器，所有业务 Controller 继承它
-  - 提供：`create`, `update`, `saveBatch`, `remove`, `removeBatch`, `get`, `page`, `list`, `export`
-- **业务 Controller**：继承 BaseController，可添加自定义业务接口
-- **超级管理员**：`SYS_SUPER_USER_ID = "1"`，拥有所有权限，免鉴权
+## 1. 目标
 
-### 目标
-- **BaseController 的 CRUD 方法**：自动根据实体类型生成权限码校验，无需额外配置
-- **业务 Controller 的自定义接口**：按需添加 `@RequirePermission` 注解进行校验
-- **无需权限控制的接口**：不加注解即可
+- `/api/admin/**` 默认拒绝未声明权限的接口。
+- 通用 CRUD 方法由 `PermissionCheckInterceptor` 自动推导权限码。
+- 自定义接口必须显式声明权限码或跳过权限校验。
+- 菜单路由和按钮权限码与 vben 5.7.x 的权限设计对齐。
+- 超级管理员保留免鉴权能力。
 
----
+## 2. 请求链路
 
-## 2. 权限码设计
-
-### 2.1 权限码命名规范
-
-```
-{module}:{entity}:{operation}
+```text
+HTTP Request
+  -> JwtAuthenticationFilter
+  -> PermissionCheckInterceptor
+  -> Controller
 ```
 
-| operation | HTTP Method                       | 说明           |
-|-----------|-----------------------------------|--------------|
-| `list` | POST /page, POST /list, GET /{id} | 列表/分页查询、单条查询 |
-| `add` | POST, POST /batch                 | 新增 、批量新增     |        
-| `edit` | PUT /{id}                         | 修改           |
-| `delete` | DELETE /{id}, DELETE /batch       | 删除、批量删除      |
-| `export` | GET/POST /export                  | 导出           |
+权限判断顺序：
 
-### 2.2 权限码示例
+1. 未登录访问受保护接口，拒绝。
+2. 方法或类上存在 `@RequirePermission(skip = true)`，跳过权限码校验。
+3. 方法或类上存在 `@RequirePermission("xxx")`，按声明权限码校验。
+4. Handler 属于 `BaseCrudController` 通用方法，自动推导 CRUD 权限码。
+5. `/api/admin/**` 下仍未得到权限声明，默认拒绝。
+6. 非 Admin 管理接口不走 Admin 权限默认拒绝策略。
 
-| 实体类型 | 列表 | 新增 | 修改 | 删除 | 导出 |
-|---------|------|------|------|------|------|
-| SysUser | `sys:user:list` | `sys:user:add` | `sys:user:edit` | `sys:user:delete` | `sys:user:export` |
-| SysRole | `sys:role:list` | `sys:role:add` | `sys:role:edit` | `sys:role:delete` | `sys:role:export` |
-| SysDept | `sys:dept:list` | `sys:dept:add` | `sys:dept:edit` | `sys:dept:delete` | `sys:dept:export` |
+## 3. 权限码规范
 
----
-
-## 3. 实现方案
-
-### 3.1 整体架构
-
-```
-请求 → JwtAuthenticationFilter(认证) → PermissionCheckInterceptor(权限校验) → Controller
-                                                                          │
-                              ┌────────────────────┬────────────────────┘
-                              │                    │
-                    BaseController 方法          自定义方法
-                     (自动生成权限码)          (@RequirePermission 注解)
+```text
+{domain}:{resource}:{operation}
 ```
 
-### 3.2 校验逻辑
+标准 CRUD 操作：
 
-1. **无注解** + BaseController 方法 → 自动生成权限码校验
-2. **有注解** + 任意方法 → 使用注解指定的权限码校验
-3. **无注解** + 非 BaseController 方法 → 放行（不做权限控制）
+| operation | 方法 | 路径 |
+| --- | --- | --- |
+| `list` | `GET` / `POST` | `/{id}`、`/page`、`/list` |
+| `add` | `POST` | `/` |
+| `edit` | `PUT` | `/{id}` |
+| `delete` | `DELETE` | `/{id}`、`/` |
+| `export` | `GET` / `POST` | `/export` |
+| `import` | `POST` | `/import` |
 
----
+示例：
 
-## 4. 实现步骤
+| 资源 | 列表 | 新增 | 修改 | 删除 | 导出 | 导入 |
+| --- | --- | --- | --- | --- | --- | --- |
+| 用户 | `sys:user:list` | `sys:user:add` | `sys:user:edit` | `sys:user:delete` | `sys:user:export` | `sys:user:import` |
+| 角色 | `sys:role:list` | `sys:role:add` | `sys:role:edit` | `sys:role:delete` | `sys:role:export` | `sys:role:import` |
+| 菜单 | `sys:menu:list` | `sys:menu:add` | `sys:menu:edit` | `sys:menu:delete` | `sys:menu:export` | `sys:menu:import` |
 
-### 4.1 扩展 LoginUser 存储权限码
+## 4. CRUD 权限推导
 
-**文件**: `src/main/java/com/yunlbd/flexboot4/security/LoginUser.java`
+`PermissionCheckInterceptor` 只识别 `BaseCrudController`。生产代码不再兼容旧 `BaseController`。
 
-```java
-public class LoginUser implements UserDetails {
-
-    private SysUser sysUser;
-    private Collection<? extends GrantedAuthority> authorities;
-
-    /** 用户拥有的权限码列表 */
-    private List<String> permissionCodes;
-
-    // ... 构造方法和现有字段 ...
-
-    public List<String> getPermissionCodes() {
-        return permissionCodes;
-    }
-
-    public void setPermissionCodes(List<String> permissionCodes) {
-        this.permissionCodes = permissionCodes;
-    }
-
-    /** 检查是否拥有指定权限码 */
-    public boolean hasPermission(String code) {
-        return permissionCodes != null && permissionCodes.contains(code);
-    }
-
-    /** 是否为超级管理员 */
-    public boolean isSuperAdmin() {
-        return SysConstant.SYS_SUPER_USER_ID.equals(sysUser.getId());
-    }
-}
-```
-
-### 4.2 修改 UserDetailsServiceImpl 加载权限码
-
-**文件**: `src/main/java/com/yunlbd/flexboot4/security/UserDetailsServiceImpl.java`
-
-```java
-@Service
-@RequiredArgsConstructor
-@CacheConfig(cacheNames = "userDetails")
-public class UserDetailsServiceImpl implements UserDetailsService {
-
-    private final SysUserService sysUserService;
-    private final SysMenuService sysMenuService;
-
-    @Override
-    @Cacheable(key = "#username", unless = "#result == null")
-    public UserDetails loadUserByUsername(String username) {
-        SysUser sysUser = sysUserService.getOne(
-            QueryWrapper.create().eq(SysUser::getUsername, username)
-        );
-
-        if (sysUser == null) {
-            return null;
-        }
-
-        // 构建角色权限 (ROLE_xxx 格式)
-        List<SimpleGrantedAuthority> authorities = sysUser.getRoles().stream()
-            .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getRoleValue()))
-            .collect(Collectors.toList());
-
-        LoginUser loginUser = new LoginUser(sysUser, authorities);
-
-        // 加载用户的权限码列表
-        List<String> permissionCodes = sysMenuService.getPermissionCodes(sysUser.getId());
-        loginUser.setPermissionCodes(permissionCodes);
-
-        return loginUser;
-    }
-}
-```
-
-### 4.3 创建权限注解
-
-**文件**: `src/main/java/com/yunlbd/flexboot4/common/annotation/RequirePermission.java`
-
-```java
-package com.yunlbd.flexboot4.common.annotation;
-
-import java.lang.annotation.*;
-
-/**
- * 接口权限注解
- * 标注在 Controller 方法上，指定访问该接口所需的权限码
- *
- * @usage
- * // 自定义权限码
- * @RequirePermission("sys:user:resetPwd")
- * @PostMapping("/reset-password")
- * public ApiResult<?> resetPassword() { ... }
- *
- * // 跳过权限校验（特殊情况）
- * @RequirePermission(skip = true)
- * @GetMapping("/public")
- * public ApiResult<?> publicApi() { ... }
- */
-@Target({ElementType.METHOD})
-@Retention(RetentionPolicy.RUNTIME)
-@Documented
-public @interface RequirePermission {
-
-    /** 所需权限码 */
-    String value() default "";
-
-    /** 跳过权限校验（用于特殊情况，如公开接口） */
-    boolean skip() default false;
-}
-```
-
-### 4.4 创建权限校验拦截器
-
-**文件**: `src/main/java/com/yunlbd/flexboot4/security/PermissionCheckInterceptor.java`
-
-```java
-package com.yunlbd.flexboot4.security;
-
-import com.yunlbd.flexboot4.common.annotation.RequirePermission;
-import com.yunlbd.flexboot4.common.constant.SysConstant;
-import com.yunlbd.flexboot4.common.util.SecurityUtils;
-import com.yunlbd.flexboot4.controller.BaseController;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
-import org.springframework.web.method.HandlerMethod;
-import org.springframework.web.servlet.HandlerInterceptor;
-
-/**
- * 权限校验拦截器
- *
- * 校验逻辑：
- * 1. 有 @RequirePermission 注解 → 使用注解指定的权限码校验
- * 2. 无注解 + BaseController 方法 → 自动生成权限码校验
- * 3. 无注解 + 非 BaseController 方法 → 放行（不做权限控制）
- */
-@Slf4j
-@Component
-public class PermissionCheckInterceptor implements HandlerInterceptor {
-
-    @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
-        if (!(handler instanceof HandlerMethod handlerMethod)) {
-            return true;
-        }
-
-        // 1. 获取当前登录用户
-        LoginUser loginUser = SecurityUtils.getLoginUser();
-        if (loginUser == null) {
-            response.setStatus(401);
-            return false;
-        }
-
-        // 2. 超级管理员 bypass
-        if (loginUser.isSuperAdmin()) {
-            return true;
-        }
-
-        // 3. 检查方法注解
-        RequirePermission annotation = handlerMethod.getMethodAnnotation(RequirePermission.class);
-        if (annotation != null) {
-            if (annotation.skip()) {
-                return true; // 跳过校验
-            }
-            if (!annotation.value().isEmpty()) {
-                // 使用注解指定的权限码
-                return checkPermission(loginUser, annotation.value(), request);
-            }
-        }
-
-        // 4. 无注解时，判断是否是 BaseController 方法
-        Object controller = handlerMethod.getBean();
-        if (controller instanceof BaseController) {
-            // BaseController 方法需要自动生成权限码校验
-            String requiredPermission = buildPermissionFromRequest(handlerMethod, (BaseController<?, ?, ?>) controller);
-            if (requiredPermission != null) {
-                return checkPermission(loginUser, requiredPermission, request);
-            }
-        }
-
-        // 5. 非 BaseController 方法且无注解 → 放行（不做权限控制）
-        return true;
-    }
-
-    /**
-     * 权限校验
-     */
-    private boolean checkPermission(LoginUser loginUser, String requiredPermission, HttpServletRequest request) {
-        if (!loginUser.hasPermission(requiredPermission)) {
-            log.warn("Permission denied: user={}, permission={}, uri={}",
-                    loginUser.getSysUser().getUsername(),
-                    requiredPermission,
-                    request.getRequestURI());
-            response.setStatus(403);
-            response.setContentType("application/json;charset=UTF-8");
-            response.getWriter().write("{\"code\":403,\"msg\":\"权限不足，禁止访问\"}");
-            return false;
-        }
-        return true;
-    }
-
-    /**
-     * 根据请求自动生成权限码
-     * 格式: {entityName}:{operation}
-     */
-    private String buildPermissionFromRequest(HandlerMethod handlerMethod, BaseController<?, ?, ?> controller) {
-        String method = handlerMethod.getMethod().getName();
-        String entityName = getEntityName(controller);
-
-        return switch (method) {
-            case "create", "saveBatch" -> entityName + ":add";
-            case "update" -> entityName + ":edit";
-            case "remove", "removeBatch" -> entityName + ":delete";
-            case "get", "page", "list" -> entityName + ":list";
-            case "exportGet", "exportPost" -> entityName + ":export";
-            default -> null;
-        };
-    }
-
-    /**
-     * 获取实体名称（首字母小写 + 冒号分隔）
-     * 例如: SysUser -> sys:user
-     */
-    private String getEntityName(BaseController<?, ?, ?> controller) {
-        Class<?> entityClass = controller.getEntityClass();
-        if (entityClass == null) {
-            return "unknown";
-        }
-        String simpleName = entityClass.getSimpleName();
-        return toSnakeCase(simpleName);
-    }
-
-    /**
-     * 大写字母转换为冒号分隔的小写形式
-     * SysUser -> sys:user
-     * SysUserRole -> sys:user:role
-     */
-    private String toSnakeCase(String name) {
-        if (name == null || name.isEmpty()) {
-            return name;
-        }
-        StringBuilder result = new StringBuilder();
-        for (int i = 0; i < name.length(); i++) {
-            char c = name.charAt(i);
-            if (Character.isUpperCase(c)) {
-                if (i > 0) {
-                    result.append(':');
-                }
-                result.append(Character.toLowerCase(c));
-            } else {
-                result.append(c);
-            }
-        }
-        return result.toString();
-    }
-}
-```
-
-### 4.5 注册拦截器
-
-**文件**: `src/main/java/com/yunlbd/flexboot4/security/SecurityConfig.java`
-
-```java
-@Configuration
-@EnableWebSecurity
-@RequiredArgsConstructor
-public class SecurityConfig {
-
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final PermissionCheckInterceptor permissionCheckInterceptor;
-    // ... 其他依赖
-
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-            .csrf(AbstractHttpConfigurer::disable)
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers(ignoreUrlsConfig.getUrls().toArray(new String[0])).permitAll()
-                .anyRequest().authenticated()
-            )
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-            .addFilterBefore(permissionCheckInterceptor, JwtAuthenticationFilter.class);
-
-        return http.build();
-    }
-}
-```
-
----
-
-## 5. 使用示例
-
-### 5.1 业务 Controller 完整示例
+示例 Controller：
 
 ```java
 @RestController
-@RequestMapping("/api/user")
-@RequiredArgsConstructor
-public class SysUserController extends BaseController<ISysUserService, SysUser, String> {
-
-    private final ISysUserService userService;  // 额外注入业务服务
-
-    @Override
-    protected Class<SysUser> getEntityClass() {
-        return SysUser.class;
-    }
-
-    // ==================== CRUD 方法（自动受权限控制） ====================
-    // POST /       → sys:user:add
-    // PUT /{id}    → sys:user:edit
-    // DELETE /{id} → sys:user:delete
-    // GET /{id}    → sys:user:list
-    // POST /page   → sys:user:list
-    // POST /export → sys:user:export
-
-    // ==================== 自定义业务接口 ====================
-
-    // 按需添加权限注解
-    @RequirePermission("sys:user:resetPwd")
-    @PostMapping("/reset-password")
-    public ApiResult<Void> resetPassword(@RequestBody ResetPwdReq req) {
-        userService.resetPassword(req);
-        return ApiResult.success();
-    }
-
-    // 无需权限控制的接口（不加注解）
-    @GetMapping("/options")
-    public ApiResult<List<Option>> getOptions() {
-        return ApiResult.success(userService.getOptions());
-    }
-
-    // 特殊情况：跳过权限校验
-    @RequirePermission(skip = true)
-    @GetMapping("/public-info")
-    public ApiResult<?> getPublicInfo() {
-        return ApiResult.success(...);
-    }
+@RequestMapping("/api/admin/user")
+public class SysUserController extends BaseCrudController<SysUserService, SysUser, String,
+        SysUserCreateReq, SysUserUpdateReq, SysUserListVO, SysUserDetailVO> {
+    // ...
 }
 ```
 
-### 5.2 自定义权限码覆盖
+权限前缀来自资源路径或框架约定。例如 `/api/admin/user/page` 推导为：
+
+```text
+sys:user:list
+```
+
+对于方法名，`create` 映射为 `add`，`update` 映射为 `edit`，`remove` 和 `removeBatch` 映射为 `delete`。
+
+## 5. 自定义接口
+
+自定义接口必须显式声明权限：
 
 ```java
-public class SysUserController extends BaseController<...> {
-
-    // 覆盖默认权限码，使用自定义权限
-    @RequirePermission("sys:user:manage")
-    @DeleteMapping("/{id}")
-    public ApiResult<Boolean> remove(@PathVariable String id) {
-        return super.remove(id);
-    }
+@RequirePermission("sys:user:reset-password")
+@PostMapping("/{id}/reset-password")
+public ApiResult<Boolean> resetPassword(@PathVariable String id) {
+    // ...
 }
 ```
 
----
-
-## 6. 数据权限扩展（可选）
-
-后续如需实现**数据权限**（用户只能查看/操作自己部门的数据），可在 Service 层扩展：
+确实无需权限码的接口应显式声明跳过：
 
 ```java
-public interface IExtendedService<T> {
-    // 现有方法 ...
-
-    /**
-     * 获取数据权限过滤条件
-     */
-    default QueryWrapper getDataScopeFilter(String userId) {
-        return QueryWrapper.create();
-    }
+@RequirePermission(skip = true)
+@GetMapping("/all")
+public ApiResult<List<VueRoute>> getAllMenus() {
+    // ...
 }
 ```
 
-在 `page()` 和 `list()` 方法中自动追加数据权限过滤条件。
+不要依赖“无注解自动放行”。Admin 管理接口默认拒绝无声明接口。
 
----
+## 6. vben 菜单与按钮权限
 
-## 7. 实施计划
+vben 对接规则：
 
-| 步骤 | 任务 | 文件 |
-|------|------|------|
-| 1 | 扩展 `LoginUser` 添加权限码字段和 `isSuperAdmin()` | `security/LoginUser.java` |
-| 2 | 修改 `UserDetailsServiceImpl` 加载权限码 | `security/UserDetailsServiceImpl.java` |
-| 3 | 创建 `@RequirePermission` 注解 | `common/annotation/RequirePermission.java` |
-| 4 | 创建 `PermissionCheckInterceptor` | `security/PermissionCheckInterceptor.java` |
-| 5 | 注册拦截器到 `SecurityConfig` | `security/SecurityConfig.java` |
+- 后端路由接口返回 catalog/menu 路由树。
+- button 节点不进入路由树。
+- button 节点的 `authCode` 进入 `/admin/auth/codes`。
+- `RouteMeta` 使用 vben 字段：`hideInMenu`、`hideInTab`、`hideInBreadcrumb`。
+- 布局组件与前端 `layoutMap` 保持一致。
 
----
+菜单和按钮示例：
+
+```text
+系统管理
+  用户管理                  -> route
+    新增用户 sys:user:add    -> button
+    编辑用户 sys:user:edit   -> button
+    删除用户 sys:user:delete -> button
+```
+
+## 7. LoginUser 与权限加载
+
+登录成功后，认证用户上下文应包含：
+
+- 用户基础信息
+- 角色标识
+- 权限码列表
+
+权限码来自用户角色绑定的菜单/按钮节点。超级管理员用户拥有所有权限。
 
 ## 8. 缓存与权限变更
 
-当管理员修改用户角色或菜单权限时，需清理 `userDetails` 缓存：
+当角色、菜单或用户角色关系变化时，应清理或刷新用户权限缓存，避免登录态中的权限码滞后。
 
-```java
-// 在角色/权限变更时调用
-userDetailsService.evictUserCache(username);
-```
+典型触发点：
 
-缓存配置已在 `UserDetailsServiceImpl` 上通过 `@CacheConfig` 注解实现。
+- 分配用户角色
+- 分配角色菜单
+- 禁用菜单或按钮权限
+- 修改菜单 `authCode`
 
----
+## 9. 新接口接入清单
 
-## 9. 权限码对照表
+1. Admin 管理接口路径放在 `/api/admin/**`。
+2. 通用 CRUD 继承 `BaseCrudController` 或 `EntityCrudController`。
+3. 自定义接口声明 `@RequirePermission`。
+4. 在 `sys_menu` 中添加对应 button 权限节点。
+5. 给目标角色分配菜单/按钮。
+6. 前端按钮使用同一权限码控制显示。
+7. 通过接口请求验证 401、403、成功路径。
 
-### BaseController 自动生成
+## 10. 常见错误
 
-| 方法名 | HTTP 路径 | 自动生成权限码 |
-|--------|-----------|----------------|
-| `create` | POST / | `{entity}:add` |
-| `saveBatch` | POST /batch | `{entity}:add` |
-| `update` | PUT /{id} | `{entity}:edit` |
-| `remove` | DELETE /{id} | `{entity}:delete` |
-| `removeBatch` | DELETE / | `{entity}:delete` |
-| `get` | GET /{id} | `{entity}:list` |
-| `page` | POST /page | `{entity}:list` |
-| `list` | POST /list | `{entity}:list` |
-| `exportGet/exportPost` | GET/POST /export | `{entity}:export` |
+### 前端按钮显示，但接口 403
 
-### 实体类型映射
+通常是前端按钮权限码和后端推导权限码不一致。例如前端使用 `sys:user:create`，但后端标准是 `sys:user:add`。
 
-| 实体类 | 权限码前缀 |
-|--------|-----------|
-| SysUser | `sys:user` |
-| SysRole | `sys:role` |
-| SysDept | `sys:dept` |
-| SysMenu | `sys:menu` |
-| SysUserRole | `sys:user:role` |
+### 登录后菜单不显示
+
+检查：
+
+- 菜单节点是否是 catalog/menu，而不是 button。
+- 根节点 `parentId` 是否为 `NULL`。
+- `component` 是否为 vben 支持的 `BasicLayout` 或真实页面路径。
+- `status` 是否启用。
+
+### 路由接口返回 button 节点
+
+这是错误设计。button 节点应只进入权限码列表，不进入动态路由树。

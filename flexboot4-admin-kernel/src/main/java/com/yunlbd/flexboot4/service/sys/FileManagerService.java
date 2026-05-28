@@ -4,6 +4,8 @@ import com.yunlbd.flexboot4.file.FileAccessDescriptor;
 import com.yunlbd.flexboot4.file.FileObject;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.InputStream;
+
 public interface FileManagerService {
 
     FileObject upload(MultipartFile file,
@@ -18,6 +20,8 @@ public interface FileManagerService {
                       boolean forceNew);
 
     FileAccessDescriptor access(String fileId, long ttlSeconds, boolean attachment);
+
+    InputStream load(String fileId);
 
     void delete(String fileId);
 }

@@ -16,6 +16,7 @@ dependencies {
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
+    annotationProcessor(libs.mapstructProcessor)
 
     implementation(libs.jainSipApi)
     implementation(libs.jainSipRi)

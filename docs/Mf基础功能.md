@@ -1,35 +1,40 @@
-﻿# 通用查询构建与使用说明
+# 通用查询构建与使用说明
 
-## api应用场景：**单表** 或 **多表关联** 查询`/list`、`/page`
+FlexBoot4 通用 CRUD 的 `/page`、`/list`、`/export` 使用 `SearchDto` 描述查询条件。查询构建器基于 MyBatis-Flex `QueryWrapper`，支持单表、根表别名、关系字段、嵌套条件和多字段排序。
 
-## 基础查询参数格式
-- 入参对象为 SearchDto，包含：
-  - pageNumber、pageSize
-  - items：支持递归 children 的条件列表，children 之间使用 logic 组合（AND/OR），根层使用 dto.logic 组合
-  - orders：多字段排序，column 为实体属性或关联路径，asc 为方向
-- 空值忽略：当条件值为 null 时自动忽略该条件
+## 1. SearchDto 结构
 
-约定（推荐用法）
-
-- SearchItem.field 的前缀必须是“业务表名/实体名的驼峰写法”，例如：
-    - 表 iot_device → iotDevice.xxx
-    - 表 sys_dict_type → sysDictType.code
-
-单表示例：
 ```json
 {
   "pageNumber": 1,
   "pageSize": 10,
   "logic": "AND",
+  "items": [],
+  "orders": []
+}
+```
+
+字段说明：
+
+| 字段 | 说明 |
+| --- | --- |
+| `pageNumber` | 页码，默认 1 |
+| `pageSize` | 每页数量，默认 10 |
+| `logic` | 根条件组合方式，`AND` 或 `OR` |
+| `items` | 查询条件，支持递归 `children` |
+| `orders` | 排序条件 |
+
+## 2. 单表查询
+
+裸字段写法：
+
+```json
+{
+  "pageNumber": 1,
+  "pageSize": 10,
   "items": [
     { "field": "status", "op": "eq", "val": 1 },
-    {
-      "logic": "OR",
-      "children": [
-        { "field": "username", "op": "like", "val": "mi" },
-        { "field": "realName", "op": "like", "val": "mi" }
-      ]
-    }
+    { "field": "realName", "op": "like", "val": "张" }
   ],
   "orders": [
     { "column": "createTime", "asc": false }
@@ -37,20 +42,47 @@
 }
 ```
 
-## 关联查询语法规范
-- 字段路径采用点号表示：relation.property
-- relation 为实体上声明的关联属性名，支持 @RelationManyToOne、@RelationManyToMany
-- 根据注解自动构建 left join 及 on 条件
-- 排序可使用关联列，如 "dept.deptName"、"roles.roleName"；亦可以使用表名驼峰格式，如"sysDept.deptName"、"sysRole.roleName"
+根表别名写法：
 
-关联示例：
+```json
+{
+  "items": [
+    { "field": "sysUser.status", "op": "eq", "val": 1 }
+  ],
+  "orders": [
+    { "column": "sysUser.createTime", "asc": false }
+  ]
+}
+```
+
+根表别名可以使用：
+
+- 实体类 lowerCamel：`sysUser.createTime`
+- 表名 lowerCamel：`sysUser.createTime`
+- 裸字段：`createTime`
+
+## 3. 关系查询
+
+关系字段使用点号：
+
+```text
+relation.property
+```
+
+`relation` 可以是：
+
+- Entity 上的关系属性名，如 `dept.deptName`
+- 目标实体 lowerCamel，如 `sysDept.deptName`
+- 目标表名 lowerCamel，如 `sysDept.deptName`
+
+示例：
+
 ```json
 {
   "pageNumber": 1,
   "pageSize": 10,
   "items": [
     { "field": "dept.deptName", "op": "like", "val": "研发" },
-    { "field": "sysUser.createTime", "op": "gt", "val": "2026-01-01 00:00:00" },
     { "field": "roles.roleValue", "op": "eq", "val": "admin" }
   ],
   "orders": [
@@ -59,77 +91,109 @@
 }
 ```
 
-## 特殊查询场景示例
-- in/notin 值支持数组、集合或逗号分隔字符串：
-  - { "field": "id", "op": "in", "val": ["1","2","3"] }
-  - { "field": "id", "op": "in", "val": "1,2,3" }
-- isnull/notnull 用于空值判断：
-  - { "field": "email", "op": "isnull" }
-  - { "field": "avatar", "op": "notnull" }
-- 嵌套条件分组：
-  - children + logic 组合复杂 AND/OR 场景
+关系字段必须通过 Controller 的 `CrudFieldPolicy` 显式开放。即使根表允许 `createTime`，也不代表自动允许 `dept.createTime`。
 
-## 自定义扩展方式说明
-- 模板方法扩展：
-  - AbstractQueryWrapperBuilder 定义构建流程，业务可继承并重载列解析、操作符策略、默认排序等
-- 注解扩展：
-  - 可为实体属性增加自定义注解如 @QueryField/@QueryIgnore 用于别名、禁用操作符、值转换等（建议在代码生成阶段同步生成处理）
-- 配置扩展：
-  - 在 src/main/resources/query-rules.yml 中定义全局或实体级规则，实现特殊字段映射、操作符权限、默认排序等
+## 4. 嵌套条件
 
-## 与 MyBatis-Flex 行为一致性
-- 空值条件自动忽略
-- 关联查询通过 left join 构建，支持 QueryWrapper 的 and/or 分组
-- 排序支持多列与关联列
+```json
+{
+  "logic": "AND",
+  "items": [
+    { "field": "sysUser.status", "op": "eq", "val": 1 },
+    {
+      "logic": "OR",
+      "children": [
+        { "field": "sysUser.username", "op": "like", "val": "admin" },
+        { "field": "sysUser.realName", "op": "like", "val": "管理员" }
+      ]
+    }
+  ]
+}
+```
 
-## 代码位置
-- BaseController：通用方法入口 [BaseController.java](../src/main/java/com/yunlbd/flexboot4/controller/BaseController.java)
-- 默认构建器：DefaultQueryWrapperBuilder [DefaultQueryWrapperBuilder.java](../src/main/java/com/yunlbd/flexboot4/query/DefaultQueryWrapperBuilder.java)
-- 关联解析：RelationQueryBuilder [RelationQueryBuilder.java](../src/main/java/com/yunlbd/flexboot4/query/RelationQueryBuilder.java)
-- 工具：FieldResolver、ValueConverter、OperatorStrategies、SearchDtoUtils
+## 5. 操作符
 
+常用操作符：
 
-## 字典设计要点
+| op | 说明 |
+| --- | --- |
+| `eq` | 等于 |
+| `ne` | 不等于 |
+| `gt` | 大于 |
+| `ge` | 大于等于 |
+| `lt` | 小于 |
+| `le` | 小于等于 |
+| `like` | 模糊匹配 |
+| `notlike` | 非模糊匹配 |
+| `in` | 包含 |
+| `notin` | 不包含 |
+| `isnull` | 为空 |
+| `notnull` | 不为空 |
 
-* 使用已有的静态解析器 [DictTextResolver](../src/main/java/com/yunlbd/flexboot4/excel/DictTextResolver.java) 作为统一入口，避免监听器直接依赖 Spring Bean。
+`in` 和 `notin` 支持数组、集合或逗号分隔字符串：
 
-* 通过在实体字段上标注字典类型（使用注解 [ExcelDict](../src/main/java/com/yunlbd/flexboot4/excel/ExcelDict.java)），[GlobalDictSetListener.java](../src/main/java/com/yunlbd/flexboot4/listener/GlobalDictSetListener.java)全局监听器在 onSet 时读取注解决定字典类型（无需在具体的业务类上的@Table注解内增加配置onSet）。
+```json
+{ "field": "id", "op": "in", "val": ["1", "2", "3"] }
+```
 
-> 示例：更新 SysUser.java 去除 @Table(onSet=...)，改用全局监听器；性别字段标注 @ExcelDict("gender") 保持回写到 genderStr
+```json
+{ "field": "id", "op": "in", "val": "1,2,3" }
+```
 
-* 监听器通用化：只要字段带有 @ExcelDict("`<typeCode>`") 声明取注解的字典类型 code，就将解析得到的文本写入同名的 `<fieldName>Str` 字段。
-* 对于未标注的字段，维持现状，不做字典回写。
-* 未匹配字典项：返回原始 code 字符串，便于排查。
-* 顺序：typeHandler 优先于 SetListener，符合 MyBatis-Flex 官方说明。
-* 全局 onSet 能力：新增全局监听器，对所有继承 BaseEntity 的实体启用字典回写 
-* 多字典字段支持：按每次属性赋值触发，逐字段检测并解析，支持同一实体含多个字典字段
+## 6. 字段白名单
 
+`BaseCrudController` 会在构建查询前调用 `CrudFieldPolicy`：
 
-如何运行
+```java
+@Override
+protected CrudFieldPolicy fieldPolicy() {
+    return CrudFieldPolicy.same(List.of(
+            "id", "username", "realName", "email", "status", "createTime"
+    )).withQueryFields("dept.deptName", "roles.roleValue");
+}
+```
 
-- 启动后台管理（MVC）： .\gradlew.bat :admin-server:bootRun
-- 启动 AI 中台（WebFlux）： .\gradlew.bat :ai-gateway:bootRun
-- 全量测试（根目录）： .\gradlew.bat test （已验证通过）
+规则：
 
+- `same(...)` 同时开放查询和排序。
+- `withQueryFields(...)` 只开放查询。
+- `withOrderFields(...)` 只开放排序。
+- 根表别名字段会规范化为裸字段后校验。
+- 关系字段会规范化为关系属性名后校验。
+- 未在白名单中的字段会抛出 `查询字段不允许` 或 `排序字段不允许`。
 
----
-文件上传-----数据流
+## 7. 与 DTO/VO 的关系
 
-【解析阶段】admin-server
-FileChunkingServiceImpl.chunk() 保存 chunk
-→ publishChunks(entities) 批量发布
-→ FileEmbeddingPublisherImpl 写入 Redis Stream
-→ 每条消息: {chunkId, fileId, model, retryCount}
+查询字段对应 Entity 字段和关系路径，不对应 VO 字段。
 
-【向量阶段】ai-gateway
-EmbeddingStreamStartupListener 启动消费者
-→ XREADGROUP 消费消息
-→ 查询 sys_file_chunk (embed_status=PENDING)
-→ 更新状态 PROCESSING
-→ 调用本地 Embedding HTTP 服务
-→ 写入 ai_vector_chunk (ON CONFLICT DO UPDATE)
-→ 更新状态 EMBEDDED / FAILED
-→ 超过重试次数 → 写入 DLQ
+原因是查询发生在数据库层，而 VO 是响应契约。Controller 负责通过 `CrudFieldPolicy` 控制哪些 Entity 字段允许暴露为查询能力。
 
----
+## 8. 代码位置
 
+| 能力 | 文件 |
+| --- | --- |
+| CRUD 入口 | `flexboot4-admin-kernel/src/main/java/com/yunlbd/flexboot4/controller/sys/BaseCrudController.java` |
+| 字段白名单 | `flexboot4-admin-kernel/src/main/java/com/yunlbd/flexboot4/controller/sys/CrudFieldPolicy.java` |
+| 默认查询构建器 | `flexboot4-admin-kernel/src/main/java/com/yunlbd/flexboot4/query/DefaultQueryWrapperBuilder.java` |
+| 关系解析 | `flexboot4-admin-kernel/src/main/java/com/yunlbd/flexboot4/query/RelationQueryBuilder.java` |
+| 字段解析 | `flexboot4-admin-kernel/src/main/java/com/yunlbd/flexboot4/query/FieldResolver.java` |
+| 值转换 | `flexboot4-admin-kernel/src/main/java/com/yunlbd/flexboot4/query/ValueConverter.java` |
+| 查询工具 | `flexboot4-admin-kernel/src/main/java/com/yunlbd/flexboot4/query/SearchDtoUtils.java` |
+
+## 9. 常见问题
+
+### 排序字段不允许: sysUser.createTime
+
+说明 Controller 的字段白名单没有通过实体上下文校验，或当前资源没有开放 `createTime`。标准 `BaseCrudController` 会将 `sysUser.createTime` 识别为根表 `createTime`。
+
+### 关系字段查询报错
+
+检查：
+
+- Entity 是否声明了 `@RelationManyToOne`、`@RelationOneToMany`、`@RelationManyToMany` 或 `@RelationOneToOne`。
+- Controller 是否在 `CrudFieldPolicy` 中显式开放该关系字段。
+- 前缀是否能匹配关系属性名、目标实体名或目标表名。
+
+### 返回数据里关系对象过多
+
+这是 VO 设计问题。ListVO 不需要的关系字段不要声明；低风险默认映射器会忽略 Entity 多余字段，高风险模块应使用 MapStruct 精确控制输出。
