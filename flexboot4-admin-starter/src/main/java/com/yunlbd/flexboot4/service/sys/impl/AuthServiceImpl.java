@@ -14,7 +14,6 @@ import com.yunlbd.flexboot4.dto.ResetPasswordReq;
 import com.yunlbd.flexboot4.dto.SmsCodeReq;
 import com.yunlbd.flexboot4.entity.sys.SysRole;
 import com.yunlbd.flexboot4.entity.sys.SysUser;
-import com.yunlbd.flexboot4.mapper.SysUserMapper;
 import com.yunlbd.flexboot4.metrics.MetricsRecorder;
 import com.yunlbd.flexboot4.security.JwtUtil;
 import com.yunlbd.flexboot4.security.UserDetailsCacheService;
@@ -62,21 +61,31 @@ public class AuthServiceImpl implements IAuthService {
     private static final String SMS_COOLDOWN_KEY_PREFIX = "auth:sms-code:cooldown:";
     private static final String SMS_DAILY_KEY_PREFIX = "auth:sms-code:daily:";
     private static final String SMS_FAIL_KEY_PREFIX = "auth:sms-code:fail:";
+    private static final String SMS_IP_HOUR_KEY_PREFIX = "auth:sms-code:ip:hour:";
+    private static final String SMS_IP_DAILY_KEY_PREFIX = "auth:sms-code:ip:daily:";
     private static final String MFA_CHALLENGE_KEY_PREFIX = "auth:mfa:challenge:";
     private static final String LOGIN_TYPE_PASSWORD = "password";
     private static final String LOGIN_TYPE_SMS = "sms";
     private static final String LOGIN_OPTIONS_KEY = "auth.login.options";
     private static final String SMS_CONFIG_ID_KEY = "auth.sms.configId";
     private static final String SMS_TEMPLATE_ID_KEY = "auth.sms.templateId";
+    private static final String SMS_IP_HOURLY_LIMIT_KEY = "auth.sms.ipHourlyLimit";
+    private static final String SMS_IP_DAILY_LIMIT_KEY = "auth.sms.ipDailyLimit";
     private static final String SMS_SEND_SUCCESS_MSG = "验证码已发送，请注意查收";
+    private static final String SMS_CODE_INVALID_MSG = "验证码不正确或已过期";
+    private static final String SMS_SEND_TOO_FREQUENT_MSG = "验证码发送过于频繁，请稍后再试";
+    private static final String SMS_SEND_DAILY_LIMIT_MSG = "验证码发送次数已达今日上限";
     private static final int DEFAULT_SMS_CODE_LENGTH = 6;
     private static final int DEFAULT_SMS_TTL_MINUTES = 5;
     private static final int DEFAULT_SMS_COOLDOWN_SECONDS = 60;
     private static final int DEFAULT_SMS_DAILY_LIMIT = 10;
+    private static final int DEFAULT_SMS_IP_HOURLY_LIMIT = 30;
+    private static final int DEFAULT_SMS_IP_DAILY_LIMIT = 100;
     private static final int MAX_SMS_VERIFY_ATTEMPTS = 5;
     private static final int MAX_LOGIN_ATTEMPTS = 5;
     private static final int MAX_MFA_VERIFY_ATTEMPTS = 5;
     private static final long LOCK_TIME_MINUTES = 15;
+    private static final long SMS_IP_HOURLY_TTL_MINUTES = 60;
     private static final long MFA_CHALLENGE_TTL_MINUTES = 5;
     private static final long MAX_DAILY_TTL_MINUTES = 1440;
     private static final String RESET_LINK_SENT_MSG = "Reset link sent. Please check your email.";
@@ -85,7 +94,6 @@ public class AuthServiceImpl implements IAuthService {
     private final UserDetailsService userDetailsService;
     private final JwtUtil jwtUtil;
     private final StringRedisTemplate redisTemplate;
-    private final SysUserMapper sysUserMapper;
     private final SysMenuService sysMenuService;
     private final UserDetailsCacheService userDetailsCacheService;
     private final ObjectProvider<EmailService> emailServiceProvider;
@@ -125,15 +133,16 @@ public class AuthServiceImpl implements IAuthService {
         if (!isValidPhone(phone)) {
             throw new IllegalArgumentException("手机号格式不正确");
         }
+        enforceSmsIpRateLimit(clientIp);
         if (Boolean.TRUE.equals(redisTemplate.hasKey(SMS_COOLDOWN_KEY_PREFIX + phone))) {
-            throw new IllegalStateException("验证码发送过于频繁，请稍后再试");
+            throw new IllegalStateException(SMS_SEND_TOO_FREQUENT_MSG);
         }
 
         String dailyKey = SMS_DAILY_KEY_PREFIX + phone;
         long dailyCount = incrementDailyCounter(dailyKey);
         if (dailyCount > DEFAULT_SMS_DAILY_LIMIT) {
             metricsRecorder.increment("flexboot4.auth.sms_send_limited", Map.of("clientIp", clientIp));
-            throw new IllegalStateException("验证码发送次数已达今日上限");
+            throw new IllegalStateException(SMS_SEND_DAILY_LIMIT_MSG);
         }
 
         SysUser user = findActiveUserByPhone(phone);
@@ -223,7 +232,7 @@ public class AuthServiceImpl implements IAuthService {
             );
 
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            SysUser sysUser = sysUserMapper.selectOneByQuery(
+            SysUser sysUser = sysUserService.getOne(
                     QueryWrapper.create().where(SysUser::getUsername).eq(req.getUsername())
             );
 
@@ -259,7 +268,7 @@ public class AuthServiceImpl implements IAuthService {
         SysUser sysUser = findActiveUserByPhone(phone);
         if (sysUser == null) {
             metricsRecorder.increment("flexboot4.auth.sms_login_failed", Map.of("clientIp", clientIp, "reason", "user_not_found"));
-            throw new SecurityException("Invalid SMS login code");
+            throw new IllegalStateException(SMS_CODE_INVALID_MSG);
         }
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(sysUser.getUsername());
@@ -310,7 +319,7 @@ public class AuthServiceImpl implements IAuthService {
         }
 
         redisTemplate.delete(key);
-        SysUser sysUser = sysUserMapper.selectOneByQuery(
+        SysUser sysUser = sysUserService.getOne(
                 QueryWrapper.create()
                         .where(SysUser::getId).eq(challenge.userId())
                         .and(SysUser::getStatus).eq(1)
@@ -365,7 +374,7 @@ public class AuthServiceImpl implements IAuthService {
             redisTemplate.opsForValue().set(BLACKLIST_KEY_PREFIX + token, "revoked", remainingTtl, TimeUnit.MILLISECONDS);
         }
 
-        SysUser fullUser = sysUserMapper.selectOneWithRelationsByQuery(
+        SysUser fullUser = sysUserService.getOne(
                 QueryWrapper.create().where(SysUser::getUsername).eq(username)
         );
         if (fullUser == null) {
@@ -390,7 +399,7 @@ public class AuthServiceImpl implements IAuthService {
     public String forgetPassword(ForgetPasswordReq req) {
         String email = req.getEmail().toLowerCase().trim();
 
-        SysUser user = sysUserMapper.selectOneByQuery(
+        SysUser user = sysUserService.getOne(
                 QueryWrapper.create().where(SysUser::getEmail).eq(email)
         );
 
@@ -549,14 +558,14 @@ public class AuthServiceImpl implements IAuthService {
 
     private void verifySmsCode(String phone, String code) {
         if (code == null || code.isBlank()) {
-            throw new SecurityException("Invalid SMS login code");
+            throw new IllegalStateException(SMS_CODE_INVALID_MSG);
         }
 
         String failKey = SMS_FAIL_KEY_PREFIX + phone;
         String failValue = redisTemplate.opsForValue().get(failKey);
         int failCount = failValue == null ? 0 : Integer.parseInt(failValue);
         if (failCount >= MAX_SMS_VERIFY_ATTEMPTS) {
-            throw new SecurityException("Invalid SMS login code");
+            throw new IllegalStateException(SMS_CODE_INVALID_MSG);
         }
 
         String codeKey = SMS_CODE_KEY_PREFIX + phone;
@@ -564,7 +573,7 @@ public class AuthServiceImpl implements IAuthService {
         if (storedHash == null || !storedHash.equals(hashSmsCode(phone, code.trim()))) {
             redisTemplate.opsForValue().increment(failKey);
             redisTemplate.expire(failKey, DEFAULT_SMS_TTL_MINUTES, TimeUnit.MINUTES);
-            throw new SecurityException("Invalid SMS login code");
+            throw new IllegalStateException(SMS_CODE_INVALID_MSG);
         }
     }
 
@@ -574,7 +583,7 @@ public class AuthServiceImpl implements IAuthService {
     }
 
     private SysUser findActiveUserByPhone(String phone) {
-        List<SysUser> users = sysUserMapper.selectListByQuery(
+        List<SysUser> users = sysUserService.list(
                 QueryWrapper.create()
                         .where(SysUser::getPhone).eq(phone)
                         .and(SysUser::getStatus).eq(1)
@@ -590,11 +599,45 @@ public class AuthServiceImpl implements IAuthService {
     }
 
     private long incrementDailyCounter(String dailyKey) {
-        Long value = redisTemplate.opsForValue().increment(dailyKey);
+        return incrementCounter(dailyKey, MAX_DAILY_TTL_MINUTES);
+    }
+
+    private void enforceSmsIpRateLimit(String clientIp) {
+        String normalizedIp = normalizeClientIp(clientIp);
+        int hourlyLimit = configInt(SMS_IP_HOURLY_LIMIT_KEY, DEFAULT_SMS_IP_HOURLY_LIMIT);
+        long hourlyCount = incrementCounter(SMS_IP_HOUR_KEY_PREFIX + normalizedIp, SMS_IP_HOURLY_TTL_MINUTES);
+        if (hourlyCount > hourlyLimit) {
+            metricsRecorder.increment("flexboot4.auth.sms_send_limited", Map.of(
+                    "clientIp", normalizedIp,
+                    "reason", "ip_hour"
+            ));
+            throw new IllegalStateException(SMS_SEND_TOO_FREQUENT_MSG);
+        }
+
+        int dailyLimit = configInt(SMS_IP_DAILY_LIMIT_KEY, DEFAULT_SMS_IP_DAILY_LIMIT);
+        long dailyCount = incrementCounter(SMS_IP_DAILY_KEY_PREFIX + normalizedIp, MAX_DAILY_TTL_MINUTES);
+        if (dailyCount > dailyLimit) {
+            metricsRecorder.increment("flexboot4.auth.sms_send_limited", Map.of(
+                    "clientIp", normalizedIp,
+                    "reason", "ip_daily"
+            ));
+            throw new IllegalStateException(SMS_SEND_DAILY_LIMIT_MSG);
+        }
+    }
+
+    private long incrementCounter(String key, long ttlMinutes) {
+        Long value = redisTemplate.opsForValue().increment(key);
         if (value != null && value == 1L) {
-            redisTemplate.expire(dailyKey, MAX_DAILY_TTL_MINUTES, TimeUnit.MINUTES);
+            redisTemplate.expire(key, ttlMinutes, TimeUnit.MINUTES);
         }
         return value == null ? 0L : value;
+    }
+
+    private String normalizeClientIp(String clientIp) {
+        if (clientIp == null || clientIp.isBlank()) {
+            return "unknown";
+        }
+        return clientIp.trim();
     }
 
     private String randomNumericCode(int length) {
@@ -638,6 +681,20 @@ public class AuthServiceImpl implements IAuthService {
 
     private static int optionInt(Integer value, int defaultValue) {
         return value == null || value <= 0 ? defaultValue : value;
+    }
+
+    private int configInt(String key, int defaultValue) {
+        String value = configLookupService.getConfigValue(key);
+        if (value == null || value.isBlank()) {
+            return defaultValue;
+        }
+        try {
+            int parsed = Integer.parseInt(value.trim());
+            return parsed <= 0 ? defaultValue : parsed;
+        } catch (NumberFormatException e) {
+            log.warn("Invalid integer config value, key={}, value={}", key, value);
+            return defaultValue;
+        }
     }
 
     private static String maskPhone(String phone) {

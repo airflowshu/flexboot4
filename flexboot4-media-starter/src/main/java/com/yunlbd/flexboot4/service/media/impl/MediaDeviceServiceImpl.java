@@ -1,56 +1,57 @@
 package com.yunlbd.flexboot4.service.media.impl;
 
 import com.mybatisflex.core.query.QueryWrapper;
-import com.yunlbd.flexboot4.entity.media.MediaChannel;
 import com.yunlbd.flexboot4.entity.media.MediaDevice;
-import com.yunlbd.flexboot4.mapper.MediaChannelMapper;
 import com.yunlbd.flexboot4.mapper.MediaDeviceMapper;
 import com.yunlbd.flexboot4.media.dto.MediaDeviceDetail;
 import com.yunlbd.flexboot4.media.enums.MediaAccessType;
 import com.yunlbd.flexboot4.media.enums.MediaOnlineStatus;
+import com.yunlbd.flexboot4.service.media.MediaChannelService;
 import com.yunlbd.flexboot4.service.media.MediaDeviceService;
 import com.yunlbd.flexboot4.service.media.MediaStreamSessionService;
 import com.yunlbd.flexboot4.service.sys.impl.BaseServiceImpl;
-import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 
 @Service
-@RequiredArgsConstructor
 @CacheConfig(cacheNames = "mediaDevice")
 public class MediaDeviceServiceImpl extends BaseServiceImpl<MediaDeviceMapper, MediaDevice> implements MediaDeviceService {
 
-    private final MediaChannelMapper mediaChannelMapper;
+    private final MediaChannelService mediaChannelService;
     private final MediaStreamSessionService mediaStreamSessionService;
+
+    public MediaDeviceServiceImpl(@Lazy MediaChannelService mediaChannelService,
+                                  MediaStreamSessionService mediaStreamSessionService) {
+        this.mediaChannelService = mediaChannelService;
+        this.mediaStreamSessionService = mediaStreamSessionService;
+    }
 
     @Override
     public MediaDeviceDetail getDetail(String deviceId) {
-        MediaDevice device = super.getById(deviceId);
+        MediaDevice device = cacheProxy().getById(deviceId);
         if (device == null) {
             throw new IllegalArgumentException("Device not found");
         }
         return new MediaDeviceDetail(
                 device,
-                mediaChannelMapper.selectListByQuery(QueryWrapper.create()
-                        .from(MediaChannel.class)
-                        .where(MediaChannel::getDeviceId).eq(deviceId)
-                        .orderBy(MediaChannel::getCreateTime, true)),
+                mediaChannelService.listByDeviceId(deviceId),
                 mediaStreamSessionService.listByDeviceId(deviceId)
         );
     }
 
     @Override
     public MediaDevice upsertGbDevice(String gatewayId, String deviceCode, String deviceName) {
-        MediaDevice existing = super.getOne(QueryWrapper.create()
+        MediaDevice existing = cacheProxy().getOne(QueryWrapper.create()
                 .from(MediaDevice.class)
                 .where(MediaDevice::getDeviceCode).eq(deviceCode));
         if (existing != null) {
             existing.setGatewayId(gatewayId);
             existing.setDeviceName(deviceName);
             existing.setAccessType(MediaAccessType.GB28181);
-            updateById(existing, true);
+            cacheProxy().updateById(existing, true);
             return existing;
         }
         MediaDevice device = MediaDevice.builder()
@@ -61,13 +62,13 @@ public class MediaDeviceServiceImpl extends BaseServiceImpl<MediaDeviceMapper, M
                 .onlineStatus(MediaOnlineStatus.UNKNOWN)
                 .registerStatus("UNKNOWN")
                 .build();
-        save(device);
+        cacheProxy().save(device);
         return device;
     }
 
     @Override
     public void markOnline(String deviceCode, String gatewayId, LocalDateTime registerTime) {
-        MediaDevice device = super.getOne(QueryWrapper.create()
+        MediaDevice device = cacheProxy().getOne(QueryWrapper.create()
                 .from(MediaDevice.class)
                 .where(MediaDevice::getDeviceCode).eq(deviceCode));
         if (device == null) {
@@ -77,12 +78,12 @@ public class MediaDeviceServiceImpl extends BaseServiceImpl<MediaDeviceMapper, M
         device.setOnlineStatus(MediaOnlineStatus.ONLINE);
         device.setRegisterStatus("REGISTERED");
         device.setLastRegisterTime(registerTime);
-        updateById(device, true);
+        cacheProxy().updateById(device, true);
     }
 
     @Override
     public void markKeepalive(String deviceCode, LocalDateTime keepaliveTime) {
-        MediaDevice device = super.getOne(QueryWrapper.create()
+        MediaDevice device = cacheProxy().getOne(QueryWrapper.create()
                 .from(MediaDevice.class)
                 .where(MediaDevice::getDeviceCode).eq(deviceCode));
         if (device == null) {
@@ -90,6 +91,6 @@ public class MediaDeviceServiceImpl extends BaseServiceImpl<MediaDeviceMapper, M
         }
         device.setOnlineStatus(MediaOnlineStatus.ONLINE);
         device.setLastKeepaliveTime(keepaliveTime);
-        updateById(device, true);
+        cacheProxy().updateById(device, true);
     }
 }

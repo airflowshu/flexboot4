@@ -1,5 +1,6 @@
 package com.yunlbd.flexboot4.service.kb;
 
+import com.yunlbd.flexboot4.common.annotation.BumpTableVersion;
 import com.yunlbd.flexboot4.entity.kb.KbMember;
 import com.yunlbd.flexboot4.service.sys.IExtendedService;
 
@@ -22,5 +23,11 @@ public interface KbMemberService extends IExtendedService<KbMember> {
      * 移除知识库成员
      */
     boolean removeMembers(String kbId, Collection<String> userIds);
+
+    /**
+     * 恢复已逻辑删除的知识库成员
+     */
+    @BumpTableVersion(KbMember.class)
+    boolean restoreMemberById(String id);
 }
 

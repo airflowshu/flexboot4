@@ -25,7 +25,7 @@ public class MediaScreenServiceImpl extends BaseServiceImpl<MediaScreenMapper, M
 
     @Override
     public MediaScreenDetail getDetail(String screenId) {
-        MediaScreen screen = super.getById(screenId);
+        MediaScreen screen = cacheProxy().getById(screenId);
         if (screen == null) {
             throw new IllegalArgumentException("Screen not found");
         }
@@ -36,7 +36,7 @@ public class MediaScreenServiceImpl extends BaseServiceImpl<MediaScreenMapper, M
     public MediaScreenDetail saveScreen(ScreenSaveRequest request) {
         MediaScreen screen = request.id() == null || request.id().isBlank()
                 ? new MediaScreen()
-                : super.getById(request.id());
+                : cacheProxy().getById(request.id());
         if (screen == null) {
             throw new IllegalArgumentException("Screen not found");
         }
@@ -47,7 +47,7 @@ public class MediaScreenServiceImpl extends BaseServiceImpl<MediaScreenMapper, M
         screen.setIsDefault(request.isDefault() != null && request.isDefault());
 
         if (screen.getIsDefault() != null && screen.getIsDefault()) {
-            List<MediaScreen> others = super.list(QueryWrapper.create()
+            List<MediaScreen> others = cacheProxy().list(QueryWrapper.create()
                     .from(MediaScreen.class)
                     .where(MediaScreen::getIsDefault).eq(true));
             for (MediaScreen other : others) {
@@ -55,14 +55,14 @@ public class MediaScreenServiceImpl extends BaseServiceImpl<MediaScreenMapper, M
                     continue;
                 }
                 other.setIsDefault(false);
-                updateById(other, true);
+                cacheProxy().updateById(other, true);
             }
         }
 
         if (screen.getId() == null || screen.getId().isBlank()) {
-            save(screen);
+            cacheProxy().save(screen);
         } else {
-            updateById(screen, true);
+            cacheProxy().updateById(screen, true);
         }
 
         mediaScreenSlotService.deleteByScreenId(screen.getId());

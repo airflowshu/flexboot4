@@ -27,6 +27,16 @@ class MediaAutoConfigurationMetadataTest {
                 .contains("com.yunlbd.flexboot4.config.FlexBoot4MediaEnvironmentListener");
     }
 
+    @Test
+    void mediaDatabaseResourcesArePackaged() throws IOException {
+        assertThat(resourceAsString("/db/init.sql"))
+                .contains("CREATE TABLE IF NOT EXISTS media_server")
+                .contains("CREATE TABLE IF NOT EXISTS media_cascade_binding");
+        assertThat(resourceAsString("/db/menu_data.sql"))
+                .contains("media_root")
+                .contains("media:server:list");
+    }
+
     private static String resourceAsString(String path) throws IOException {
         try (var in = MediaAutoConfigurationMetadataTest.class.getResourceAsStream(path)) {
             assertThat(in).as("resource %s", path).isNotNull();

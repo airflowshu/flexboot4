@@ -218,13 +218,14 @@ sys:user:import
 - 布局组件使用前端 `layoutMap` 支持的值，例如 `BasicLayout`、`IFrameView`。
 - 根菜单 parentId 统一使用 `NULL`，不要混用 `"0"`。
 
-菜单 SQL 应包含：
+模块 `src/main/resources/db/menu_data.sql` 应包含：
 
 - 菜单路由节点
 - 按钮权限节点
 - `authCode`
 - vben meta 字段
-- 对应 `sys_role_menu` 授权数据
+
+`sys_role_menu` 授权数据按模块或项目初始化策略追加；可插拔业务 starter 不强制默认授权给内置角色。
 
 已有开发数据不需要兼容旧格式，旧数据不符合规范时直接用 SQL 修正。
 

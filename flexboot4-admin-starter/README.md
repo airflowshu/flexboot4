@@ -150,6 +150,12 @@ flexboot4:
 
 启用后会追加迁移目录 `classpath:db/migration/flexboot4/admin/postgresql`。starter 默认不强制启用 Flyway，避免影响已有项目的数据库启动策略。
 
+## SQL
+
+- 首次接入初始化：`src/main/resources/db/init.sql`
+- 菜单与按钮权限：`src/main/resources/db/menu_data.sql`
+- 后续演进迁移：`src/main/resources/db/migration/flexboot4/admin/postgresql`
+
 ### 可观测性扩展
 
 默认提供 Noop `MetricsRecorder`，不会引入额外监控依赖。业务项目可声明自己的 Bean 接入 Micrometer、Prometheus 或内部监控：
@@ -216,7 +222,7 @@ P0 安全收口后，Admin 接口应显式声明 `@RequirePermission`；`/api/ad
 
 1. Admin Starter 是纯库模块，通过默认配置文件提供框架级默认值，外部项目仍需提供数据库、Redis、JWT 等环境配置
 2. 外部项目需要配置数据库连接、Redis 连接等信息
-3. 确保数据库已创建相应的表结构与权限数据（可参考 `../docs/sql/` 目录，P0 权限码补丁见 `../docs/sql/admin_permission_p0_patch_pg.sql`，P2 操作日志幂等补丁见 `../docs/sql/admin_operlog_p2_reliability_pg.sql`）
+3. 确保数据库已创建相应的表结构与权限数据：首次接入执行本模块 `src/main/resources/db/init.sql` 和 `src/main/resources/db/menu_data.sql`；后续改动通过本模块 Flyway 迁移目录维护
 4. JWT Secret 建议使用至少 256 位的随机字符串
 5. MFA Secret 建议使用独立于 JWT Secret 的稳定随机字符串，生产环境通过 `FLEXBOOT4_SECURITY_MFA_SECRET_KEY` 注入
 6. `flexboot4-admin-kernel` 仅承载公共底座类，不会自动启用 RBAC/运维 Bean；kb/media/sms/cms starter 已按 kernel 解耦。kb/cms 如需使用默认文件管理、配置读取、用户上下文与后台管理能力，请在应用中显式引入 `admin-starter`，或提供等价 Bean 实现

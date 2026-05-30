@@ -16,4 +16,6 @@ public interface MediaCascadePlatformService extends IExtendedService<MediaCasca
     boolean registerPlatform(String platformId);
 
     boolean stopPlatform(String platformId);
+
+    void markRegisterStatus(String platformId, boolean online, String error);
 }

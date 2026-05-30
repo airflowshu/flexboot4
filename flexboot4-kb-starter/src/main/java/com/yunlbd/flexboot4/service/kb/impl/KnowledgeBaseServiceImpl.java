@@ -39,7 +39,7 @@ public class KnowledgeBaseServiceImpl extends BaseServiceImpl<KnowledgeBaseMappe
         if (kb.getStatus() == null) {
             kb.setStatus(1);
         }
-        boolean ok = this.save(kb);
+        boolean ok = cacheProxy().save(kb);
         if (ok && "team".equalsIgnoreCase(kb.getType())) {
             KbMember member = KbMember.builder().kbId(kb.getId()).userId(userId).build();
             kbMemberService.save(member);
@@ -49,7 +49,7 @@ public class KnowledgeBaseServiceImpl extends BaseServiceImpl<KnowledgeBaseMappe
 
     @Override
     public boolean updateKnowledgeBase(String id, KnowledgeBase kb, String userId) {
-        KnowledgeBase existing = super.getById(id);
+        KnowledgeBase existing = cacheProxy().getById(id);
         if (existing == null) {
             return false;
         }
@@ -58,19 +58,19 @@ public class KnowledgeBaseServiceImpl extends BaseServiceImpl<KnowledgeBaseMappe
         }
         kb.setId(existing.getId());
         kb.setOwnerId(existing.getOwnerId());
-        return this.updateById(kb, true);
+        return cacheProxy().updateById(kb, true);
     }
 
     @Override
     public boolean deleteKnowledgeBase(String id, String userId) {
-        KnowledgeBase existing = super.getById(id);
+        KnowledgeBase existing = cacheProxy().getById(id);
         if (existing == null) {
             return false;
         }
         if (!isOwner(existing, userId)) {
             throw new RuntimeException("仅知识库创建者可执行该操作");
         }
-        return this.removeById(id);
+        return cacheProxy().removeById(id);
     }
 
     @Override
@@ -97,7 +97,7 @@ public class KnowledgeBaseServiceImpl extends BaseServiceImpl<KnowledgeBaseMappe
             kbIdQw.or(KnowledgeBase::getId).in(memberKbIds);
         }
 
-        List<String> kbIds = super.listAs(kbIdQw, String.class);
+        List<String> kbIds = cacheProxy().listAs(kbIdQw, String.class);
         return kbIds == null ? Set.of() : kbIds.stream()
                 .filter(s -> s != null && !s.isBlank())
                 .collect(Collectors.toSet());
@@ -116,7 +116,7 @@ public class KnowledgeBaseServiceImpl extends BaseServiceImpl<KnowledgeBaseMappe
 
         QueryWrapper qw = DefaultQueryWrapperBuilder.get().build(searchDto, KnowledgeBase.class);
         qw.and(KnowledgeBase::getId).in(visibleKbIds);
-        return super.page(page, qw);
+        return cacheProxy().page(page, qw);
     }
 
     @Override
@@ -126,7 +126,7 @@ public class KnowledgeBaseServiceImpl extends BaseServiceImpl<KnowledgeBaseMappe
 
     @Override
     public void checkVisible(String kbId, String userId) {
-        KnowledgeBase kb = super.getById(kbId);
+        KnowledgeBase kb = cacheProxy().getById(kbId);
         if (kb == null) {
             throw new RuntimeException("知识库不存在");
         }
@@ -151,7 +151,7 @@ public class KnowledgeBaseServiceImpl extends BaseServiceImpl<KnowledgeBaseMappe
 
     @Override
     public void checkOwner(String kbId, String userId) {
-        KnowledgeBase kb = super.getById(kbId);
+        KnowledgeBase kb = cacheProxy().getById(kbId);
         if (kb == null) {
             throw new RuntimeException("知识库不存在");
         }

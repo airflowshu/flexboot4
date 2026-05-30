@@ -52,19 +52,23 @@ Media 专项文档：
 
 ## SQL 与初始化
 
-常用 SQL 位于 [docs/sql](sql/)：
+SQL 脚本跟随业务 starter 维护，不再集中放在 `docs` 下。每个需要数据库资源的模块在 `src/main/resources/db/` 下提供：
 
-- Admin 权限与菜单补丁
-- CMS 表结构与菜单初始化
-- vben 菜单契约修正脚本
+- `init.sql`：该模块的业务表、索引和必要初始化数据
+- `menu_data.sql`：该模块的菜单、按钮和权限初始化数据
+- `migration/flexboot4/{module}/postgresql/V*__*.sql`：后续功能演进的 Flyway 脚本
 
-业务 starter 自带的初始化脚本位于模块资源目录，例如：
+当前模块脚本入口：
 
-- `flexboot4-cms-starter/src/main/resources/db/cms_pg.sql`
-- `flexboot4-cms-starter/src/main/resources/db/cms_menu_init_pg.sql`
-- `flexboot4-media-starter/src/main/resources/db/migration/media_pg.sql`
-- `flexboot4-media-starter/src/main/resources/db/migration/media_menu_pg.sql`
-- `flexboot4-sms4j-starter/src/main/resources/db/sms4j_config_pg.sql`
-- `flexboot4-kb-starter/src/main/resources/db/kb_menu_pg.sql`
+- `flexboot4-admin-starter/src/main/resources/db/init.sql`
+- `flexboot4-admin-starter/src/main/resources/db/menu_data.sql`
+- `flexboot4-cms-starter/src/main/resources/db/init.sql`
+- `flexboot4-cms-starter/src/main/resources/db/menu_data.sql`
+- `flexboot4-media-starter/src/main/resources/db/init.sql`
+- `flexboot4-media-starter/src/main/resources/db/menu_data.sql`
+- `flexboot4-sms4j-starter/src/main/resources/db/init.sql`
+- `flexboot4-sms4j-starter/src/main/resources/db/menu_data.sql`
+- `flexboot4-kb-starter/src/main/resources/db/init.sql`
+- `flexboot4-kb-starter/src/main/resources/db/menu_data.sql`
 
-开发阶段旧数据不要求兼容。若数据不符合当前契约，优先使用 SQL 修正数据，而不是在代码里保留旧兼容逻辑。
+开发阶段旧数据不要求兼容。若数据不符合当前契约，优先使用模块 SQL 或 Flyway 迁移修正数据，而不是在代码里保留旧兼容逻辑。

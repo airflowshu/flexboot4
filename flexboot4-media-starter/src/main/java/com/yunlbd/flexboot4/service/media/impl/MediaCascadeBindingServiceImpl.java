@@ -18,14 +18,14 @@ public class MediaCascadeBindingServiceImpl extends BaseServiceImpl<MediaCascade
 
     @Override
     public List<MediaCascadeBinding> listByPlatformId(String platformId) {
-        return list(QueryWrapper.create()
+        return cacheProxy().list(QueryWrapper.create()
                 .from(MediaCascadeBinding.class)
                 .where(MediaCascadeBinding::getPlatformId).eq(platformId));
     }
 
     @Override
     public boolean deleteByPlatformId(String platformId) {
-        return remove(QueryWrapper.create()
+        return cacheProxy().remove(QueryWrapper.create()
                 .from(MediaCascadeBinding.class)
                 .where(MediaCascadeBinding::getPlatformId).eq(platformId));
     }

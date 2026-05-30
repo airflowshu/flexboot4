@@ -1,10 +1,11 @@
 package com.yunlbd.flexboot4.service.sys;
 
-import com.yunlbd.flexboot4.cache.TableVersions;
+import com.mybatisflex.core.query.QueryWrapper;
+import com.yunlbd.flexboot4.common.annotation.BumpTableVersion;
 import com.yunlbd.flexboot4.entity.sys.SysFile;
+import com.yunlbd.flexboot4.entity.sys.table.SysFileTableDef;
 import com.yunlbd.flexboot4.file.*;
 import com.yunlbd.flexboot4.file.ai.AiParseStatus;
-import com.yunlbd.flexboot4.mapper.SysFileMapper;
 import com.yunlbd.flexboot4.storage.FileStorageRegistry;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
@@ -24,12 +25,10 @@ public class FileManagerServiceImpl implements FileManagerService {
 
     private final FileStorageRegistry fileStorageRegistry;
     private final SysFileService sysFileService;
-    private final SysFileMapper sysFileMapper;
 
-    public FileManagerServiceImpl(FileStorageRegistry fileStorageRegistry, SysFileService sysFileService, SysFileMapper sysFileMapper) {
+    public FileManagerServiceImpl(FileStorageRegistry fileStorageRegistry, SysFileService sysFileService) {
         this.fileStorageRegistry = fileStorageRegistry;
         this.sysFileService = sysFileService;
-        this.sysFileMapper = sysFileMapper;
     }
 
     @Override
@@ -99,7 +98,7 @@ public class FileManagerServiceImpl implements FileManagerService {
                 }
             }
             fileStorage.delete(stored.location());
-            throw new IllegalStateException("sys_file.file_hash 唯一索引未按文件存储规范调整，请执行 docs/sql/admin_sys_file_hash_alive_unique_pg.sql", e);
+            throw new IllegalStateException("sys_file.file_hash 唯一索引未按文件存储规范调整，请执行 flexboot4-admin-starter/src/main/resources/db/migration/flexboot4/admin/postgresql/V3__sys_file_hash_alive_unique.sql", e);
         }
 
         return stored;
@@ -149,8 +148,14 @@ public class FileManagerServiceImpl implements FileManagerService {
         if (hash == null || hash.isBlank()) {
             return null;
         }
-        // 使用自定义 Mapper 方法，绕过 TableLogic 自动添加 del_flag 条件
-        return sysFileMapper.selectByHash(hash);
+        SysFileTableDef file = SysFileTableDef.SYS_FILE;
+        QueryWrapper query = QueryWrapper.create()
+                .select(file.ALL_COLUMNS)
+                .from(file)
+                .where(file.FILE_HASH.eq(hash))
+                .and(file.DEL_FLAG.eq(0))
+                .limit(1);
+        return sysFileService.getOne(query);
     }
 
     /**
@@ -222,14 +227,15 @@ public class FileManagerServiceImpl implements FileManagerService {
     }
 
     @Override
-    public void delete(String fileId) {
+    @BumpTableVersion(tables = "sys_file")
+    public boolean delete(String fileId) {
         SysFile entity = sysFileService.getById(fileId);
         if (entity == null || entity.getStorageType() == null || entity.getStorageType().isBlank()) {
-            return;
+            return false;
         }
         FileObject fileObject = toFileObject(entity);
         fileStorageRegistry.get(fileObject.location().storageType()).delete(fileObject.location());
-        bumpFileTableVersion();
+        return true;
     }
 
     private HashResult sha256AndCount(InputStream in) throws IOException {
@@ -284,10 +290,4 @@ public class FileManagerServiceImpl implements FileManagerService {
         );
     }
 
-    /**
-     * 清除文件相关缓存
-     */
-    private void bumpFileTableVersion() {
-        TableVersions.bumpVersion("sys_file");
-    }
 }

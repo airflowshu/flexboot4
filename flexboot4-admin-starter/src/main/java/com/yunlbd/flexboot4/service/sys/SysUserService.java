@@ -1,5 +1,6 @@
 package com.yunlbd.flexboot4.service.sys;
 
+import com.yunlbd.flexboot4.common.annotation.BumpTableVersion;
 import com.yunlbd.flexboot4.entity.sys.SysUser;
 
 /**
@@ -12,5 +13,6 @@ public interface SysUserService extends IExtendedService<SysUser> {
 
     boolean updatePasswordById(String id, String newPassword);
 
+    @BumpTableVersion(SysUser.class)
     boolean updateCurrentProfile(String id, String realName, String profileFileId, String remark);
 }

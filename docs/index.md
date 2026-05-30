@@ -36,4 +36,5 @@
 
 ## SQL
 
-SQL 脚本集中在 [sql](sql/) 目录。当前项目处于开发阶段，旧数据不符合新契约时优先用 SQL 修正，不保留旧兼容逻辑。
+SQL 脚本随业务 starter 一起维护。每个需要数据库资源的模块在
+`src/main/resources/db/` 下提供 `init.sql` 与 `menu_data.sql`：前者放业务表和模块初始化数据，后者放菜单与按钮权限数据。后续功能演进通过模块自己的 `db/migration/flexboot4/{module}/postgresql` Flyway 脚本管理。

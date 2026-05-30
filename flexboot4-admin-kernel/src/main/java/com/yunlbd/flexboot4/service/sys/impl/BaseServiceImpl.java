@@ -13,6 +13,7 @@ import com.yunlbd.flexboot4.query.DefaultQueryWrapperBuilder;
 import com.yunlbd.flexboot4.query.SearchDtoUtils;
 import com.yunlbd.flexboot4.service.sys.IExtendedService;
 import org.jspecify.annotations.NonNull;
+import org.springframework.aop.framework.AopContext;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.ResolvableType;
@@ -32,7 +33,7 @@ public class BaseServiceImpl<M extends BaseMapper<T>, T extends BaseEntity> exte
 
     @Override
     @CacheEvict(allEntries = true, cacheResolver = "dynamicCacheResolver")
-    public boolean save(T entity) {
+    public boolean save(@NonNull T entity) {
         boolean ok = super.save(entity);
         if (ok) {
             bumpVersionsOnWrite(entity.getClass());
@@ -73,7 +74,7 @@ public class BaseServiceImpl<M extends BaseMapper<T>, T extends BaseEntity> exte
 
     @Override
     @CacheEvict(key = "#id", cacheResolver = "dynamicCacheResolver")
-    public boolean removeById(Serializable id) {
+    public boolean removeById(@NonNull Serializable id) {
         boolean ok = super.removeById(id);
         if (ok) {
             bumpVersionsOnWrite(resolveEntityClass());
@@ -93,7 +94,7 @@ public class BaseServiceImpl<M extends BaseMapper<T>, T extends BaseEntity> exte
 
     @Override
     @CacheEvict(allEntries = true, cacheResolver = "dynamicCacheResolver")
-    public boolean update(T entity, QueryWrapper query) {
+    public boolean update(@NonNull T entity, @NonNull QueryWrapper query) {
         boolean ok = super.update(entity, query);
         if (ok) {
             bumpVersionsOnWrite(entity != null ? entity.getClass() : resolveEntityClass());
@@ -103,7 +104,17 @@ public class BaseServiceImpl<M extends BaseMapper<T>, T extends BaseEntity> exte
 
     @Override
     @CacheEvict(key = "#entity.id", cacheResolver = "dynamicCacheResolver")
-    public boolean updateById(T entity, boolean ignoreNulls) {
+    public boolean updateById(@NonNull T entity) {
+        boolean ok = super.updateById(entity);
+        if (ok) {
+            bumpVersionsOnWrite(entity != null ? entity.getClass() : resolveEntityClass());
+        }
+        return ok;
+    }
+
+    @Override
+    @CacheEvict(key = "#entity.id", cacheResolver = "dynamicCacheResolver")
+    public boolean updateById(@NonNull T entity, boolean ignoreNulls) {
         boolean ok = super.updateById(entity, ignoreNulls);
         if (ok) {
             bumpVersionsOnWrite(entity != null ? entity.getClass() : resolveEntityClass());
@@ -220,6 +231,23 @@ public class BaseServiceImpl<M extends BaseMapper<T>, T extends BaseEntity> exte
 
     protected void bumpTableVersion(Class<?> entityClass) {
         bumpVersionsOnWrite(entityClass);
+    }
+
+    @SuppressWarnings("unchecked")
+    protected IExtendedService<T> cacheProxy() {
+        try {
+            return (IExtendedService<T>) AopContext.currentProxy();
+        } catch (IllegalStateException ignored) {
+            return this;
+        }
+    }
+
+    protected <S> S serviceProxy(Class<S> serviceType) {
+        try {
+            return serviceType.cast(AopContext.currentProxy());
+        } catch (IllegalStateException ignored) {
+            return serviceType.cast(this);
+        }
     }
 
     private void bumpVersionsOnWrite(Class<?> entityClass) {

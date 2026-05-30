@@ -34,6 +34,16 @@ class KbAutoConfigurationMetadataTest {
         assertThat(defaults).contains("enabled: ${FILE_EMBEDDING_STREAM_ENABLED:false}");
     }
 
+    @Test
+    void kbDatabaseResourcesArePackaged() throws IOException {
+        assertThat(resourceAsString("/db/init.sql"))
+                .contains("CREATE TABLE IF NOT EXISTS knowledge_base")
+                .contains("CREATE TABLE IF NOT EXISTS sys_file_chunk");
+        assertThat(resourceAsString("/db/menu_data.sql"))
+                .contains("kb_menu_root")
+                .contains("kb:manage:list");
+    }
+
     private static String resourceAsString(String path) throws IOException {
         try (var in = KbAutoConfigurationMetadataTest.class.getResourceAsStream(path)) {
             assertThat(in).as("resource %s", path).isNotNull();

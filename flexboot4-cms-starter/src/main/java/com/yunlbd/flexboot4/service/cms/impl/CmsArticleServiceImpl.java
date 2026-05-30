@@ -3,11 +3,14 @@ package com.yunlbd.flexboot4.service.cms.impl;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.core.relation.RelationManager;
+import com.mybatisflex.core.update.UpdateChain;
 import com.yunlbd.flexboot4.auth.CurrentUserProvider;
+import com.yunlbd.flexboot4.common.annotation.BumpTableVersion;
 import com.yunlbd.flexboot4.config.CmsRenderProperties;
 import com.yunlbd.flexboot4.dto.SearchDto;
 import com.yunlbd.flexboot4.entity.cms.ArticleStatusEnum;
 import com.yunlbd.flexboot4.entity.cms.CmsArticle;
+import com.yunlbd.flexboot4.entity.cms.table.CmsArticleTableDef;
 import com.yunlbd.flexboot4.mapper.CmsArticleMapper;
 import com.yunlbd.flexboot4.query.DefaultQueryWrapperBuilder;
 import com.yunlbd.flexboot4.query.SearchDtoUtils;
@@ -15,9 +18,9 @@ import com.yunlbd.flexboot4.service.cms.CmsArticleService;
 import com.yunlbd.flexboot4.service.cms.CmsContentSanitizer;
 import com.yunlbd.flexboot4.service.cms.CmsTemplateRenderService;
 import com.yunlbd.flexboot4.service.sys.impl.BaseServiceImpl;
+import org.jspecify.annotations.NonNull;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -28,18 +31,15 @@ import java.util.Objects;
 @CacheConfig(cacheNames = "cmsArticle")
 public class CmsArticleServiceImpl extends BaseServiceImpl<CmsArticleMapper, CmsArticle> implements CmsArticleService {
 
-    private final CmsArticleMapper articleMapper;
     private final CmsTemplateRenderService templateRenderService;
     private final CmsContentSanitizer cmsContentSanitizer;
     private final CmsRenderProperties cmsRenderProperties;
     private final CurrentUserProvider currentUserProvider;
 
-    public CmsArticleServiceImpl(CmsArticleMapper articleMapper,
-                                 CmsTemplateRenderService templateRenderService,
+    public CmsArticleServiceImpl(CmsTemplateRenderService templateRenderService,
                                  CmsContentSanitizer cmsContentSanitizer,
                                  CmsRenderProperties cmsRenderProperties,
                                  CurrentUserProvider currentUserProvider) {
-        this.articleMapper = articleMapper;
         this.templateRenderService = templateRenderService;
         this.cmsContentSanitizer = cmsContentSanitizer;
         this.cmsRenderProperties = cmsRenderProperties;
@@ -47,7 +47,6 @@ public class CmsArticleServiceImpl extends BaseServiceImpl<CmsArticleMapper, Cms
     }
 
     @Override
-    @Cacheable(keyGenerator = "versionedQueryKeyGenerator", cacheResolver = "dynamicCacheResolver")
     public Page<CmsArticle> pageWithPermissionFilter(SearchDto searchDto) {
         // 检查用户是否有审核权限（管理员）
         List<String> permissionCodes = currentUserProvider.getPermissionCodes();
@@ -64,7 +63,7 @@ public class CmsArticleServiceImpl extends BaseServiceImpl<CmsArticleMapper, Cms
             queryWrapper.and(CmsArticle::getCreateBy).eq(currentUsername);
         }
 
-        Page<CmsArticle> result = super.page(page, queryWrapper);
+        Page<CmsArticle> result = cacheProxy().page(page, queryWrapper);
 
         // 加载关系数据
         if (SearchDtoUtils.hasRelationPaths(searchDto, CmsArticle.class)) {
@@ -81,7 +80,7 @@ public class CmsArticleServiceImpl extends BaseServiceImpl<CmsArticleMapper, Cms
     @Override
     @CacheEvict(allEntries = true)
     public boolean submitForReview(String articleId) {
-        CmsArticle article = getById(articleId);
+        CmsArticle article = cacheProxy().getById(articleId);
         if (article == null) {
             throw new IllegalArgumentException("文章不存在");
         }
@@ -94,13 +93,13 @@ public class CmsArticleServiceImpl extends BaseServiceImpl<CmsArticleMapper, Cms
                 .id(articleId)
                 .status(ArticleStatusEnum.PENDING.name())
                 .build();
-        return updateById(update, true);
+        return cacheProxy().updateById(update, true);
     }
 
     @Override
     @CacheEvict(allEntries = true)
     public boolean approveArticle(String articleId, String reviewComment) {
-        CmsArticle article = getById(articleId);
+        CmsArticle article = cacheProxy().getById(articleId);
         if (article == null) {
             throw new IllegalArgumentException("文章不存在");
         }
@@ -119,7 +118,7 @@ public class CmsArticleServiceImpl extends BaseServiceImpl<CmsArticleMapper, Cms
                 .reviewComment(reviewComment)
                 .publishTime(now)
                 .build();
-        boolean updated = updateById(update, true);
+        boolean updated = cacheProxy().updateById(update, true);
         if (updated && cmsRenderProperties.isAutoGenerateOnApprove()) {
             renderPublishedPage(articleId);
         }
@@ -129,7 +128,7 @@ public class CmsArticleServiceImpl extends BaseServiceImpl<CmsArticleMapper, Cms
     @Override
     @CacheEvict(allEntries = true)
     public boolean rejectArticle(String articleId, String reviewComment) {
-        CmsArticle article = getById(articleId);
+        CmsArticle article = cacheProxy().getById(articleId);
         if (article == null) {
             throw new IllegalArgumentException("文章不存在");
         }
@@ -147,29 +146,37 @@ public class CmsArticleServiceImpl extends BaseServiceImpl<CmsArticleMapper, Cms
                 .reviewTime(now)
                 .reviewComment(reviewComment)
                 .build();
-        return updateById(update, true);
+        return cacheProxy().updateById(update, true);
     }
 
     @Override
+    @BumpTableVersion(CmsArticle.class)
     public boolean incrementViewCount(String articleId) {
-        return articleMapper.incrementViewCount(articleId) > 0;
+        CmsArticleTableDef article = CmsArticleTableDef.CMS_ARTICLE;
+        return UpdateChain.of(getMapper())
+                .setRaw(article.VIEW_COUNT, "coalesce(view_count, 0) + 1", true)
+                .where(article.ID.eq(articleId))
+                .and(article.DEL_FLAG.eq(0))
+                .update();
     }
 
     @Override
-    public boolean save(CmsArticle entity) {
+    @CacheEvict(allEntries = true, cacheResolver = "dynamicCacheResolver")
+    public boolean save(@NonNull CmsArticle entity) {
         cmsContentSanitizer.sanitizeForPersistence(entity);
         return super.save(entity);
     }
 
     @Override
-    public boolean updateById(CmsArticle entity, boolean ignoreNulls) {
+    @CacheEvict(key = "#entity.id", cacheResolver = "dynamicCacheResolver")
+    public boolean updateById(@NonNull CmsArticle entity, boolean ignoreNulls) {
         cmsContentSanitizer.sanitizeForPersistence(entity);
         return super.updateById(entity, ignoreNulls);
     }
 
     @Override
     public String renderPreviewPage(String articleId) {
-        CmsArticle article = getById(articleId);
+        CmsArticle article = cacheProxy().getById(articleId);
         if (article == null) {
             throw new IllegalArgumentException("文章不存在");
         }
@@ -178,7 +185,7 @@ public class CmsArticleServiceImpl extends BaseServiceImpl<CmsArticleMapper, Cms
 
     @Override
     public String renderPublishedPage(String articleId) {
-        CmsArticle article = getById(articleId);
+        CmsArticle article = cacheProxy().getById(articleId);
         if (article == null) {
             throw new IllegalArgumentException("文章不存在");
         }

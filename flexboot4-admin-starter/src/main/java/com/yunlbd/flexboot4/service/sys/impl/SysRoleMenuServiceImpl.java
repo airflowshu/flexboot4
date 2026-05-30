@@ -29,7 +29,7 @@ public class SysRoleMenuServiceImpl extends BaseServiceImpl<SysRoleMenuMapper, S
         // 清除该角色的所有菜单关联
         QueryWrapper wrapper = QueryWrapper.create()
                 .where(SysRoleMenuTableDef.SYS_ROLE_MENU.ROLE_ID.eq(roleId));
-        super.remove(wrapper);
+        cacheProxy().remove(wrapper);
 
         // 批量新增菜单关联
         List<SysRoleMenu> roleMenus = menuIds.stream()
@@ -37,7 +37,7 @@ public class SysRoleMenuServiceImpl extends BaseServiceImpl<SysRoleMenuMapper, S
                         .roleId(roleId)
                         .menuId(menuId)
                         .build()).collect(Collectors.toUnmodifiableList());
-        super.saveBatch(roleMenus);
+        cacheProxy().saveBatch(roleMenus);
         return true;
     }
 
@@ -46,7 +46,7 @@ public class SysRoleMenuServiceImpl extends BaseServiceImpl<SysRoleMenuMapper, S
         QueryWrapper wrapper = QueryWrapper.create()
                 .select(SysRoleMenuTableDef.SYS_ROLE_MENU.MENU_ID)
                 .where(SysRoleMenuTableDef.SYS_ROLE_MENU.ROLE_ID.eq(roleId));
-        return super.list(wrapper).stream()
+        return cacheProxy().list(wrapper).stream()
                 .map(SysRoleMenu::getMenuId)
                 .toList();
     }

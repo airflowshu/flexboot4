@@ -12,10 +12,12 @@ import com.yunlbd.flexboot4.entity.ops.table.AiApiKeyTableDef;
 import com.yunlbd.flexboot4.entity.sys.SysUser;
 import com.yunlbd.flexboot4.entity.sys.table.SysUserTableDef;
 import com.yunlbd.flexboot4.mapper.AiApiKeyMapper;
-import com.yunlbd.flexboot4.mapper.SysUserMapper;
 import com.yunlbd.flexboot4.service.ops.AiApiKeyService;
+import com.yunlbd.flexboot4.service.sys.SysUserService;
 import com.yunlbd.flexboot4.service.sys.impl.BaseServiceImpl;
+import org.jspecify.annotations.NonNull;
 import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -43,18 +45,19 @@ public class AiApiKeyServiceImpl extends BaseServiceImpl<AiApiKeyMapper, AiApiKe
     private static final String AI_API_KEY_SNAPSHOT_LATEST = "aikey:snapshot:latest";
     private static final Duration SNAPSHOT_TTL = Duration.ofDays(7);
 
-    private final SysUserMapper sysUserMapper;
+    private final SysUserService sysUserService;
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
 
-    public AiApiKeyServiceImpl(SysUserMapper sysUserMapper, StringRedisTemplate redisTemplate, ObjectMapper objectMapper) {
-        this.sysUserMapper = sysUserMapper;
+    public AiApiKeyServiceImpl(SysUserService sysUserService, StringRedisTemplate redisTemplate, ObjectMapper objectMapper) {
+        this.sysUserService = sysUserService;
         this.redisTemplate = redisTemplate;
         this.objectMapper = objectMapper;
     }
 
     @Override
-    public boolean save(AiApiKey entity) {
+    @CacheEvict(allEntries = true, cacheResolver = "dynamicCacheResolver")
+    public boolean save(@NonNull AiApiKey entity) {
         boolean result = super.save(entity);
         if (result && entity.getApiKey() != null) {
             cacheApiKey(entity);
@@ -66,7 +69,8 @@ public class AiApiKeyServiceImpl extends BaseServiceImpl<AiApiKeyMapper, AiApiKe
     }
 
     @Override
-    public boolean updateById(AiApiKey entity) {
+    @CacheEvict(allEntries = true, cacheResolver = "dynamicCacheResolver")
+    public boolean updateById(@NonNull AiApiKey entity) {
         boolean result = super.updateById(entity);
         if (result && entity.getApiKey() != null) {
             if (entity.getStatus() != null && entity.getStatus() != 1) {
@@ -83,13 +87,14 @@ public class AiApiKeyServiceImpl extends BaseServiceImpl<AiApiKeyMapper, AiApiKe
     }
 
     @Override
-    public boolean updateById(AiApiKey entity, boolean ignoreNulls) {
-        String id = entity == null ? null : entity.getId();
-        AiApiKey before = id == null ? null : super.getById(id);
+    @CacheEvict(allEntries = true, cacheResolver = "dynamicCacheResolver")
+    public boolean updateById(@NonNull AiApiKey entity, boolean ignoreNulls) {
+        String id = entity.getId();
+        AiApiKey before = id == null ? null : cacheProxy().getById(id);
 
         boolean result = super.updateById(entity, ignoreNulls);
         if (result) {
-            AiApiKey after = id == null ? null : super.getById(id);
+            AiApiKey after = id == null ? null : cacheProxy().getById(id);
             refreshCacheOnChange(before, after);
             rebuildSnapshot();
         }
@@ -97,8 +102,19 @@ public class AiApiKeyServiceImpl extends BaseServiceImpl<AiApiKeyMapper, AiApiKe
     }
 
     @Override
-    public boolean removeById(Serializable id) {
-        AiApiKey entity = id == null ? null : super.getById(id);
+    @CacheEvict(allEntries = true, cacheResolver = "dynamicCacheResolver")
+    public boolean removeById(@NonNull Serializable id) {
+        return removeByIdInternal(id);
+    }
+
+    @Override
+    @CacheEvict(allEntries = true, cacheResolver = "dynamicCacheResolver")
+    public boolean removeById(String id) {
+        return removeByIdInternal(id);
+    }
+
+    private boolean removeByIdInternal(Serializable id) {
+        AiApiKey entity = id == null ? null : cacheProxy().getById(id);
         boolean result = super.removeById(id);
         if (result && entity != null && entity.getApiKey() != null) {
             removeApiKeyFromCache(entity.getApiKey(), entity.getUserId());
@@ -107,11 +123,6 @@ public class AiApiKeyServiceImpl extends BaseServiceImpl<AiApiKeyMapper, AiApiKe
             rebuildSnapshot();
         }
         return result;
-    }
-
-    @Override
-    public boolean removeById(String id) {
-        return removeById((Serializable) id);
     }
 
     @Override
@@ -160,8 +171,8 @@ public class AiApiKeyServiceImpl extends BaseServiceImpl<AiApiKeyMapper, AiApiKe
         String beforeKey = before == null ? null : before.getApiKey();
         String afterKey = after == null ? null : after.getApiKey();
 
-        if (beforeKey != null && !beforeKey.isBlank() && (afterKey == null || !beforeKey.equals(afterKey))) {
-            removeApiKeyFromCache(beforeKey, before == null ? null : before.getUserId());
+        if (beforeKey != null && !beforeKey.isBlank() && (!beforeKey.equals(afterKey))) {
+            removeApiKeyFromCache(beforeKey, before.getUserId());
         }
 
         if (after == null || afterKey == null || afterKey.isBlank()) {
@@ -325,7 +336,7 @@ public class AiApiKeyServiceImpl extends BaseServiceImpl<AiApiKeyMapper, AiApiKe
                 .select(aiApiKey.USER_ID)
                 .from(aiApiKey);
 
-        return sysUserMapper.selectListByQuery(QueryWrapper.create()
+        return sysUserService.list(QueryWrapper.create()
                 .where(sysUser.ID.notIn(subQuery)));
     }
 }

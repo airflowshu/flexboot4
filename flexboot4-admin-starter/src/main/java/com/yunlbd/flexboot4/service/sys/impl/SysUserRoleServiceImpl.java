@@ -29,7 +29,7 @@ public class SysUserRoleServiceImpl extends BaseServiceImpl<SysUserRoleMapper, S
         // 清除该用户的所有角色关联
         QueryWrapper wrapper = QueryWrapper.create()
                 .where(SysUserRoleTableDef.SYS_USER_ROLE.USER_ID.eq(userId));
-        super.remove(wrapper);
+        cacheProxy().remove(wrapper);
 
         // 批量新增角色关联
         List<SysUserRole> userRoles = roleIds.stream()
@@ -37,7 +37,7 @@ public class SysUserRoleServiceImpl extends BaseServiceImpl<SysUserRoleMapper, S
                         .userId(userId)
                         .roleId(roleId)
                         .build()).collect(Collectors.toUnmodifiableList());
-        super.saveBatch(userRoles);
+        cacheProxy().saveBatch(userRoles);
         return true;
     }
 }

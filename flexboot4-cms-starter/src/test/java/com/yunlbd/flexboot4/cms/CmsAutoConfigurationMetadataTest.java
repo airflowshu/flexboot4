@@ -19,4 +19,21 @@ class CmsAutoConfigurationMetadataTest {
             assertThat(imports).contains("com.yunlbd.flexboot4.autoconfigure.FlexBoot4CmsAutoConfiguration");
         }
     }
+
+    @Test
+    void cmsDatabaseResourcesArePackaged() throws IOException {
+        assertThat(resourceAsString("/db/init.sql"))
+                .contains("CREATE TABLE IF NOT EXISTS cms_category")
+                .contains("CREATE TABLE IF NOT EXISTS cms_template_publish_record");
+        assertThat(resourceAsString("/db/menu_data.sql"))
+                .contains("cms_menu_root")
+                .contains("cms:article:list");
+    }
+
+    private static String resourceAsString(String path) throws IOException {
+        try (var in = CmsAutoConfigurationMetadataTest.class.getResourceAsStream(path)) {
+            assertThat(in).as("resource %s", path).isNotNull();
+            return new String(in.readAllBytes(), StandardCharsets.UTF_8);
+        }
+    }
 }

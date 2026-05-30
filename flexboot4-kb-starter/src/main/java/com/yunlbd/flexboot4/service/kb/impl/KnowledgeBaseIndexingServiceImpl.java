@@ -12,7 +12,6 @@ import com.yunlbd.flexboot4.file.ai.AiStatus;
 import com.yunlbd.flexboot4.file.parse.FileParser;
 import com.yunlbd.flexboot4.file.parse.ParsedDocument;
 import com.yunlbd.flexboot4.file.parse.TokenEstimator;
-import com.yunlbd.flexboot4.mapper.KbFileTreeMapper;
 import com.yunlbd.flexboot4.service.kb.*;
 import com.yunlbd.flexboot4.service.sys.ConfigLookupService;
 import com.yunlbd.flexboot4.service.sys.FileManagerService;
@@ -27,7 +26,7 @@ import java.util.List;
 public class KnowledgeBaseIndexingServiceImpl implements KnowledgeBaseIndexingService {
 
     private final KnowledgeBaseService knowledgeBaseService;
-    private final KbFileTreeMapper kbFileTreeMapper;
+    private final KbFileTreeService kbFileTreeService;
     private final SysFileService sysFileService;
     private final SysFileParsedService sysFileParsedService;
     private final SysFileChunkService sysFileChunkService;
@@ -38,7 +37,7 @@ public class KnowledgeBaseIndexingServiceImpl implements KnowledgeBaseIndexingSe
     private final ConfigLookupService configLookupService;
 
     public KnowledgeBaseIndexingServiceImpl(KnowledgeBaseService knowledgeBaseService,
-                                            KbFileTreeMapper kbFileTreeMapper,
+                                            KbFileTreeService kbFileTreeService,
                                             SysFileService sysFileService,
                                             SysFileParsedService sysFileParsedService,
                                             SysFileChunkService sysFileChunkService,
@@ -48,7 +47,7 @@ public class KnowledgeBaseIndexingServiceImpl implements KnowledgeBaseIndexingSe
                                             List<FileParser> parsers,
                                             ConfigLookupService configLookupService) {
         this.knowledgeBaseService = knowledgeBaseService;
-        this.kbFileTreeMapper = kbFileTreeMapper;
+        this.kbFileTreeService = kbFileTreeService;
         this.sysFileService = sysFileService;
         this.sysFileParsedService = sysFileParsedService;
         this.sysFileChunkService = sysFileChunkService;
@@ -77,7 +76,7 @@ public class KnowledgeBaseIndexingServiceImpl implements KnowledgeBaseIndexingSe
         if (fileTreeIds != null && !fileTreeIds.isEmpty()) {
             treeQw.and(KbFileTreeTableDef.KB_FILE_TREE.ID.in(fileTreeIds));
         }
-        List<KbFileTree> fileNodes = kbFileTreeMapper.selectListByQuery(treeQw);
+        List<KbFileTree> fileNodes = kbFileTreeService.list(treeQw);
         if (fileNodes == null || fileNodes.isEmpty()) {
             return 0;
         }

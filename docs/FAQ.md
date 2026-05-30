@@ -209,23 +209,20 @@ Unable to connect to database
 
 4. **执行初始化脚本**
    ```bash
-   psql -U postgres -d flexboot4 -f docs/sql/sys_oper_log_pg.sql
+   psql -U postgres -d flexboot4 -f flexboot4-admin-starter/src/main/resources/db/init.sql
+   psql -U postgres -d flexboot4 -f flexboot4-admin-starter/src/main/resources/db/menu_data.sql
    ```
 
 ### Q10: 表不存在错误
 
-**A:** 执行数据库初始化脚本：
+**A:** 按已集成的 starter 执行数据库初始化脚本。基础后台能力至少需要：
 
 ```bash
-# 找到 SQL 脚本
-ls docs/sql/
-
-# 执行脚本
-psql -U postgres -d flexboot4 -f docs/sql/init.sql
-
-# P0 permission hardening patch (reset-password / monitor / oper-log)
-psql -U postgres -d flexboot4 -f docs/sql/admin_permission_p0_patch_pg.sql
+psql -U postgres -d flexboot4 -f flexboot4-admin-starter/src/main/resources/db/init.sql
+psql -U postgres -d flexboot4 -f flexboot4-admin-starter/src/main/resources/db/menu_data.sql
 ```
+
+如集成 CMS、Media、SMS4J、KB 等能力，再执行对应模块的 `src/main/resources/db/init.sql` 与 `src/main/resources/db/menu_data.sql`。后续功能改动通过各模块 `src/main/resources/db/migration/...` 下的 Flyway 脚本管理。
 
 或者在应用配置中启用自动建表（仅开发环境）：
 

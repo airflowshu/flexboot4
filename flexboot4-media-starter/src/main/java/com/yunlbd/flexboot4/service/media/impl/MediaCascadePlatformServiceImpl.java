@@ -12,8 +12,8 @@ import com.yunlbd.flexboot4.service.media.MediaCascadePlatformService;
 import com.yunlbd.flexboot4.service.media.MediaChannelService;
 import com.yunlbd.flexboot4.service.media.MediaGatewayRuntimeManager;
 import com.yunlbd.flexboot4.service.sys.impl.BaseServiceImpl;
-import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -21,13 +21,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 @CacheConfig(cacheNames = "mediaCascadePlatform")
 public class MediaCascadePlatformServiceImpl extends BaseServiceImpl<MediaCascadePlatformMapper, MediaCascadePlatform> implements MediaCascadePlatformService {
 
     private final MediaChannelService mediaChannelService;
     private final MediaCascadeBindingService mediaCascadeBindingService;
     private final MediaGatewayRuntimeManager mediaGatewayRuntimeManager;
+
+    public MediaCascadePlatformServiceImpl(@Lazy MediaChannelService mediaChannelService,
+                                           MediaCascadeBindingService mediaCascadeBindingService,
+                                           @Lazy MediaGatewayRuntimeManager mediaGatewayRuntimeManager) {
+        this.mediaChannelService = mediaChannelService;
+        this.mediaCascadeBindingService = mediaCascadeBindingService;
+        this.mediaGatewayRuntimeManager = mediaGatewayRuntimeManager;
+    }
 
     @Override
     public List<CascadeBindingView> listBindings(String platformId) {
@@ -41,7 +48,7 @@ public class MediaCascadePlatformServiceImpl extends BaseServiceImpl<MediaCascad
 
     @Override
     public List<CascadeBindingView> bindChannels(CascadeBindRequest request) {
-        MediaCascadePlatform platform = super.getById(request.platformId());
+        MediaCascadePlatform platform = cacheProxy().getById(request.platformId());
         if (platform == null) {
             throw new IllegalArgumentException("Cascade platform not found");
         }
@@ -67,7 +74,7 @@ public class MediaCascadePlatformServiceImpl extends BaseServiceImpl<MediaCascad
 
     @Override
     public boolean registerPlatform(String platformId) {
-        MediaCascadePlatform platform = super.getById(platformId);
+        MediaCascadePlatform platform = cacheProxy().getById(platformId);
         if (platform == null) {
             throw new IllegalArgumentException("Cascade platform not found");
         }
@@ -80,13 +87,13 @@ public class MediaCascadePlatformServiceImpl extends BaseServiceImpl<MediaCascad
             platform.setLastError("Cascade register request send failed");
             platform.setLastRegisterTime(LocalDateTime.now());
         }
-        updateById(platform, true);
+        cacheProxy().updateById(platform, true);
         return ok;
     }
 
     @Override
     public boolean stopPlatform(String platformId) {
-        MediaCascadePlatform platform = super.getById(platformId);
+        MediaCascadePlatform platform = cacheProxy().getById(platformId);
         if (platform == null) {
             return true;
         }
@@ -94,7 +101,19 @@ public class MediaCascadePlatformServiceImpl extends BaseServiceImpl<MediaCascad
         platform.setOnlineStatus(MediaOnlineStatus.OFFLINE);
         platform.setLastKeepaliveTime(LocalDateTime.now());
         platform.setLastError(ok ? null : "Cascade stop failed");
-        updateById(platform, true);
+        cacheProxy().updateById(platform, true);
         return ok;
+    }
+
+    @Override
+    public void markRegisterStatus(String platformId, boolean online, String error) {
+        MediaCascadePlatform platform = cacheProxy().getById(platformId);
+        if (platform == null) {
+            return;
+        }
+        platform.setOnlineStatus(online ? MediaOnlineStatus.ONLINE : MediaOnlineStatus.OFFLINE);
+        platform.setLastRegisterTime(LocalDateTime.now());
+        platform.setLastError(online ? null : (error == null || error.isBlank() ? "Cascade register failed" : error));
+        cacheProxy().updateById(platform, true);
     }
 }

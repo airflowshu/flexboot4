@@ -1,6 +1,9 @@
 package com.yunlbd.flexboot4.service.sys.impl;
 
+import com.mybatisflex.core.update.UpdateChain;
+import com.yunlbd.flexboot4.common.annotation.BumpTableVersion;
 import com.yunlbd.flexboot4.entity.sys.SysUser;
+import com.yunlbd.flexboot4.entity.sys.table.SysUserTableDef;
 import com.yunlbd.flexboot4.mapper.SysUserMapper;
 import com.yunlbd.flexboot4.service.sys.SysUserService;
 import lombok.RequiredArgsConstructor;
@@ -31,22 +34,26 @@ public class SysUserServiceImpl extends BaseServiceImpl<SysUserMapper, SysUser> 
      * @return true if updated successfully
      */
     public boolean updatePasswordById(String id, String newPassword) {
-        SysUser user = super.getById(id);
+        SysUser user = cacheProxy().getById(id);
         if (user == null) {
             return false;
         }
         newPassword = StringUtils.isEmpty(newPassword) ? "11111111" : newPassword;
         user.setPassword(passwordEncoder.encode(newPassword));
-        return updateById(user, true);
+        return cacheProxy().updateById(user, true);
     }
 
     @Override
+    @BumpTableVersion(SysUser.class)
     @CacheEvict(allEntries = true, cacheResolver = "dynamicCacheResolver")
     public boolean updateCurrentProfile(String id, String realName, String profileFileId, String remark) {
-        boolean ok = mapper.updateCurrentProfile(id, realName, profileFileId, remark) > 0;
-        if (ok) {
-            bumpTableVersion(SysUser.class);
-        }
-        return ok;
+        SysUserTableDef user = SysUserTableDef.SYS_USER;
+        return UpdateChain.of(getMapper())
+                .set(user.REAL_NAME, realName, true)
+                .set(user.PROFILE_FILE_ID, profileFileId, true)
+                .set(user.REMARK, remark, true)
+                .where(user.ID.eq(id))
+                .and(user.DEL_FLAG.eq(0))
+                .update();
     }
 }

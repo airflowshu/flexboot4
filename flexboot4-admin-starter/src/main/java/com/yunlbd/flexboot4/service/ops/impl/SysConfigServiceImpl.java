@@ -71,7 +71,7 @@ public class SysConfigServiceImpl extends BaseServiceImpl<SysConfigMapper, SysCo
                 .eq(SysConfig::getConfigKey, configKey)
                 .eq(SysConfig::getStatus, STATUS_ENABLED);
 
-        SysConfig config = super.getOne(queryWrapper);
+        SysConfig config = cacheProxy().getOne(queryWrapper);
 
         if (config == null) {
             log.debug("配置键不存在或已禁用: {}", configKey);
@@ -91,7 +91,7 @@ public class SysConfigServiceImpl extends BaseServiceImpl<SysConfigMapper, SysCo
                 .eq(SysConfig::getConfigKey, configKey)
                 .eq(SysConfig::getStatus, 1);
 
-        return super.count(queryWrapper) > 0;
+        return cacheProxy().count(queryWrapper) > 0;
     }
 
     @Override
@@ -109,7 +109,7 @@ public class SysConfigServiceImpl extends BaseServiceImpl<SysConfigMapper, SysCo
                 .eq(SysConfig::getConfigKey, configKey)
                 .eq(SysConfig::getStatus, STATUS_ENABLED);
 
-        SysConfig config = super.getOne(queryWrapper);
+        SysConfig config = cacheProxy().getOne(queryWrapper);
 
         if (config == null) {
             log.debug("配置键不存在或已禁用: {}", configKey);

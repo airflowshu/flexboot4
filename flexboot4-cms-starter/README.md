@@ -67,9 +67,8 @@ cms:
 
 ## SQL
 
-- 表结构脚本：`docs/sql/cms_pg.sql`
-- 菜单初始化脚本：`docs/sql/cms_menu_init_pg.sql`
-- 兼容菜单脚本别名：`docs/sql/cms_menu_pg.sql`
+- 表结构与初始化数据：`src/main/resources/db/init.sql`
+- 菜单与按钮权限：`src/main/resources/db/menu_data.sql`
 
 ## API 路由前缀
 

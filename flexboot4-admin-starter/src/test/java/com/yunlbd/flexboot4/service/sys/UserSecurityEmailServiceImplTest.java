@@ -5,7 +5,6 @@ import com.yunlbd.flexboot4.dto.sys.SecurityEmailBindReq;
 import com.yunlbd.flexboot4.dto.sys.SecurityEmailBindResp;
 import com.yunlbd.flexboot4.dto.sys.SecurityEmailCodeReq;
 import com.yunlbd.flexboot4.entity.sys.SysUser;
-import com.yunlbd.flexboot4.mapper.SysUserMapper;
 import com.yunlbd.flexboot4.metrics.MetricsRecorder;
 import com.yunlbd.flexboot4.security.JwtUtil;
 import com.yunlbd.flexboot4.security.UserDetailsCacheService;
@@ -35,7 +34,6 @@ class UserSecurityEmailServiceImplTest {
 
     private final StringRedisTemplate redisTemplate = mock(StringRedisTemplate.class);
     private final ValueOperations<String, String> valueOperations = mock(ValueOperations.class);
-    private final SysUserMapper sysUserMapper = mock(SysUserMapper.class);
     private final SysUserService sysUserService = mock(SysUserService.class);
     private final UserDetailsCacheService userDetailsCacheService = mock(UserDetailsCacheService.class);
     private final EmailService emailService = mock(EmailService.class);
@@ -49,11 +47,10 @@ class UserSecurityEmailServiceImplTest {
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         when(redisTemplate.hasKey(any())).thenReturn(false);
         when(valueOperations.increment(any())).thenReturn(1L);
-        when(sysUserMapper.selectListByQuery(any(QueryWrapper.class))).thenReturn(List.of());
+        when(sysUserService.list(any(QueryWrapper.class))).thenReturn(List.of());
 
         service = new UserSecurityEmailServiceImpl(
                 redisTemplate,
-                sysUserMapper,
                 sysUserService,
                 userDetailsCacheService,
                 objectProvider(emailService),
@@ -92,7 +89,7 @@ class UserSecurityEmailServiceImplTest {
         SysUser other = new SysUser();
         other.setId("u2");
         other.setEmail("alice@example.com");
-        when(sysUserMapper.selectListByQuery(any(QueryWrapper.class))).thenReturn(List.of(other));
+        when(sysUserService.list(any(QueryWrapper.class))).thenReturn(List.of(other));
 
         SecurityEmailCodeReq req = new SecurityEmailCodeReq();
         req.setEmail("alice@example.com");
@@ -107,7 +104,6 @@ class UserSecurityEmailServiceImplTest {
     void sendBindCodeRejectsMissingEmailService() {
         service = new UserSecurityEmailServiceImpl(
                 redisTemplate,
-                sysUserMapper,
                 sysUserService,
                 userDetailsCacheService,
                 objectProvider(null),

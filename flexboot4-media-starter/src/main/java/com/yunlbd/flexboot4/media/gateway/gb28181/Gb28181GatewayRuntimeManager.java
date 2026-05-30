@@ -7,7 +7,6 @@ import com.yunlbd.flexboot4.entity.media.MediaDevice;
 import com.yunlbd.flexboot4.entity.media.MediaGateway;
 import com.yunlbd.flexboot4.entity.media.MediaServer;
 import com.yunlbd.flexboot4.entity.media.MediaStreamSession;
-import com.yunlbd.flexboot4.mapper.MediaCascadePlatformMapper;
 import com.yunlbd.flexboot4.media.core.ZlmClient;
 import com.yunlbd.flexboot4.media.dto.PlaybackQueryRequest;
 import com.yunlbd.flexboot4.media.dto.PlaybackRecordItem;
@@ -17,6 +16,7 @@ import com.yunlbd.flexboot4.media.enums.MediaAccessType;
 import com.yunlbd.flexboot4.media.enums.MediaOnlineStatus;
 import com.yunlbd.flexboot4.media.enums.MediaSessionStatus;
 import com.yunlbd.flexboot4.media.enums.MediaSessionType;
+import com.yunlbd.flexboot4.service.media.MediaCascadePlatformService;
 import com.yunlbd.flexboot4.service.media.MediaChannelService;
 import com.yunlbd.flexboot4.service.media.MediaDeviceService;
 import com.yunlbd.flexboot4.service.media.MediaGatewayRuntimeManager;
@@ -61,7 +61,7 @@ public class Gb28181GatewayRuntimeManager implements MediaGatewayRuntimeManager 
     private final MediaServerService mediaServerService;
     private final MediaDeviceService mediaDeviceService;
     private final MediaStreamSessionService mediaStreamSessionService;
-    private final MediaCascadePlatformMapper mediaCascadePlatformMapper;
+    private final MediaCascadePlatformService mediaCascadePlatformService;
     private final MediaChannelService mediaChannelService;
 
     private final Map<String, RuntimeState> runtimes = new ConcurrentHashMap<>();
@@ -70,12 +70,12 @@ public class Gb28181GatewayRuntimeManager implements MediaGatewayRuntimeManager 
             MediaServerService mediaServerService,
             MediaDeviceService mediaDeviceService,
             MediaStreamSessionService mediaStreamSessionService,
-            MediaCascadePlatformMapper mediaCascadePlatformMapper,
+            @Lazy MediaCascadePlatformService mediaCascadePlatformService,
             @Lazy MediaChannelService mediaChannelService) {
         this.mediaServerService = mediaServerService;
         this.mediaDeviceService = mediaDeviceService;
         this.mediaStreamSessionService = mediaStreamSessionService;
-        this.mediaCascadePlatformMapper = mediaCascadePlatformMapper;
+        this.mediaCascadePlatformService = mediaCascadePlatformService;
         this.mediaChannelService = mediaChannelService;
     }
 
@@ -663,14 +663,7 @@ public class Gb28181GatewayRuntimeManager implements MediaGatewayRuntimeManager 
             return;
         }
         try {
-            MediaCascadePlatform platform = mediaCascadePlatformMapper.selectOneById(platformId);
-            if (platform == null) {
-                return;
-            }
-            platform.setOnlineStatus(online ? MediaOnlineStatus.ONLINE : MediaOnlineStatus.OFFLINE);
-            platform.setLastRegisterTime(LocalDateTime.now());
-            platform.setLastError(online ? null : (error == null || error.isBlank() ? "Cascade register failed" : error));
-            mediaCascadePlatformMapper.update(platform, true);
+            mediaCascadePlatformService.markRegisterStatus(platformId, online, error);
         } catch (Exception e) {
             log.warn("Failed to update cascade platform register status, platformId={}", platformId, e);
         }

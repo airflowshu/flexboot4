@@ -8,6 +8,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -19,6 +20,7 @@ import java.time.Duration;
 
 @Configuration
 @EnableCaching
+@EnableAspectJAutoProxy(exposeProxy = true)
 public class CacheConfig {
 
     @Bean

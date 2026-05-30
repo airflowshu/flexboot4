@@ -7,12 +7,13 @@ import com.yunlbd.flexboot4.dto.sys.UserMfaTotpSetupResp;
 import com.yunlbd.flexboot4.dto.sys.UserMfaTotpStatusResp;
 import com.yunlbd.flexboot4.entity.sys.SysUser;
 import com.yunlbd.flexboot4.entity.sys.SysUserMfa;
-import com.yunlbd.flexboot4.mapper.SysUserMfaMapper;
+import com.yunlbd.flexboot4.entity.sys.table.SysUserMfaTableDef;
 import com.yunlbd.flexboot4.metrics.MetricsRecorder;
 import com.yunlbd.flexboot4.security.MfaSecretCipher;
 import com.yunlbd.flexboot4.security.TotpUtil;
 import com.yunlbd.flexboot4.security.UserDetailsCacheService;
 import com.yunlbd.flexboot4.service.sys.UserMfaService;
+import com.yunlbd.flexboot4.service.sys.SysUserMfaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -32,7 +33,7 @@ public class UserMfaServiceImpl implements UserMfaService {
     private static final String DEFAULT_DEVICE_NAME = "认证器应用";
     private static final char[] ACCOUNT_SUFFIX_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789".toCharArray();
 
-    private final SysUserMfaMapper sysUserMfaMapper;
+    private final SysUserMfaService sysUserMfaService;
     private final TotpUtil totpUtil;
     private final MfaSecretCipher mfaSecretCipher;
     private final PasswordEncoder passwordEncoder;
@@ -66,9 +67,9 @@ public class UserMfaServiceImpl implements UserMfaService {
         String accountName = buildUniqueAccountName(user.getUsername());
 
         if (isNew) {
-            sysUserMfaMapper.insert(mfa);
+            sysUserMfaService.save(mfa);
         } else {
-            sysUserMfaMapper.update(mfa, true);
+            sysUserMfaService.updateById(mfa, true);
         }
 
         metricsRecorder.increment("flexboot4.user.mfa_totp.setup", Map.of("userId", user.getId()));
@@ -100,7 +101,7 @@ public class UserMfaServiceImpl implements UserMfaService {
         mfa.setConfirmedAt(now);
         mfa.setLastUsedAt(now);
         mfa.setDeviceName(normalizeDeviceName(req.getDeviceName()));
-        sysUserMfaMapper.update(mfa, true);
+        sysUserMfaService.updateById(mfa, true);
 
         userDetailsCacheService.evictUserCache(user.getUsername());
         metricsRecorder.increment("flexboot4.user.mfa_totp.enabled", Map.of("userId", user.getId()));
@@ -125,7 +126,7 @@ public class UserMfaServiceImpl implements UserMfaService {
 
         mfa.setEnabled(false);
         mfa.setLastUsedAt(LocalDateTime.now());
-        sysUserMfaMapper.update(mfa, true);
+        sysUserMfaService.updateById(mfa, true);
 
         userDetailsCacheService.evictUserCache(user.getUsername());
         metricsRecorder.increment("flexboot4.user.mfa_totp.disabled", Map.of("userId", user.getId()));
@@ -154,7 +155,7 @@ public class UserMfaServiceImpl implements UserMfaService {
         boolean verified = totpUtil.verify(secret, code);
         if (verified) {
             mfa.setLastUsedAt(LocalDateTime.now());
-            sysUserMfaMapper.update(mfa, true);
+            sysUserMfaService.updateById(mfa, true);
         }
         return verified;
     }
@@ -163,28 +164,26 @@ public class UserMfaServiceImpl implements UserMfaService {
         if (userId == null || userId.isBlank()) {
             return null;
         }
-        return sysUserMfaMapper.selectOneByQuery(
-                QueryWrapper.create()
-                        .where("user_id = ?", userId)
-                        .and("type = ?", TYPE_TOTP)
-                        .and("enabled = ?", true)
-                        .and("del_flag = ?", 0)
-                        .limit(1)
-        );
+        SysUserMfaTableDef mfa = SysUserMfaTableDef.SYS_USER_MFA;
+        return sysUserMfaService.getOne(QueryWrapper.create()
+                .where(mfa.USER_ID.eq(userId))
+                .and(mfa.TYPE.eq(TYPE_TOTP))
+                .and(mfa.ENABLED.eq(true))
+                .and(mfa.DEL_FLAG.eq(0))
+                .limit(1));
     }
 
     private SysUserMfa findLatestTotp(String userId) {
         if (userId == null || userId.isBlank()) {
             return null;
         }
-        return sysUserMfaMapper.selectOneByQuery(
-                QueryWrapper.create()
-                        .where("user_id = ?", userId)
-                        .and("type = ?", TYPE_TOTP)
-                        .and("del_flag = ?", 0)
-                        .orderBy("create_time DESC")
-                        .limit(1)
-        );
+        SysUserMfaTableDef mfa = SysUserMfaTableDef.SYS_USER_MFA;
+        return sysUserMfaService.getOne(QueryWrapper.create()
+                .where(mfa.USER_ID.eq(userId))
+                .and(mfa.TYPE.eq(TYPE_TOTP))
+                .and(mfa.DEL_FLAG.eq(0))
+                .orderBy(mfa.CREATE_TIME, false)
+                .limit(1));
     }
 
     private UserMfaTotpStatusResp toStatus(SysUserMfa mfa) {

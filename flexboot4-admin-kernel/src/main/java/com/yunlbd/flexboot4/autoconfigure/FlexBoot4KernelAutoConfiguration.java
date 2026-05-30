@@ -17,7 +17,8 @@ import org.springframework.context.annotation.Import;
 @Import({
         CurrentUserAutoConfiguration.class,
         DistributedLockAutoConfiguration.class,
-        MetricsAutoConfiguration.class
+        MetricsAutoConfiguration.class,
+        TableVersionAutoConfiguration.class
 })
 public class FlexBoot4KernelAutoConfiguration {
 }

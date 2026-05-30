@@ -1,5 +1,6 @@
 package com.yunlbd.flexboot4.service.sys;
 
+import com.yunlbd.flexboot4.common.annotation.BumpTableVersion;
 import com.yunlbd.flexboot4.file.FileAccessDescriptor;
 import com.yunlbd.flexboot4.file.FileObject;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,5 +24,6 @@ public interface FileManagerService {
 
     InputStream load(String fileId);
 
-    void delete(String fileId);
+    @BumpTableVersion(tables = "sys_file")
+    boolean delete(String fileId);
 }

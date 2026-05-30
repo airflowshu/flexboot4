@@ -62,7 +62,7 @@ public class MediaChannelServiceImpl extends BaseServiceImpl<MediaChannelMapper,
 
     @Override
     public List<MediaChannel> listByDeviceId(String deviceId) {
-        return super.list(QueryWrapper.create()
+        return cacheProxy().list(QueryWrapper.create()
                 .from(MediaChannel.class)
                 .where(MediaChannel::getDeviceId).eq(deviceId)
                 .orderBy(MediaChannel::getCreateTime, true));
@@ -70,21 +70,21 @@ public class MediaChannelServiceImpl extends BaseServiceImpl<MediaChannelMapper,
 
     @Override
     public MediaChannel upsertChannel(MediaChannel channel) {
-        MediaChannel existing = super.getOne(QueryWrapper.create()
+        MediaChannel existing = cacheProxy().getOne(QueryWrapper.create()
                 .from(MediaChannel.class)
                 .where(MediaChannel::getChannelCode).eq(channel.getChannelCode()));
         if (existing == null) {
-            save(channel);
+            cacheProxy().save(channel);
             return channel;
         }
         channel.setId(existing.getId());
-        updateById(channel, true);
-        return super.getById(existing.getId());
+        cacheProxy().updateById(channel, true);
+        return cacheProxy().getById(existing.getId());
     }
 
     @Override
     public void markChannelStatus(String channelCode, String status, LocalDateTime time) {
-        MediaChannel channel = super.getOne(QueryWrapper.create()
+        MediaChannel channel = cacheProxy().getOne(QueryWrapper.create()
                 .from(MediaChannel.class)
                 .where(MediaChannel::getChannelCode).eq(channelCode));
         if (channel == null) {
@@ -92,7 +92,7 @@ public class MediaChannelServiceImpl extends BaseServiceImpl<MediaChannelMapper,
         }
         channel.setStatus(status);
         channel.setLastOfflineTime(time);
-        updateById(channel, true);
+        cacheProxy().updateById(channel, true);
     }
 
     @Override
@@ -117,7 +117,7 @@ public class MediaChannelServiceImpl extends BaseServiceImpl<MediaChannelMapper,
         channel.setLastPlayTime(LocalDateTime.now());
         channel.setStreamApp(session.getStreamApp());
         channel.setStreamId(session.getStreamId());
-        updateById(channel, true);
+        cacheProxy().updateById(channel, true);
         return buildResponse(session, protocol);
     }
 
@@ -127,7 +127,7 @@ public class MediaChannelServiceImpl extends BaseServiceImpl<MediaChannelMapper,
         if (session == null) {
             return true;
         }
-        MediaChannel channel = super.getById(session.getChannelId());
+        MediaChannel channel = cacheProxy().getById(session.getChannelId());
         if (channel != null && isFixedAddress(channel)) {
             MediaServer server = resolveServer(channel);
             if (server != null) {
@@ -143,7 +143,7 @@ public class MediaChannelServiceImpl extends BaseServiceImpl<MediaChannelMapper,
         mediaStreamSessionService.closeSession(sessionId, MediaSessionStatus.CLOSED, LocalDateTime.now());
         if (channel != null) {
             channel.setPlayStatus(MediaPlayStatus.STOPPED);
-            updateById(channel, true);
+            cacheProxy().updateById(channel, true);
         }
         return true;
     }
@@ -168,7 +168,7 @@ public class MediaChannelServiceImpl extends BaseServiceImpl<MediaChannelMapper,
         channel.setLastPlayTime(LocalDateTime.now());
         channel.setStreamApp(session.getStreamApp());
         channel.setStreamId(session.getStreamId());
-        updateById(channel, true);
+        cacheProxy().updateById(channel, true);
         return buildResponse(session, protocol);
     }
 
@@ -180,11 +180,11 @@ public class MediaChannelServiceImpl extends BaseServiceImpl<MediaChannelMapper,
         }
         mediaGatewayRuntimeManager.stopPlayback(session);
         mediaStreamSessionService.closeSession(sessionId, MediaSessionStatus.CLOSED, LocalDateTime.now());
-        MediaChannel channel = super.getById(session.getChannelId());
+        MediaChannel channel = cacheProxy().getById(session.getChannelId());
         if (channel != null) {
             channel.setPlayStatus(MediaPlayStatus.STOPPED);
             channel.setLastOfflineTime(LocalDateTime.now());
-            updateById(channel, true);
+            cacheProxy().updateById(channel, true);
         }
         return true;
     }
@@ -243,7 +243,7 @@ public class MediaChannelServiceImpl extends BaseServiceImpl<MediaChannelMapper,
     }
 
     private MediaChannel requireChannel(String channelId) {
-        MediaChannel channel = super.getById(channelId);
+        MediaChannel channel = cacheProxy().getById(channelId);
         if (channel == null) {
             throw new IllegalArgumentException("Channel not found");
         }

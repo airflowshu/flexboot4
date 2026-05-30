@@ -42,7 +42,7 @@ public class MediaServerServiceImpl extends BaseServiceImpl<MediaServerMapper, M
             server.setLastTestTime(now);
             server.setLastError(null);
             if (server.getId() != null) {
-                updateById(server, true);
+                cacheProxy().updateById(server, true);
             }
             return new MediaServerTestResult(
                     true,
@@ -56,7 +56,7 @@ public class MediaServerServiceImpl extends BaseServiceImpl<MediaServerMapper, M
             server.setLastTestTime(now);
             server.setLastError(e.getMessage());
             if (server.getId() != null) {
-                updateById(server, true);
+                cacheProxy().updateById(server, true);
             }
             return new MediaServerTestResult(false, null, 0, now, e.getMessage());
         }
@@ -64,7 +64,7 @@ public class MediaServerServiceImpl extends BaseServiceImpl<MediaServerMapper, M
 
     @Override
     public List<Map<String, Object>> listStreams(String serverId, String app, String stream) {
-        MediaServer server = getById(serverId);
+        MediaServer server = cacheProxy().getById(serverId);
         if (server == null) {
             throw new IllegalArgumentException("Media server not found");
         }
@@ -73,7 +73,7 @@ public class MediaServerServiceImpl extends BaseServiceImpl<MediaServerMapper, M
 
     @Override
     public boolean closeStream(String serverId, String app, String stream, boolean force) {
-        MediaServer server = getById(serverId);
+        MediaServer server = cacheProxy().getById(serverId);
         if (server == null) {
             throw new IllegalArgumentException("Media server not found");
         }
@@ -83,7 +83,7 @@ public class MediaServerServiceImpl extends BaseServiceImpl<MediaServerMapper, M
 
     @Override
     public Map<String, String> buildPlayUrls(String serverId, String app, String stream) {
-        MediaServer server = getById(serverId);
+        MediaServer server = cacheProxy().getById(serverId);
         if (server == null) {
             throw new IllegalArgumentException("Media server not found");
         }
@@ -92,13 +92,13 @@ public class MediaServerServiceImpl extends BaseServiceImpl<MediaServerMapper, M
 
     @Override
     public void markHookAlive(String mediaServerId, LocalDateTime hookTime) {
-        MediaServer server = getById(mediaServerId);
+        MediaServer server = cacheProxy().getById(mediaServerId);
         if (server == null) {
             return;
         }
         server.setLastHookTime(hookTime);
         server.setStatus(MediaServerStatus.HEALTHY);
-        updateById(server, true);
+        cacheProxy().updateById(server, true);
     }
 
     @Override
@@ -108,7 +108,7 @@ public class MediaServerServiceImpl extends BaseServiceImpl<MediaServerMapper, M
 
     private MediaServer resolveServer(MediaServerTestRequest request) {
         if (request.serverId() != null && !request.serverId().isBlank()) {
-            MediaServer server = getById(request.serverId());
+            MediaServer server = cacheProxy().getById(request.serverId());
             if (server != null) {
                 return server;
             }

@@ -6,7 +6,6 @@ import com.yunlbd.flexboot4.dto.sys.SecurityPhoneBindReq;
 import com.yunlbd.flexboot4.dto.sys.SecurityPhoneBindResp;
 import com.yunlbd.flexboot4.dto.sys.SecurityPhoneCodeReq;
 import com.yunlbd.flexboot4.entity.sys.SysUser;
-import com.yunlbd.flexboot4.mapper.SysUserMapper;
 import com.yunlbd.flexboot4.metrics.MetricsRecorder;
 import com.yunlbd.flexboot4.security.JwtUtil;
 import com.yunlbd.flexboot4.security.UserDetailsCacheService;
@@ -38,7 +37,6 @@ class UserSecurityPhoneServiceImplTest {
 
     private final StringRedisTemplate redisTemplate = mock(StringRedisTemplate.class);
     private final ValueOperations<String, String> valueOperations = mock(ValueOperations.class);
-    private final SysUserMapper sysUserMapper = mock(SysUserMapper.class);
     private final SysUserService sysUserService = mock(SysUserService.class);
     private final UserDetailsCacheService userDetailsCacheService = mock(UserDetailsCacheService.class);
     private final SmsMessageSender smsMessageSender = mock(SmsMessageSender.class);
@@ -53,7 +51,7 @@ class UserSecurityPhoneServiceImplTest {
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         when(redisTemplate.hasKey(any())).thenReturn(false);
         when(valueOperations.increment(any())).thenReturn(1L);
-        when(sysUserMapper.selectListByQuery(any(QueryWrapper.class))).thenReturn(List.of());
+        when(sysUserService.list(any(QueryWrapper.class))).thenReturn(List.of());
         when(configLookupService.getConfigValue("auth.login.options")).thenReturn(
                 "{\"methods\":{\"password\":{\"enabled\":true},\"sms\":{\"enabled\":false,\"codeLength\":6,\"cooldownSeconds\":60}}}"
         );
@@ -62,7 +60,6 @@ class UserSecurityPhoneServiceImplTest {
 
         service = new UserSecurityPhoneServiceImpl(
                 redisTemplate,
-                sysUserMapper,
                 sysUserService,
                 userDetailsCacheService,
                 objectProvider(smsMessageSender),
@@ -104,7 +101,7 @@ class UserSecurityPhoneServiceImplTest {
         SysUser other = new SysUser();
         other.setId("u2");
         other.setPhone("13800138000");
-        when(sysUserMapper.selectListByQuery(any(QueryWrapper.class))).thenReturn(List.of(other));
+        when(sysUserService.list(any(QueryWrapper.class))).thenReturn(List.of(other));
 
         SecurityPhoneCodeReq req = new SecurityPhoneCodeReq();
         req.setPhone("13800138000");
@@ -119,7 +116,6 @@ class UserSecurityPhoneServiceImplTest {
     void sendBindCodeRejectsMissingSmsSender() {
         service = new UserSecurityPhoneServiceImpl(
                 redisTemplate,
-                sysUserMapper,
                 sysUserService,
                 userDetailsCacheService,
                 objectProvider(null),

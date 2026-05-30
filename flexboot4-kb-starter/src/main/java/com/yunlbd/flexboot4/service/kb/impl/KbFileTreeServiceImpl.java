@@ -1,12 +1,12 @@
 package com.yunlbd.flexboot4.service.kb.impl;
 
 import com.mybatisflex.core.query.QueryWrapper;
+import com.mybatisflex.core.relation.RelationManager;
 import com.yunlbd.flexboot4.entity.kb.KbFileTree;
 import com.yunlbd.flexboot4.entity.kb.table.KbFileTreeTableDef;
 import com.yunlbd.flexboot4.mapper.KbFileTreeMapper;
 import com.yunlbd.flexboot4.service.kb.KbFileTreeService;
 import com.yunlbd.flexboot4.service.sys.impl.BaseServiceImpl;
-import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.stereotype.Service;
 
@@ -14,10 +14,7 @@ import java.util.List;
 
 @Service
 @CacheConfig(cacheNames = "kbFileTree")
-@RequiredArgsConstructor
 public class KbFileTreeServiceImpl extends BaseServiceImpl<KbFileTreeMapper, KbFileTree> implements KbFileTreeService {
-
-    private final KbFileTreeMapper kbFileTreeMapper;
 
     @Override
     public List<KbFileTree> fsList(String kbId, String parentId) {
@@ -31,7 +28,7 @@ public class KbFileTreeServiceImpl extends BaseServiceImpl<KbFileTreeMapper, KbF
             qw.and(KbFileTreeTableDef.KB_FILE_TREE.PARENT_ID.eq(parentId));
         }
         qw.orderBy(KbFileTree::getSortOrder);
-        return kbFileTreeMapper.selectListWithRelationsByQuery(qw);
+        return listWithRelations(qw);
     }
 
     @Override
@@ -42,7 +39,13 @@ public class KbFileTreeServiceImpl extends BaseServiceImpl<KbFileTreeMapper, KbF
                 .and(KbFileTreeTableDef.KB_FILE_TREE.TYPE.eq("FILE"))
                 .and(KbFileTreeTableDef.KB_FILE_TREE.DEL_FLAG.eq(0));
         qw.orderBy(KbFileTree::getSortOrder);
-        return kbFileTreeMapper.selectListWithRelationsByQuery(qw);
+        return listWithRelations(qw);
+    }
+
+    private List<KbFileTree> listWithRelations(QueryWrapper query) {
+        List<KbFileTree> result = cacheProxy().list(query);
+        RelationManager.queryRelations(getMapper(), result);
+        return result;
     }
 
     @Override
@@ -54,7 +57,7 @@ public class KbFileTreeServiceImpl extends BaseServiceImpl<KbFileTreeMapper, KbF
                 .type("FILE")
                 .sortOrder(0)
                 .build();
-        return this.save(node);
+        return cacheProxy().save(node);
     }
 
     @Override
@@ -66,12 +69,12 @@ public class KbFileTreeServiceImpl extends BaseServiceImpl<KbFileTreeMapper, KbF
                 .type("FOLDER")
                 .sortOrder(0)
                 .build();
-        return this.save(node);
+        return cacheProxy().save(node);
     }
 
     @Override
     public boolean deleteNode(String id) {
-        KbFileTree node = super.getById(id);
+        KbFileTree node = cacheProxy().getById(id);
         if (node == null) {
             return false;
         }
@@ -79,13 +82,11 @@ public class KbFileTreeServiceImpl extends BaseServiceImpl<KbFileTreeMapper, KbF
             // 递归删除子节点
             deleteChildren(id);
         }
-        return removeById(id);
-        // node.setDelFlag(1);
-        // return this.updateById(node, true);
+        return cacheProxy().removeById(id);
     }
 
     private void deleteChildren(String parentId) {
-        List<KbFileTree> children = super.list(QueryWrapper.create()
+        List<KbFileTree> children = cacheProxy().list(QueryWrapper.create()
                 .from(KbFileTree.class)
                 .where(KbFileTree::getParentId).eq(parentId)
                 .and(KbFileTree::getDelFlag).eq(0));
@@ -93,9 +94,7 @@ public class KbFileTreeServiceImpl extends BaseServiceImpl<KbFileTreeMapper, KbF
             if ("FOLDER".equals(child.getType())) {
                 deleteChildren(child.getId());
             }
-            removeById(child.getId());
-            // child.setDelFlag(1);
-            // this.updateById(child, true);
+            cacheProxy().removeById(child.getId());
         }
     }
 
@@ -106,7 +105,7 @@ public class KbFileTreeServiceImpl extends BaseServiceImpl<KbFileTreeMapper, KbF
         }
         // 验证目标目录
         if (targetParentId != null && !targetParentId.isBlank()) {
-            KbFileTree target = super.getById(targetParentId);
+            KbFileTree target = cacheProxy().getById(targetParentId);
             if (target == null || target.getDelFlag() != null && target.getDelFlag() != 0) {
                 throw new RuntimeException("目标目录不存在");
             }
@@ -129,7 +128,7 @@ public class KbFileTreeServiceImpl extends BaseServiceImpl<KbFileTreeMapper, KbF
             if (nodeId == null || nodeId.isBlank()) {
                 continue;
             }
-            KbFileTree node = super.getById(nodeId);
+            KbFileTree node = cacheProxy().getById(nodeId);
             if (node == null || node.getDelFlag() != null && node.getDelFlag() != 0) {
                 continue;
             }
@@ -137,7 +136,7 @@ public class KbFileTreeServiceImpl extends BaseServiceImpl<KbFileTreeMapper, KbF
                 throw new RuntimeException("存在非当前知识库的节点，禁止移动");
             }
             node.setParentId(targetParentId);
-            ok = ok && this.updateById(node, true);
+            ok = ok && cacheProxy().updateById(node, true);
         }
         return ok;
     }
@@ -147,12 +146,12 @@ public class KbFileTreeServiceImpl extends BaseServiceImpl<KbFileTreeMapper, KbF
         if (newName == null || newName.isBlank()) {
             throw new RuntimeException("名称不能为空");
         }
-        KbFileTree node = super.getById(id);
+        KbFileTree node = cacheProxy().getById(id);
         if (node == null || node.getDelFlag() != null && node.getDelFlag() != 0) {
             throw new RuntimeException("节点不存在");
         }
         node.setName(newName.trim());
-        return this.updateById(node, true);
+        return cacheProxy().updateById(node, true);
     }
 
     private boolean isDescendant(String nodeId, String maybeParentId) {
@@ -164,7 +163,7 @@ public class KbFileTreeServiceImpl extends BaseServiceImpl<KbFileTreeMapper, KbF
             if (nodeId.equals(current)) {
                 return true;
             }
-            KbFileTree f = super.getById(current);
+            KbFileTree f = cacheProxy().getById(current);
             if (f == null) {
                 return false;
             }

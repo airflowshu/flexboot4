@@ -1,6 +1,7 @@
 package com.yunlbd.flexboot4.service.cms;
 
 import com.mybatisflex.core.paginate.Page;
+import com.yunlbd.flexboot4.common.annotation.BumpTableVersion;
 import com.yunlbd.flexboot4.dto.SearchDto;
 import com.yunlbd.flexboot4.entity.cms.CmsArticle;
 import com.yunlbd.flexboot4.service.sys.IExtendedService;
@@ -45,6 +46,7 @@ public interface CmsArticleService extends IExtendedService<CmsArticle> {
      * @param articleId 文章ID
      * @return 是否成功
      */
+    @BumpTableVersion(CmsArticle.class)
     boolean incrementViewCount(String articleId);
 
     /**

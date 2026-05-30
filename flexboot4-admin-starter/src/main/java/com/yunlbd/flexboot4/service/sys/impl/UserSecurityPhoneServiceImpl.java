@@ -8,7 +8,6 @@ import com.yunlbd.flexboot4.dto.sys.SecurityPhoneBindReq;
 import com.yunlbd.flexboot4.dto.sys.SecurityPhoneBindResp;
 import com.yunlbd.flexboot4.dto.sys.SecurityPhoneCodeReq;
 import com.yunlbd.flexboot4.entity.sys.SysUser;
-import com.yunlbd.flexboot4.mapper.SysUserMapper;
 import com.yunlbd.flexboot4.metrics.MetricsRecorder;
 import com.yunlbd.flexboot4.security.JwtUtil;
 import com.yunlbd.flexboot4.security.UserDetailsCacheService;
@@ -55,7 +54,6 @@ public class UserSecurityPhoneServiceImpl implements UserSecurityPhoneService {
     private static final String SEND_SUCCESS_MSG = "验证码已发送，请注意查收";
 
     private final StringRedisTemplate redisTemplate;
-    private final SysUserMapper sysUserMapper;
     private final SysUserService sysUserService;
     private final UserDetailsCacheService userDetailsCacheService;
     private final ObjectProvider<SmsMessageSender> smsMessageSenderProvider;
@@ -158,7 +156,7 @@ public class UserSecurityPhoneServiceImpl implements UserSecurityPhoneService {
             throw new IllegalArgumentException("手机号格式不正确");
         }
 
-        List<SysUser> users = sysUserMapper.selectListByQuery(
+        List<SysUser> users = sysUserService.list(
                 QueryWrapper.create()
                         .where(SysUser::getPhone).eq(phone)
                         .and(SysUser::getDelFlag).eq(0)

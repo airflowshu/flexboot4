@@ -9,7 +9,7 @@
 - 在 `flexboot4-media-starter` 新增持久化模型：`MediaServer`、`MediaGateway`、`MediaDevice`、`MediaChannel`、`MediaStreamSession`、`MediaScreen`、`MediaScreenSlot`、`MediaCascadePlatform`、`MediaCascadeBinding`。
 - PostgreSQL 负责保存配置、设备目录、分屏方案和级联绑定；Redis 负责设备注册态、心跳、播放会话 TTL、ZLM hook 运行态和网关缓存。
 - 扩展 `MediaProperties`，仅保留应用级开关、回调基址、默认播放协议、默认截图业务类型、网关线程池和 hook 校验配置；设备、网关、流媒体具体配置全部落库。
-- 补齐 `docs/sql/media_pg.sql` 与 `docs/sql/media_menu_pg.sql`，菜单新增 `视频中心/流媒体服务/视频网关/视频设备/分屏展示/国标级联`，权限码统一使用 `media:*`。
+- 补齐 `flexboot4-media-starter/src/main/resources/db/init.sql` 与 `flexboot4-media-starter/src/main/resources/db/menu_data.sql`，菜单新增 `视频中心/流媒体服务/视频网关/视频设备/分屏展示/国标级联`，权限码统一使用 `media:*`。
 - 用 Spring `RestClient` 封装 `ZlmClient`，实现流媒体连通性测试、流列表查询、流关闭、hook 验签和播放地址生成；播放地址统一由后台签发，优先返回 `ws-flv/http-flv`，HLS 作为回退。
 - 新增 ZLM hook 控制器，接收流注册、无人观看、流关闭等事件，回写 `MediaStreamSession` 和通道流状态。
 - 采用 JAIN-SIP 作为嵌入式 SIP 核心，在 `media-starter` 内启动单节点、单活动 GB28181 网关实例；UDP 端口、SIP ID、SIP 域、对外地址、收流端口范围从 `MediaGateway` 配置装载。

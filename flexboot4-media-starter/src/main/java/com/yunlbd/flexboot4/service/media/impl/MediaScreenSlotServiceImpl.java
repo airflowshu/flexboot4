@@ -18,7 +18,7 @@ public class MediaScreenSlotServiceImpl extends BaseServiceImpl<MediaScreenSlotM
 
     @Override
     public List<MediaScreenSlot> listByScreenId(String screenId) {
-        return list(QueryWrapper.create()
+        return cacheProxy().list(QueryWrapper.create()
                 .from(MediaScreenSlot.class)
                 .where(MediaScreenSlot::getScreenId).eq(screenId)
                 .orderBy(MediaScreenSlot::getSlotIndex, true));
@@ -26,7 +26,7 @@ public class MediaScreenSlotServiceImpl extends BaseServiceImpl<MediaScreenSlotM
 
     @Override
     public boolean deleteByScreenId(String screenId) {
-        return remove(QueryWrapper.create()
+        return cacheProxy().remove(QueryWrapper.create()
                 .from(MediaScreenSlot.class)
                 .where(MediaScreenSlot::getScreenId).eq(screenId));
     }

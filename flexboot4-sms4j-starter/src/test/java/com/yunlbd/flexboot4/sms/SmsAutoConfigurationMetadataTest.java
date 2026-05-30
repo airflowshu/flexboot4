@@ -27,6 +27,16 @@ class SmsAutoConfigurationMetadataTest {
                 .contains("com.yunlbd.flexboot4.config.FlexBoot4SmsEnvironmentListener");
     }
 
+    @Test
+    void smsDatabaseResourcesArePackaged() throws IOException {
+        assertThat(resourceAsString("/db/init.sql"))
+                .contains("CREATE TABLE IF NOT EXISTS sms4j_config")
+                .contains("uk_sms4j_config_config_id");
+        assertThat(resourceAsString("/db/menu_data.sql"))
+                .contains("sms_menu_root")
+                .contains("sms4j:config:list");
+    }
+
     private static String resourceAsString(String path) throws IOException {
         try (var in = SmsAutoConfigurationMetadataTest.class.getResourceAsStream(path)) {
             assertThat(in).as("resource %s", path).isNotNull();

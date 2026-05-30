@@ -5,11 +5,11 @@ import com.yunlbd.flexboot4.dto.sys.UserMfaTotpConfirmReq;
 import com.yunlbd.flexboot4.dto.sys.UserMfaTotpSetupResp;
 import com.yunlbd.flexboot4.entity.sys.SysUser;
 import com.yunlbd.flexboot4.entity.sys.SysUserMfa;
-import com.yunlbd.flexboot4.mapper.SysUserMfaMapper;
 import com.yunlbd.flexboot4.metrics.MetricsRecorder;
 import com.yunlbd.flexboot4.security.MfaSecretCipher;
 import com.yunlbd.flexboot4.security.TotpUtil;
 import com.yunlbd.flexboot4.security.UserDetailsCacheService;
+import com.yunlbd.flexboot4.service.sys.SysUserMfaService;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -23,14 +23,14 @@ import static org.mockito.Mockito.when;
 
 class UserMfaServiceImplTest {
 
-    private final SysUserMfaMapper mapper = mock(SysUserMfaMapper.class);
+    private final SysUserMfaService sysUserMfaService = mock(SysUserMfaService.class);
     private final TotpUtil totpUtil = mock(TotpUtil.class);
     private final MfaSecretCipher cipher = mock(MfaSecretCipher.class);
     private final PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
     private final UserDetailsCacheService userDetailsCacheService = mock(UserDetailsCacheService.class);
     private final MetricsRecorder metricsRecorder = mock(MetricsRecorder.class);
     private final UserMfaServiceImpl service = new UserMfaServiceImpl(
-            mapper,
+            sysUserMfaService,
             totpUtil,
             cipher,
             passwordEncoder,
@@ -49,13 +49,13 @@ class UserMfaServiceImplTest {
 
         assertThat(resp.manualKey()).isEqualTo("ABCDEF234567");
         assertThat(resp.accountName()).matches("alice@[A-Z2-9]{6}");
-        verify(mapper).insert(any(SysUserMfa.class));
+        verify(sysUserMfaService).save(any(SysUserMfa.class));
     }
 
     @Test
     void confirmTotpEnablesMfaWhenCodeIsValid() {
         SysUserMfa pending = pendingMfa();
-        when(mapper.selectOneByQuery(any(QueryWrapper.class))).thenReturn(pending);
+        when(sysUserMfaService.getOne(any(QueryWrapper.class))).thenReturn(pending);
         when(cipher.decrypt("encrypted")).thenReturn("ABCDEF234567");
         when(totpUtil.verify("ABCDEF234567", "123456")).thenReturn(true);
         UserMfaTotpConfirmReq req = new UserMfaTotpConfirmReq();

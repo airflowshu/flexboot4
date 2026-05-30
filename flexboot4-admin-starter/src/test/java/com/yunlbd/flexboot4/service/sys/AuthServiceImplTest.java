@@ -3,9 +3,10 @@ package com.yunlbd.flexboot4.service.sys;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.yunlbd.flexboot4.dto.AuthLoginOptions;
+import com.yunlbd.flexboot4.dto.LoginReq;
+import com.yunlbd.flexboot4.dto.LoginResp;
 import com.yunlbd.flexboot4.dto.SmsCodeReq;
 import com.yunlbd.flexboot4.entity.sys.SysUser;
-import com.yunlbd.flexboot4.mapper.SysUserMapper;
 import com.yunlbd.flexboot4.metrics.MetricsRecorder;
 import com.yunlbd.flexboot4.security.JwtUtil;
 import com.yunlbd.flexboot4.security.UserDetailsCacheService;
@@ -19,6 +20,8 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -26,8 +29,10 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -40,7 +45,6 @@ class AuthServiceImplTest {
     private final JwtUtil jwtUtil = new JwtUtil();
     private final StringRedisTemplate redisTemplate = mock(StringRedisTemplate.class);
     private final ValueOperations<String, String> valueOperations = mock(ValueOperations.class);
-    private final SysUserMapper sysUserMapper = mock(SysUserMapper.class);
     private final SysMenuService sysMenuService = mock(SysMenuService.class);
     private final UserDetailsCacheService userDetailsCacheService = mock(UserDetailsCacheService.class);
     private final ConfigLookupService configLookupService = mock(ConfigLookupService.class);
@@ -62,13 +66,14 @@ class AuthServiceImplTest {
         );
         when(configLookupService.getConfigValue("auth.sms.templateId")).thenReturn("1");
         when(configLookupService.getConfigValue("auth.sms.configId")).thenReturn("");
+        when(configLookupService.getConfigValue("auth.sms.ipHourlyLimit")).thenReturn(null);
+        when(configLookupService.getConfigValue("auth.sms.ipDailyLimit")).thenReturn(null);
 
         authService = new AuthServiceImpl(
                 authenticationManager,
                 userDetailsService,
                 jwtUtil,
                 redisTemplate,
-                sysUserMapper,
                 sysMenuService,
                 userDetailsCacheService,
                 objectProvider(null),
@@ -94,7 +99,7 @@ class AuthServiceImplTest {
 
     @Test
     void sendSmsCodeUsesSenderWithCloopenTemplateParams() {
-        when(sysUserMapper.selectListByQuery(any(QueryWrapper.class))).thenReturn(List.of(activeUser()));
+        when(sysUserService.list(any(QueryWrapper.class))).thenReturn(List.of(activeUser()));
 
         SmsCodeReq req = new SmsCodeReq();
         req.setPhone("13800138000");
@@ -107,11 +112,15 @@ class AuthServiceImplTest {
         assertThat(request.templateId()).isEqualTo("1");
         assertThat(request.templateParams()).containsEntry("2", "5");
         assertThat(request.templateParams().get("1")).matches("\\d{6}");
+        verify(valueOperations).increment("auth:sms-code:ip:hour:127.0.0.1");
+        verify(redisTemplate).expire("auth:sms-code:ip:hour:127.0.0.1", 60L, TimeUnit.MINUTES);
+        verify(valueOperations).increment("auth:sms-code:ip:daily:127.0.0.1");
+        verify(redisTemplate).expire("auth:sms-code:ip:daily:127.0.0.1", 1440L, TimeUnit.MINUTES);
     }
 
     @Test
     void sendSmsCodeDoesNotSendWhenPhoneIsNotBound() {
-        when(sysUserMapper.selectListByQuery(any(QueryWrapper.class))).thenReturn(List.of());
+        when(sysUserService.list(any(QueryWrapper.class))).thenReturn(List.of());
 
         SmsCodeReq req = new SmsCodeReq();
         req.setPhone("13800138000");
@@ -119,7 +128,119 @@ class AuthServiceImplTest {
 
         assertThat(message).contains("验证码已发送");
         verify(smsMessageSender, never()).send(any());
+        verify(valueOperations).increment("auth:sms-code:ip:hour:127.0.0.1");
+        verify(valueOperations).increment("auth:sms-code:ip:daily:127.0.0.1");
+        verify(valueOperations).increment("auth:sms-code:daily:13800138000");
         verify(valueOperations).set("auth:sms-code:cooldown:13800138000", "1", 60L, TimeUnit.SECONDS);
+    }
+
+    @Test
+    void sendSmsCodeStopsBeforeUserLookupWhenIpHourlyLimitExceeded() {
+        when(valueOperations.increment("auth:sms-code:ip:hour:127.0.0.1")).thenReturn(31L);
+
+        SmsCodeReq req = new SmsCodeReq();
+        req.setPhone("13800138000");
+
+        assertThatThrownBy(() -> authService.sendSmsCode(req, "127.0.0.1"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("验证码发送过于频繁，请稍后再试");
+
+        verify(sysUserService, never()).list(any(QueryWrapper.class));
+        verify(smsMessageSender, never()).send(any());
+        verify(valueOperations, never()).increment("auth:sms-code:ip:daily:127.0.0.1");
+        verify(valueOperations, never()).increment("auth:sms-code:daily:13800138000");
+    }
+
+    @Test
+    void sendSmsCodeStopsBeforeUserLookupWhenIpDailyLimitExceeded() {
+        when(valueOperations.increment("auth:sms-code:ip:daily:127.0.0.1")).thenReturn(101L);
+
+        SmsCodeReq req = new SmsCodeReq();
+        req.setPhone("13800138000");
+
+        assertThatThrownBy(() -> authService.sendSmsCode(req, "127.0.0.1"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("验证码发送次数已达今日上限");
+
+        verify(sysUserService, never()).list(any(QueryWrapper.class));
+        verify(smsMessageSender, never()).send(any());
+        verify(valueOperations).increment("auth:sms-code:ip:hour:127.0.0.1");
+        verify(valueOperations).increment("auth:sms-code:ip:daily:127.0.0.1");
+        verify(valueOperations, never()).increment("auth:sms-code:daily:13800138000");
+    }
+
+    @Test
+    void smsLoginWithInvalidCodeThrowsBusinessExceptionAndKeepsStoredCode() {
+        when(valueOperations.get("auth:sms-code:fail:13800138000")).thenReturn(null);
+        when(valueOperations.get("auth:sms-code:13800138000")).thenReturn("stored-hash");
+
+        assertThatThrownBy(() -> authService.login(smsLoginReq("13800138000", "000000"), "127.0.0.1"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("验证码不正确或已过期");
+
+        verify(valueOperations).increment("auth:sms-code:fail:13800138000");
+        verify(redisTemplate).expire("auth:sms-code:fail:13800138000", 5L, TimeUnit.MINUTES);
+        verify(redisTemplate, never()).delete("auth:sms-code:13800138000");
+    }
+
+    @Test
+    void smsLoginAcceptsCorrectCodeAfterPreviousInvalidAttempt() {
+        when(sysUserService.list(any(QueryWrapper.class))).thenReturn(List.of(activeUser()));
+
+        SmsCodeReq smsCodeReq = new SmsCodeReq();
+        smsCodeReq.setPhone("13800138000");
+        authService.sendSmsCode(smsCodeReq, "127.0.0.1");
+
+        ArgumentCaptor<SmsMessageRequest> messageCaptor = ArgumentCaptor.forClass(SmsMessageRequest.class);
+        verify(smsMessageSender).send(messageCaptor.capture());
+        String smsCode = messageCaptor.getValue().templateParams().get("1");
+
+        ArgumentCaptor<String> storedHashCaptor = ArgumentCaptor.forClass(String.class);
+        verify(valueOperations).set(
+                eq("auth:sms-code:13800138000"),
+                storedHashCaptor.capture(),
+                eq(5L),
+                eq(TimeUnit.MINUTES)
+        );
+        String storedHash = storedHashCaptor.getValue();
+
+        clearInvocations(redisTemplate, valueOperations, smsMessageSender, metricsRecorder, sysUserService, userDetailsService);
+        when(valueOperations.get("auth:sms-code:fail:13800138000")).thenReturn(null);
+        when(valueOperations.get("auth:sms-code:13800138000")).thenReturn("not-matching");
+
+        assertThatThrownBy(() -> authService.login(smsLoginReq("13800138000", "000000"), "127.0.0.1"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("验证码不正确或已过期");
+        verify(redisTemplate, never()).delete("auth:sms-code:13800138000");
+
+        clearInvocations(redisTemplate, valueOperations, metricsRecorder, sysUserService, userDetailsService, sysMenuService, userMfaService);
+        when(valueOperations.get("auth:sms-code:fail:13800138000")).thenReturn("1");
+        when(valueOperations.get("auth:sms-code:13800138000")).thenReturn(storedHash);
+        when(sysUserService.list(any(QueryWrapper.class))).thenReturn(List.of(activeUser()));
+        UserDetails userDetails = User.withUsername("alice").password("x").authorities("ADMIN").build();
+        when(userDetailsService.loadUserByUsername("alice")).thenReturn(userDetails);
+        when(sysMenuService.getPermissionCodes("u1")).thenReturn(List.of("sys:user:list"));
+        when(userMfaService.isTotpEnabled("u1")).thenReturn(false);
+
+        LoginResp loginResp = authService.login(smsLoginReq("13800138000", smsCode), "127.0.0.1");
+
+        assertThat(loginResp.getAccessToken()).isNotBlank();
+        assertThat(loginResp.getMfaRequired()).isFalse();
+        verify(redisTemplate).delete("auth:sms-code:13800138000");
+        verify(redisTemplate).delete("auth:sms-code:fail:13800138000");
+    }
+
+    @Test
+    void smsLoginWithExceededVerifyAttemptsThrowsBusinessException() {
+        when(valueOperations.get("auth:sms-code:fail:13800138000")).thenReturn("5");
+
+        assertThatThrownBy(() -> authService.login(smsLoginReq("13800138000", "123456"), "127.0.0.1"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("验证码不正确或已过期");
+
+        verify(valueOperations, never()).increment("auth:sms-code:fail:13800138000");
+        verify(valueOperations, never()).get("auth:sms-code:13800138000");
+        verify(redisTemplate, never()).delete("auth:sms-code:13800138000");
     }
 
     @SuppressWarnings("unchecked")
@@ -127,6 +248,14 @@ class AuthServiceImplTest {
         ObjectProvider<T> provider = mock(ObjectProvider.class);
         when(provider.getIfAvailable()).thenReturn(instance);
         return provider;
+    }
+
+    private static LoginReq smsLoginReq(String phone, String code) {
+        LoginReq req = new LoginReq();
+        req.setLoginType("sms");
+        req.setPhone(phone);
+        req.setCode(code);
+        return req;
     }
 
     private static SysUser activeUser() {

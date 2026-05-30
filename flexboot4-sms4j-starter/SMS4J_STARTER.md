@@ -34,9 +34,12 @@ dependencies {
 
 ## 初始化数据库
 
-执行脚本：`flexboot4-sms4j-starter/src/main/resources/db/sms4j_config_pg.sql`
+执行脚本：
 
-该脚本包含：
+- `flexboot4-sms4j-starter/src/main/resources/db/init.sql`
+- `flexboot4-sms4j-starter/src/main/resources/db/menu_data.sql`
+
+脚本包含：
 
 - `sms4j_config` 表（短信厂商配置）
 - 索引（`config_id` 唯一索引、厂商状态索引）
@@ -45,7 +48,8 @@ dependencies {
 示例：
 
 ```bash
-psql -U postgres -d flexboot4 -f flexboot4-sms4j-starter/src/main/resources/db/sms4j_config_pg.sql
+psql -U postgres -d flexboot4 -f flexboot4-sms4j-starter/src/main/resources/db/init.sql
+psql -U postgres -d flexboot4 -f flexboot4-sms4j-starter/src/main/resources/db/menu_data.sql
 ```
 
 ---
@@ -98,7 +102,7 @@ sms4j:config:export
 
 1. 在项目中引入 `flexboot4-sms4j-starter`
 2. 管理台应用同时引入 `flexboot4-admin-starter`
-3. 执行 `flexboot4-sms4j-starter/src/main/resources/db/sms4j_config_pg.sql`
+3. 执行 `flexboot4-sms4j-starter/src/main/resources/db/init.sql` 与 `flexboot4-sms4j-starter/src/main/resources/db/menu_data.sql`
 4. 在后台「短信厂商配置」页面维护厂商参数
 5. 通过短信业务接口发起发送（按你当前业务封装）
 

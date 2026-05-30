@@ -37,7 +37,7 @@ flexboot4
 ├── flexboot4-kb-starter        # 知识库与 RAG 扩展能力
 ├── flexboot4-ai                # AI Gateway，独立 WebFlux 服务
 ├── flexboot4-bootstrap         # 内部开发聚合应用
-└── docs                        # 开发文档、SQL、模块入口
+└── docs                        # 开发文档与模块入口
 ```
 
 ## 技术栈

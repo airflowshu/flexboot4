@@ -19,7 +19,96 @@ POST /api/admin/auth/login
 
 短信登录是否展示与是否可用由系统配置 `auth.login.options` 控制。用户在个人中心绑定手机号后，不会自动开启短信登录入口；管理员仍需要显式开启短信登录配置。
 
-## 2. 个人中心安全设置
+## 2. 手机验证码登录流程与限流
+
+手机验证码登录分为“发送验证码”和“使用验证码登录”两步。
+
+发送验证码接口：
+
+```text
+POST /api/admin/auth/sms-code
+```
+
+请求体：
+
+```json
+{
+  "phone": "13800138000"
+}
+```
+
+使用验证码登录仍走统一登录接口：
+
+```text
+POST /api/admin/auth/login
+```
+
+请求体：
+
+```json
+{
+  "loginType": "sms",
+  "phone": "13800138000",
+  "code": "123456"
+}
+```
+
+发送验证码流程：
+
+1. 读取 `auth.login.options`，确认短信登录已启用。
+2. 规范化并校验手机号格式。
+3. 执行 IP 维度限流，防止同一 IP 横向请求多个手机号消耗短信额度。
+4. 执行手机号维度冷却与每日次数限制。
+5. 查询未删除、启用状态且绑定该手机号的用户。
+6. 如果手机号未绑定任何用户，接口仍返回“验证码已发送，请注意查收”，但不会调用短信发送器。
+7. 如果手机号已绑定用户，生成验证码并将哈希值写入 Redis，随后调用短信发送器。
+
+验证码登录校验流程：
+
+1. 校验手机号格式和验证码是否为空。
+2. 检查该手机号验证码错误次数，默认最多允许 5 次错误尝试。
+3. 校验 Redis 中保存的验证码哈希。
+4. 验证码错误时只增加失败计数，不删除仍在有效期内的验证码。
+5. 验证码正确且用户存在时登录成功，并清理验证码与失败计数。
+6. 若用户已启用 MFA，第一阶段校验通过后返回 MFA challenge，不直接签发正式 `accessToken`。
+
+短信验证码相关系统配置：
+
+| 配置项 | 默认值 | 类型 | 说明 |
+| --- | --- | --- | --- |
+| `auth.login.options` | 见迁移脚本 | `JSON` | 控制登录方式开关，`methods.sms.enabled` 控制短信登录是否启用 |
+| `auth.login.options.methods.sms.codeLength` | `6` | `NUMBER` | 验证码长度，运行时会限制在 4 到 8 位之间 |
+| `auth.login.options.methods.sms.cooldownSeconds` | `60` | `NUMBER` | 同一手机号发送冷却秒数 |
+| `auth.sms.templateId` | `1` | `STRING` | 短信模板 ID |
+| `auth.sms.configId` | 空字符串 | `STRING` | 指定 sms4j 配置 ID，留空使用默认启用配置 |
+| `auth.sms.ipHourlyLimit` | `30` | `NUMBER` | 同一 IP 每小时最多请求短信验证码次数 |
+| `auth.sms.ipDailyLimit` | `100` | `NUMBER` | 同一 IP 每日最多请求短信验证码次数 |
+
+短信验证码相关 Redis key：
+
+| Key 前缀 | 默认 TTL | 说明 |
+| --- | --- | --- |
+| `auth:sms-code:` | 5 分钟 | 按手机号保存验证码哈希 |
+| `auth:sms-code:cooldown:` | 由 `cooldownSeconds` 决定 | 同一手机号发送冷却 |
+| `auth:sms-code:daily:` | 1440 分钟 | 同一手机号每日请求计数，默认每日最多 10 次 |
+| `auth:sms-code:fail:` | 5 分钟 | 同一手机号验证码错误次数，默认最多 5 次 |
+| `auth:sms-code:ip:hour:` | 60 分钟 | 同一 IP 每小时请求计数 |
+| `auth:sms-code:ip:daily:` | 1440 分钟 | 同一 IP 每日请求计数 |
+
+错误语义：
+
+- 发送过于频繁或达到次数上限时，返回普通业务失败，不返回 401。
+- 验证码错误、过期或失败次数超限时，返回“验证码不正确或已过期”，不返回“登录已过期”。
+- 不存在手机号不会真实发送短信，但返回值与正常发送保持一致，用于避免手机号枚举。
+
+相关 PostgreSQL Flyway 迁移：
+
+```text
+db/migration/flexboot4/admin/postgresql/V4__auth_sms_login_options.sql
+db/migration/flexboot4/admin/postgresql/V7__auth_sms_ip_rate_limit.sql
+```
+
+## 3. 个人中心安全设置
 
 `/profile` 的“安全设置”包含以下绑定能力：
 
@@ -31,7 +120,7 @@ POST /api/admin/auth/login
 
 手机号与邮箱都只在个人中心展示脱敏值，不向前端暴露完整值。
 
-## 3. MFA 设备
+## 4. MFA 设备
 
 MFA v1 使用标准 TOTP，不接入 Microsoft 账号体系。系统生成标准 `otpauth://` 二维码，兼容以下认证器：
 
@@ -71,7 +160,7 @@ TOTP 参数固定为：
 
 已启用 MFA 的账号，无论使用账号密码登录还是手机号验证码登录，第一阶段校验通过后都不会直接签发正式 `accessToken`。
 
-## 4. 登录二阶段验证
+## 5. 登录二阶段验证
 
 启用 MFA 后，第一阶段登录成功时接口返回 challenge：
 
@@ -109,7 +198,7 @@ auth:mfa:challenge:
 
 通常不需要手动清理；如开发调试时确需清理，只清理 `auth:mfa:challenge:*` 这一类临时登录挑战即可。
 
-## 5. 后端配置
+## 6. 后端配置
 
 TOTP secret 不明文入库，会使用服务端密钥加密后写入 `sys_user_mfa.secret_ciphertext`。生产环境必须提供稳定的 MFA 加密密钥：
 
@@ -158,12 +247,14 @@ services:
       FLEXBOOT4_SECURITY_MFA_SECRET_KEY: ${FLEXBOOT4_SECURITY_MFA_SECRET_KEY}
 ```
 
-## 6. 数据库与迁移
+## 7. 数据库与迁移
 
-MFA 使用 `sys_user_mfa` 表，Admin Starter 内置 PostgreSQL Flyway 迁移：
+短信登录、IP 限流与 MFA 均由 Admin Starter 内置 PostgreSQL Flyway 迁移维护：
 
 ```text
+db/migration/flexboot4/admin/postgresql/V4__auth_sms_login_options.sql
 db/migration/flexboot4/admin/postgresql/V6__sys_user_mfa.sql
+db/migration/flexboot4/admin/postgresql/V7__auth_sms_ip_rate_limit.sql
 ```
 
 如果业务应用希望自动纳入 Admin Starter 迁移目录，需要启用：
@@ -176,7 +267,7 @@ flexboot4:
 
 当前项目仍处于开发阶段，旧数据不要求兼容。如果开发库中存在不符合唯一性约束的数据，应优先通过 SQL 清理后再执行迁移。
 
-## 7. 前端依赖
+## 8. 前端依赖
 
 MFA 二维码展示依赖：
 
