@@ -18,6 +18,20 @@
 - **flexboot4-sms4j-starter**: 提供短信发送与厂商配置管理能力（基于 sms4j）
 - **flexboot4-cms-starter**: 提供 CMS 内容管理、模板管理与静态发布能力
 
+### 前端业务包
+
+后端 starter 有对应的前端 companion package。`apps/web-antd` 是宿主壳，业务页面、业务 API 和模块语言包由 `packages/business/*` 提供：
+
+| 后端 starter | 前端 companion package |
+| --- | --- |
+| `flexboot4-admin-starter` | `@flexboot4/admin-web` |
+| `flexboot4-cms-starter` | `@flexboot4/cms-web` |
+| `flexboot4-media-starter` | `@flexboot4/media-web` |
+| `flexboot4-sms4j-starter` | `@flexboot4/sms4j-web` |
+| `flexboot4-kb-starter` | `@flexboot4/kb-web` |
+
+新项目接入某个后端 starter 时，也需要在前端宿主注册对应 web package。当前采用 pnpm workspace 编译期集成，后续稳定后可发布到 npm 或私有 registry。
+
 ### 应用模块（可独立运行）
 
 - **flexboot4-bootstrap**: 内部开发测试用，聚合所有 starter

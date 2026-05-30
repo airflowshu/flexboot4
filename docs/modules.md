@@ -50,6 +50,29 @@ Media 专项文档：
 | --- | --- | --- |
 | `flexboot4-bootstrap` | 聚合所有 starter 的本仓库联调应用 | [开发者指南](guide.md) |
 
+## 前端 Companion Package
+
+前端与后端 starter 保持同样的模块边界。`flexboot-web/vue-vben-admin/apps/web-antd` 只作为宿主壳，保留登录、布局、请求、权限指令、路由守卫、菜单拉取、fallback 与通用组件适配；业务页面、业务 API 与模块语言包放在对应的 `packages/business/*` 包中。
+
+| 后端 starter | 前端 companion package | 前端包目录 |
+| --- | --- | --- |
+| `flexboot4-admin-starter` | `@flexboot4/admin-web` | `packages/business/admin-web` |
+| `flexboot4-cms-starter` | `@flexboot4/cms-web` | `packages/business/cms-web` |
+| `flexboot4-media-starter` | `@flexboot4/media-web` | `packages/business/media-web` |
+| `flexboot4-sms4j-starter` | `@flexboot4/sms4j-web` | `packages/business/sms4j-web` |
+| `flexboot4-kb-starter` | `@flexboot4/kb-web` | `packages/business/kb-web` |
+
+新项目选择后端能力时，需要同时声明对应前端包，并在宿主的 `apps/web-antd/src/modules/enabled.ts` 中注册启用。第一版采用 pnpm workspace 编译期集成，不做运行时远程加载。
+
+前端模块契约：
+
+- 后端 `menu_data.sql` 的 `component` 字段保持 `/module/page/index` 风格。
+- 前端业务包通过 `@flexboot4/web-kit` 暴露 `pages`、`componentKeys`、`locales` 和可选 `install`。
+- 宿主合并核心页面与 enabled modules 的页面映射后解析动态路由。
+- 菜单管理的组件候选项来自当前 enabled modules，避免配置未集成模块的页面。
+- 业务包 API 通过 `useFlexbootRequestClient()` 取得宿主注入的 request client，不反向依赖宿主 `#/api/request`。
+- 后端菜单与前端页面的契约通过前端仓库 `pnpm check:flexboot-routes` 校验。
+
 ## SQL 与初始化
 
 SQL 脚本跟随业务 starter 维护，不再集中放在 `docs` 下。每个需要数据库资源的模块在 `src/main/resources/db/` 下提供：
