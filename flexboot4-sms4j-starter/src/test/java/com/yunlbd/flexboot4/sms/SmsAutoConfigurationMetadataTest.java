@@ -28,11 +28,14 @@ class SmsAutoConfigurationMetadataTest {
     }
 
     @Test
-    void smsDatabaseResourcesArePackaged() throws IOException {
-        assertThat(resourceAsString("/db/init.sql"))
+    void smsFlywayModuleResourcesArePackaged() throws IOException {
+        assertThat(resourceAsString("/META-INF/flexboot4/flyway-module.properties"))
+                .contains("module=sms4j")
+                .contains("locations=classpath:db/flexboot4-migration/sms4j/postgresql");
+        assertThat(resourceAsString("/db/flexboot4-migration/sms4j/postgresql/V2000__sms4j_schema.sql"))
                 .contains("CREATE TABLE IF NOT EXISTS sms4j_config")
                 .contains("uk_sms4j_config_config_id");
-        assertThat(resourceAsString("/db/menu_data.sql"))
+        assertThat(resourceAsString("/db/flexboot4-migration/sms4j/postgresql/V2010__sms4j_menu_data.sql"))
                 .contains("sms_menu_root")
                 .contains("sms4j:config:list");
     }

@@ -29,7 +29,9 @@ security:
 
 flexboot4:
   flyway:
-    admin-migrations-enabled: ${FLEXBOOT4_FLYWAY_ADMIN_MIGRATIONS_ENABLED:false}
+    enabled: ${FLEXBOOT4_FLYWAY_ENABLED:true}
+    database: ${FLEXBOOT4_FLYWAY_DATABASE:postgresql}
+    auto-detect-modules: ${FLEXBOOT4_FLYWAY_AUTO_DETECT_MODULES:true}
   lock:
     key-prefix: ${FLEXBOOT4_LOCK_KEY_PREFIX:flexboot4:lock:}
     default-ttl-millis: ${FLEXBOOT4_LOCK_DEFAULT_TTL_MILLIS:60000}

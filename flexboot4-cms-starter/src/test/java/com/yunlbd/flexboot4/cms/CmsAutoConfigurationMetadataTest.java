@@ -21,11 +21,14 @@ class CmsAutoConfigurationMetadataTest {
     }
 
     @Test
-    void cmsDatabaseResourcesArePackaged() throws IOException {
-        assertThat(resourceAsString("/db/init.sql"))
+    void cmsFlywayModuleResourcesArePackaged() throws IOException {
+        assertThat(resourceAsString("/META-INF/flexboot4/flyway-module.properties"))
+                .contains("module=cms")
+                .contains("locations=classpath:db/flexboot4-migration/cms/postgresql");
+        assertThat(resourceAsString("/db/flexboot4-migration/cms/postgresql/V3000__cms_schema.sql"))
                 .contains("CREATE TABLE IF NOT EXISTS cms_category")
                 .contains("CREATE TABLE IF NOT EXISTS cms_template_publish_record");
-        assertThat(resourceAsString("/db/menu_data.sql"))
+        assertThat(resourceAsString("/db/flexboot4-migration/cms/postgresql/V3010__cms_menu_data.sql"))
                 .contains("cms_menu_root")
                 .contains("cms:article:list");
     }

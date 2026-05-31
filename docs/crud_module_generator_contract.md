@@ -239,7 +239,7 @@ rg -n "super\.(getById|list|page|getOne|count|save|updateById|removeById|removeB
 
 ## 10. 模板目录
 
-当前契约配套模板位于 [templates/crud](templates/crud/)：
+当前契约配套模板位于 `templates/crud/`：
 
 ```text
 templates/crud/metadata.yml

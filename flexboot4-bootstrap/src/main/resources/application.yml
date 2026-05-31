@@ -29,15 +29,20 @@ spring:
           ssl:
             enable: true
     default-encoding: UTF-8
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://192.168.11.104:5433/flexboot4}
+    username: ${DB_USERNAME:flexboot4}
+    password: ${DB_PASSWORD:flexboot4}
+    driver-class-name: org.postgresql.Driver
 
 # MyBatis-Flex 数据源配置 (仅数据源连接信息)
 # 通用配置已在 flexboot4-admin-defaults.yml 中定义
 mybatis-flex:
   datasource:
     ds1:
-      url: jdbc:postgresql://192.168.11.104:5433/flexboot4
-      username: flexboot4
-      password: flexboot4
+      url: ${spring.datasource.url}
+      username: ${spring.datasource.username}
+      password: ${spring.datasource.password}
   # 日志配置：控制是否打印 SQL 语句
   # 选项说明：
   # - org.apache.ibatis.logging.nologging.NoLoggingImpl        # 不打印日志（默认）

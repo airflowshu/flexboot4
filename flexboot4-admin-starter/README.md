@@ -10,7 +10,7 @@ Admin Starter 提供了 flexboot4 的核心 RBAC（基于角色的访问控制�
 - **部门管理**：组织架构管理
 - **操作日志**：系统操作审计，Redis Stream 消费支持 `event_id` 幂等、成功后 ack、pending reclaim 与 dead-letter stream
 - **分布式任务锁**：关键定时任务通过 `DistributedLockService` 加锁，Redis 可用时自动使用 Redis 锁
-- **Flyway 迁移脚本**：内置 Admin PostgreSQL 迁移目录，可按需追加到业务应用的 Flyway locations
+- **Flyway 数据库迁移**：内置 Flyway runtime，并自动聚合已引入 FlexBoot4 模块的 PostgreSQL 迁移目录
 - **架构约束测试**：固化禁止字段注入、禁止注入具体 `*Impl`、starter 边界依赖等规则
 - **轻量指标接口**：通过 `MetricsRecorder` 记录认证、权限、OperLog Stream、分布式锁等关键事件，默认 Noop，支持业务项目替换实现
 - **登录日志**：用户登录追踪
@@ -94,7 +94,9 @@ mybatis-flex:
 # JWT 配置
 flexboot4:
   flyway:
-    admin-migrations-enabled: false
+    enabled: true
+    database: postgresql
+    auto-detect-modules: true
   lock:
     key-prefix: flexboot4:lock:
     default-ttl-millis: 60000
@@ -140,21 +142,31 @@ public class YourService {
 }
 ```
 
-如果业务应用已引入 Flyway，并希望自动纳入 Admin starter 的 SQL 演进脚本，可设置：
+Admin Starter 默认集成 Flyway。业务应用提供 `spring.datasource` 后，Spring Boot 会在启动时执行 Flyway 迁移；Admin 会自动扫描 classpath 上已引入 FlexBoot4 模块的迁移声明，并合并到 `spring.flyway.locations`。
 
 ```yaml
 flexboot4:
   flyway:
-    admin-migrations-enabled: true
+    enabled: true
+    database: postgresql
+    auto-detect-modules: true
 ```
 
-启用后会追加迁移目录 `classpath:db/migration/flexboot4/admin/postgresql`。starter 默认不强制启用 Flyway，避免影响已有项目的数据库启动策略。
+业务项目自己的迁移脚本仍放在 `classpath:db/migration`；FlexBoot4 内置模块脚本位于 `classpath:db/flexboot4-migration/<module>/postgresql`。如需临时关闭某个模块的迁移，可配置：
+
+```yaml
+flexboot4:
+  flyway:
+    modules:
+      sms4j:
+        enabled: false
+```
 
 ## SQL
 
-- 首次接入初始化：`src/main/resources/db/init.sql`
-- 菜单与按钮权限：`src/main/resources/db/menu_data.sql`
-- 后续演进迁移：`src/main/resources/db/migration/flexboot4/admin/postgresql`
+- Admin 迁移目录：`src/main/resources/db/flexboot4-migration/admin/postgresql`
+- 模块声明：`src/main/resources/META-INF/flexboot4/flyway-module.properties`
+- 详细规则：[数据库迁移与 Flyway](../docs/database-migration.md)
 
 ### 可观测性扩展
 
@@ -222,7 +234,7 @@ P0 安全收口后，Admin 接口应显式声明 `@RequirePermission`；`/api/ad
 
 1. Admin Starter 是纯库模块，通过默认配置文件提供框架级默认值，外部项目仍需提供数据库、Redis、JWT 等环境配置
 2. 外部项目需要配置数据库连接、Redis 连接等信息
-3. 确保数据库已创建相应的表结构与权限数据：首次接入执行本模块 `src/main/resources/db/init.sql` 和 `src/main/resources/db/menu_data.sql`；后续改动通过本模块 Flyway 迁移目录维护
+3. 确保业务应用配置了 `spring.datasource`，Admin Starter 会通过 Flyway 自动创建表结构、基础菜单与权限数据
 4. JWT Secret 建议使用至少 256 位的随机字符串
 5. MFA Secret 建议使用独立于 JWT Secret 的稳定随机字符串，生产环境通过 `FLEXBOOT4_SECURITY_MFA_SECRET_KEY` 注入
 6. `flexboot4-admin-kernel` 仅承载公共底座类，不会自动启用 RBAC/运维 Bean；kb/media/sms/cms starter 已按 kernel 解耦。kb/cms 如需使用默认文件管理、配置读取、用户上下文与后台管理能力，请在应用中显式引入 `admin-starter`，或提供等价 Bean 实现
@@ -230,6 +242,7 @@ P0 安全收口后，Admin 接口应显式声明 `@RequirePermission`；`/api/ad
 ## 相关文档
 
 - [完整架构说明](../docs/STARTER_ARCHITECTURE.md)
+- [数据库迁移与 Flyway](../docs/database-migration.md)
 - [Admin 认证与账号安全](../docs/admin-auth-security.md)
 - [权限控制设计](../docs/backend_permission_control_design.md)
 - [API 分组指南](../docs/API_TAG_GROUP_GUIDE.md)

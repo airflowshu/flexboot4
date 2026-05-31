@@ -29,35 +29,15 @@ class AdminAutoConfigurationMetadataTest {
     }
 
     @Test
-    void adminInitResourcesArePackaged() throws IOException {
-        assertThat(resourceAsString("/db/init.sql"))
+    void adminFlywayModuleResourcesArePackaged() throws IOException {
+        assertThat(resourceAsString("/META-INF/flexboot4/flyway-module.properties"))
+                .contains("module=admin")
+                .contains("locations=classpath:db/flexboot4-migration/admin/postgresql");
+        assertThat(resourceAsString("/db/flexboot4-migration/admin/postgresql/V1000__admin_core_schema.sql"))
                 .contains("CREATE TABLE IF NOT EXISTS sys_user")
-                .contains("CREATE TABLE IF NOT EXISTS sys_menu")
                 .contains("CREATE TABLE IF NOT EXISTS sys_oper_log");
-        assertThat(resourceAsString("/db/menu_data.sql"))
+        assertThat(resourceAsString("/db/flexboot4-migration/admin/postgresql/V1010__admin_menu_data.sql"))
                 .contains("sys_menu_system")
-                .contains("sys:user:reset-password")
-                .contains("sys:oper:log:list");
-    }
-
-    @Test
-    void adminFlywayMigrationResourcesArePackaged() throws IOException {
-        assertThat(resourceAsString("/db/migration/flexboot4/admin/postgresql/V1__admin_permission_p0_patch.sql"))
-                .contains("sys:user:reset-password");
-        assertThat(resourceAsString("/db/migration/flexboot4/admin/postgresql/V2__operlog_event_id_reliability.sql"))
-                .contains("uk_sys_oper_log_event_id")
-                .contains("pg_tables");
-        assertThat(resourceAsString("/db/migration/flexboot4/admin/postgresql/V4__auth_sms_login_options.sql"))
-                .contains("auth.login.options")
-                .contains("uk_sys_user_phone_alive");
-        assertThat(resourceAsString("/db/migration/flexboot4/admin/postgresql/V6__sys_user_mfa.sql"))
-                .contains("sys_user_mfa")
-                .contains("uk_sys_user_mfa_enabled_totp");
-        assertThat(resourceAsString("/db/migration/flexboot4/admin/postgresql/V7__auth_sms_ip_rate_limit.sql"))
-                .contains("auth.sms.ipHourlyLimit")
-                .contains("auth.sms.ipDailyLimit");
-        assertThat(resourceAsString("/db/migration/flexboot4/admin/postgresql/V8__vben_menu_contract_fix.sql"))
-                .contains("BasicLayout")
                 .contains("sys:user:reset-password");
     }
 

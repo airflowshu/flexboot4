@@ -45,11 +45,11 @@ pnpm-lock.yaml
 .npmrc
 
 ### VitePress / Documentation ###
-doc/node_modules/
-doc/.vitepress/dist/
-doc/.vitepress/cache/
-doc/.DS_Store
-doc/dist/
+docs/node_modules/
+docs/.vitepress/dist/
+docs/.vitepress/cache/
+docs/.DS_Store
+docs/dist/
 
 ### Environment Files ###
 .env

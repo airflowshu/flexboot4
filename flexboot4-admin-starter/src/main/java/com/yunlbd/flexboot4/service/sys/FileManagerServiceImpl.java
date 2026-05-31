@@ -98,7 +98,7 @@ public class FileManagerServiceImpl implements FileManagerService {
                 }
             }
             fileStorage.delete(stored.location());
-            throw new IllegalStateException("sys_file.file_hash 唯一索引未按文件存储规范调整，请执行 flexboot4-admin-starter/src/main/resources/db/migration/flexboot4/admin/postgresql/V3__sys_file_hash_alive_unique.sql", e);
+            throw new IllegalStateException("sys_file.file_hash 唯一索引未按文件存储规范调整，请确认 Admin Flyway 初始化脚本 flexboot4-admin-starter/src/main/resources/db/flexboot4-migration/admin/postgresql/V1000__admin_core_schema.sql 已执行", e);
         }
 
         return stored;

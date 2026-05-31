@@ -35,11 +35,14 @@ class KbAutoConfigurationMetadataTest {
     }
 
     @Test
-    void kbDatabaseResourcesArePackaged() throws IOException {
-        assertThat(resourceAsString("/db/init.sql"))
+    void kbFlywayModuleResourcesArePackaged() throws IOException {
+        assertThat(resourceAsString("/META-INF/flexboot4/flyway-module.properties"))
+                .contains("module=kb")
+                .contains("locations=classpath:db/flexboot4-migration/kb/postgresql");
+        assertThat(resourceAsString("/db/flexboot4-migration/kb/postgresql/V5000__kb_schema.sql"))
                 .contains("CREATE TABLE IF NOT EXISTS knowledge_base")
                 .contains("CREATE TABLE IF NOT EXISTS sys_file_chunk");
-        assertThat(resourceAsString("/db/menu_data.sql"))
+        assertThat(resourceAsString("/db/flexboot4-migration/kb/postgresql/V5010__kb_menu_data.sql"))
                 .contains("kb_menu_root")
                 .contains("kb:manage:list");
     }

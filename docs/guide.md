@@ -218,7 +218,7 @@ sys:user:import
 - 布局组件使用前端 `layoutMap` 支持的值，例如 `BasicLayout`、`IFrameView`。
 - 根菜单 parentId 统一使用 `NULL`，不要混用 `"0"`。
 
-模块 `src/main/resources/db/menu_data.sql` 应包含：
+模块的 Flyway 菜单迁移脚本应包含：
 
 - 菜单路由节点
 - 按钮权限节点
@@ -311,7 +311,7 @@ menu:
 - MapStruct mapper 或低风险默认 mapper
 - Service/Controller
 - 权限码
-- 菜单 SQL
+- Flyway 迁移脚本
 - 前端 API
 - vben 列表页、表单抽屉、权限按钮
 
@@ -350,12 +350,12 @@ pnpm -F @vben/web-antd typecheck
 ## 12. 新模块接入清单
 
 1. 明确模块元数据：`domain`、`resource`、`basePath`、`permissionPrefix`。
-2. 建 Entity 和表结构。
+2. 建 Entity 和 Flyway 表结构迁移。
 3. 建 `CreateReq`、`UpdateReq`、`ListVO`、`DetailVO`。
 4. 高风险模块建 MapStruct `CrudMapper`。
 5. 建 Controller，继承 `BaseCrudController` 或 `EntityCrudController`。
 6. 配置 `CrudFieldPolicy`。
 7. 配置 Excel `ExportRow`，必要时启用 `ImportRow`。
-8. 写菜单和按钮权限 SQL。
+8. 写菜单和按钮权限 Flyway 迁移。
 9. 写前端 API、列表页、表单页。
 10. 跑后端和前端回归。

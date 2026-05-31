@@ -12,6 +12,7 @@ dependencies {
     api("org.springframework.boot:spring-boot-starter-security")
     api("org.springframework.boot:spring-boot-starter-data-redis")
     api("org.springframework.boot:spring-boot-starter-jdbc")
+    api("org.springframework.boot:spring-boot-starter-flyway")
     api("org.springframework.boot:spring-boot-starter-mail")
 
     api("org.aspectj:aspectjweaver")
@@ -22,6 +23,7 @@ dependencies {
     annotationProcessor(libs.mapstructProcessor)
 
     api(libs.postgresqlJdbc)
+    runtimeOnly("org.flywaydb:flyway-database-postgresql")
     api(libs.mybatisFlexStarter)
     implementation(libs.mybatisFlexCodegen)
     annotationProcessor(libs.mybatisFlexProcessor)

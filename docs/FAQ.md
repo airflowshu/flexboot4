@@ -207,22 +207,12 @@ Unable to connect to database
    CREATE DATABASE flexboot4;
    ```
 
-4. **执行初始化脚本**
-   ```bash
-   psql -U postgres -d flexboot4 -f flexboot4-admin-starter/src/main/resources/db/init.sql
-   psql -U postgres -d flexboot4 -f flexboot4-admin-starter/src/main/resources/db/menu_data.sql
-   ```
+4. **启动应用执行迁移**
+   配置 `spring.datasource` 后启动应用，Admin Starter 内置 Flyway 会自动创建表结构、基础菜单和已引入业务模块的数据。
 
 ### Q10: 表不存在错误
 
-**A:** 按已集成的 starter 执行数据库初始化脚本。基础后台能力至少需要：
-
-```bash
-psql -U postgres -d flexboot4 -f flexboot4-admin-starter/src/main/resources/db/init.sql
-psql -U postgres -d flexboot4 -f flexboot4-admin-starter/src/main/resources/db/menu_data.sql
-```
-
-如集成 CMS、Media、SMS4J、KB 等能力，再执行对应模块的 `src/main/resources/db/init.sql` 与 `src/main/resources/db/menu_data.sql`。后续功能改动通过各模块 `src/main/resources/db/migration/...` 下的 Flyway 脚本管理。
+**A:** 确认业务应用已经引入 `flexboot4-admin-starter`，并配置了 `spring.datasource`。Admin Starter 会自动发现 classpath 上已引入模块的 Flyway 声明，并执行对应迁移。详细规则见 [数据库迁移与 Flyway](database-migration.md)。
 
 或者在应用配置中启用自动建表（仅开发环境）：
 
@@ -421,8 +411,8 @@ http://localhost:8080/scalar/index.html
 | [模块文档索引](modules.md) | Admin、CMS、Media、SMS、KB、AI 文档入口 |
 | [STARTER_ARCHITECTURE.md](STARTER_ARCHITECTURE.md) | Starter 架构设计 |
 | [QUICKSTART.md](QUICKSTART.md) | 快速开始指南 |
-| [SMS4J_STARTER.md](../flexboot4-sms4j-starter/SMS4J_STARTER.md) | SMS4J Starter 接入说明 |
-| [flexboot4-admin-starter/README.md](../flexboot4-admin-starter/README.md) | Admin Starter 使用说明 |
+| [SMS4J_STARTER.md](https://github.com/airflowshu/flexboot4/blob/master/flexboot4-sms4j-starter/SMS4J_STARTER.md) | SMS4J Starter 接入说明 |
+| [flexboot4-admin-starter/README.md](https://github.com/airflowshu/flexboot4/blob/master/flexboot4-admin-starter/README.md) | Admin Starter 使用说明 |
 
 ---
 

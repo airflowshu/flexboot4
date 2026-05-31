@@ -28,11 +28,14 @@ class MediaAutoConfigurationMetadataTest {
     }
 
     @Test
-    void mediaDatabaseResourcesArePackaged() throws IOException {
-        assertThat(resourceAsString("/db/init.sql"))
+    void mediaFlywayModuleResourcesArePackaged() throws IOException {
+        assertThat(resourceAsString("/META-INF/flexboot4/flyway-module.properties"))
+                .contains("module=media")
+                .contains("locations=classpath:db/flexboot4-migration/media/postgresql");
+        assertThat(resourceAsString("/db/flexboot4-migration/media/postgresql/V4000__media_schema.sql"))
                 .contains("CREATE TABLE IF NOT EXISTS media_server")
                 .contains("CREATE TABLE IF NOT EXISTS media_cascade_binding");
-        assertThat(resourceAsString("/db/menu_data.sql"))
+        assertThat(resourceAsString("/db/flexboot4-migration/media/postgresql/V4010__media_menu_data.sql"))
                 .contains("media_root")
                 .contains("media:server:list");
     }

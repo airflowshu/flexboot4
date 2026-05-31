@@ -101,11 +101,10 @@ POST /api/admin/auth/login
 - 验证码错误、过期或失败次数超限时，返回“验证码不正确或已过期”，不返回“登录已过期”。
 - 不存在手机号不会真实发送短信，但返回值与正常发送保持一致，用于避免手机号枚举。
 
-相关 PostgreSQL Flyway 迁移：
+相关 PostgreSQL Flyway 迁移已合并到 Admin 基线：
 
 ```text
-db/migration/flexboot4/admin/postgresql/V4__auth_sms_login_options.sql
-db/migration/flexboot4/admin/postgresql/V7__auth_sms_ip_rate_limit.sql
+db/flexboot4-migration/admin/postgresql/V1000__admin_core_schema.sql
 ```
 
 ## 3. 个人中心安全设置
@@ -252,17 +251,17 @@ services:
 短信登录、IP 限流与 MFA 均由 Admin Starter 内置 PostgreSQL Flyway 迁移维护：
 
 ```text
-db/migration/flexboot4/admin/postgresql/V4__auth_sms_login_options.sql
-db/migration/flexboot4/admin/postgresql/V6__sys_user_mfa.sql
-db/migration/flexboot4/admin/postgresql/V7__auth_sms_ip_rate_limit.sql
+db/flexboot4-migration/admin/postgresql/V1000__admin_core_schema.sql
 ```
 
-如果业务应用希望自动纳入 Admin Starter 迁移目录，需要启用：
+业务应用配置 `spring.datasource` 后，Admin Starter 会默认合并 FlexBoot4 模块迁移目录。相关配置：
 
 ```yaml
 flexboot4:
   flyway:
-    admin-migrations-enabled: true
+    enabled: true
+    database: postgresql
+    auto-detect-modules: true
 ```
 
 当前项目仍处于开发阶段，旧数据不要求兼容。如果开发库中存在不符合唯一性约束的数据，应优先通过 SQL 清理后再执行迁移。

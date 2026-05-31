@@ -1,7 +1,7 @@
 -- ============================================================
 -- FlexBoot4 Admin Starter initialization (PostgreSQL)
 -- Base tables and default data owned by the admin module.
--- Later changes are managed by db/migration/flexboot4/admin/postgresql.
+-- Later changes are managed by db/flexboot4-migration/admin/postgresql.
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS sys_dept (

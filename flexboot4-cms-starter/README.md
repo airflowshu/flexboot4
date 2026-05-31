@@ -67,8 +67,11 @@ cms:
 
 ## SQL
 
-- 表结构与初始化数据：`src/main/resources/db/init.sql`
-- 菜单与按钮权限：`src/main/resources/db/menu_data.sql`
+管理台应用引入 `flexboot4-admin-starter` 后，Admin Starter 会自动发现 CMS 模块声明，并把 CMS 的 Flyway 迁移目录合并到 `spring.flyway.locations`。
+
+- 迁移目录：`src/main/resources/db/flexboot4-migration/cms/postgresql`
+- 模块声明：`src/main/resources/META-INF/flexboot4/flyway-module.properties`
+- 详细规则：[数据库迁移与 Flyway](../docs/database-migration.md)
 
 ## API 路由前缀
 

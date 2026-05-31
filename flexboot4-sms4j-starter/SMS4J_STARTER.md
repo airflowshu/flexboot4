@@ -12,7 +12,7 @@
 - 基于 `sms4j` 统一接入多厂商短信通道
 - 提供短信厂商配置实体、Mapper、Service、Controller
 - 支持数据库驱动的动态配置热刷新（新增/更新后自动生效）
-- 提供 PostgreSQL 初始化脚本（表结构 + 菜单）
+- 提供 PostgreSQL Flyway 迁移脚本（表结构 + 菜单）
 
 ---
 
@@ -32,25 +32,19 @@ dependencies {
 
 ---
 
-## 初始化数据库
+## 数据库迁移
 
-执行脚本：
+管理台应用引入 `flexboot4-admin-starter` 后，Admin Starter 会自动发现 SMS4J 模块声明，并把 SMS4J 的 Flyway 迁移目录合并到 `spring.flyway.locations`。迁移目录：
 
-- `flexboot4-sms4j-starter/src/main/resources/db/init.sql`
-- `flexboot4-sms4j-starter/src/main/resources/db/menu_data.sql`
+```text
+flexboot4-sms4j-starter/src/main/resources/db/flexboot4-migration/sms4j/postgresql
+```
 
-脚本包含：
+迁移内容包含：
 
 - `sms4j_config` 表（短信厂商配置）
 - 索引（`config_id` 唯一索引、厂商状态索引）
 - `sys_menu` 短信管理菜单初始化数据
-
-示例：
-
-```bash
-psql -U postgres -d flexboot4 -f flexboot4-sms4j-starter/src/main/resources/db/init.sql
-psql -U postgres -d flexboot4 -f flexboot4-sms4j-starter/src/main/resources/db/menu_data.sql
-```
 
 ---
 
@@ -102,7 +96,7 @@ sms4j:config:export
 
 1. 在项目中引入 `flexboot4-sms4j-starter`
 2. 管理台应用同时引入 `flexboot4-admin-starter`
-3. 执行 `flexboot4-sms4j-starter/src/main/resources/db/init.sql` 与 `flexboot4-sms4j-starter/src/main/resources/db/menu_data.sql`
+3. 配置 `spring.datasource`，启动时由 Admin 内置 Flyway 自动执行 SMS4J 迁移
 4. 在后台「短信厂商配置」页面维护厂商参数
 5. 通过短信业务接口发起发送（按你当前业务封装）
 
@@ -142,6 +136,7 @@ sms4j:config:export
 ## 相关文档
 
 - [Starter 架构](../docs/STARTER_ARCHITECTURE.md)
+- [数据库迁移与 Flyway](../docs/database-migration.md)
 - [接入指南](../docs/guide.md)
 - [快速开始](../docs/QUICKSTART.md)
 - [常见问题](../docs/FAQ.md)

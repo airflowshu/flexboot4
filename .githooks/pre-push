@@ -1,0 +1,32 @@
+#!/bin/sh
+set -eu
+
+if [ "${SKIP_DOCS_BUILD:-}" = "1" ]; then
+  echo "[pre-push] SKIP_DOCS_BUILD=1, skip VitePress docs build."
+  exit 0
+fi
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+DOCS_DIR="$REPO_ROOT/docs"
+
+if ! command -v pnpm >/dev/null 2>&1; then
+  echo "[pre-push] ERROR: pnpm is required to build docs, but it was not found in PATH." >&2
+  echo "[pre-push] Install pnpm first, or run with SKIP_DOCS_BUILD=1 to skip temporarily." >&2
+  exit 1
+fi
+
+if [ ! -d "$DOCS_DIR" ]; then
+  echo "[pre-push] ERROR: docs directory not found: $DOCS_DIR" >&2
+  exit 1
+fi
+
+echo "[pre-push] Building VitePress docs before push..."
+cd "$DOCS_DIR"
+
+if [ ! -d "node_modules" ]; then
+  echo "[pre-push] docs/node_modules not found, installing dependencies..."
+  pnpm install --frozen-lockfile
+fi
+
+pnpm docs:build
+echo "[pre-push] Docs build passed."

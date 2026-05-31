@@ -14,7 +14,7 @@
 
 | 模块 | 定位 | 文档 |
 | --- | --- | --- |
-| `flexboot4-admin-starter` | RBAC、用户、角色、菜单、配置、文件、操作日志、API Key | [Admin Starter README](../flexboot4-admin-starter/README.md) |
+| `flexboot4-admin-starter` | RBAC、用户、角色、菜单、配置、文件、操作日志、API Key | [Admin Starter README](https://github.com/airflowshu/flexboot4/blob/master/flexboot4-admin-starter/README.md) |
 
 相关专题：
 
@@ -28,21 +28,21 @@
 
 | 模块 | 定位 | 文档 |
 | --- | --- | --- |
-| `flexboot4-cms-starter` | CMS 栏目、文章、模板、静态发布 | [CMS README](../flexboot4-cms-starter/README.md) |
-| `flexboot4-media-starter` | ZLMediaKit、GB28181、设备通道、分屏、国标级联 | [Media README](../flexboot4-media-starter/README.md) |
-| `flexboot4-sms4j-starter` | sms4j 厂商配置、动态刷新、短信能力 | [SMS4J Starter](../flexboot4-sms4j-starter/SMS4J_STARTER.md) |
+| `flexboot4-cms-starter` | CMS 栏目、文章、模板、静态发布 | [CMS README](https://github.com/airflowshu/flexboot4/blob/master/flexboot4-cms-starter/README.md) |
+| `flexboot4-media-starter` | ZLMediaKit、GB28181、设备通道、分屏、国标级联 | [Media README](https://github.com/airflowshu/flexboot4/blob/master/flexboot4-media-starter/README.md) |
+| `flexboot4-sms4j-starter` | sms4j 厂商配置、动态刷新、短信能力 | [SMS4J Starter](https://github.com/airflowshu/flexboot4/blob/master/flexboot4-sms4j-starter/SMS4J_STARTER.md) |
 | `flexboot4-kb-starter` | 知识库、文件解析、RAG 扩展能力 | 暂无独立 README |
 
 Media 专项文档：
 
-- [Media 计划](../flexboot4-media-starter/Media-PLAN.md)
-- [Media 集成检查清单](../flexboot4-media-starter/MEDIA-INTEGRATION-CHECKLIST.md)
+- [Media 计划](https://github.com/airflowshu/flexboot4/blob/master/flexboot4-media-starter/Media-PLAN.md)
+- [Media 集成检查清单](https://github.com/airflowshu/flexboot4/blob/master/flexboot4-media-starter/MEDIA-INTEGRATION-CHECKLIST.md)
 
 ## 独立服务
 
 | 模块 | 定位 | 文档 |
 | --- | --- | --- |
-| `flexboot4-ai` | AI Gateway，WebFlux 流式代理、API Key 离线鉴权、调用日志汇聚 | [AI 结构说明](../flexboot4-ai/struc.md) |
+| `flexboot4-ai` | AI Gateway，WebFlux 流式代理、API Key 离线鉴权、调用日志汇聚 | [AI 结构说明](https://github.com/airflowshu/flexboot4/blob/master/flexboot4-ai/struc.md) |
 
 ## 内部开发应用
 
@@ -75,23 +75,14 @@ Media 专项文档：
 
 ## SQL 与初始化
 
-SQL 脚本跟随业务 starter 维护，不再集中放在 `docs` 下。每个需要数据库资源的模块在 `src/main/resources/db/` 下提供：
+数据库结构由 `flexboot4-admin-starter` 内置 Flyway 统一管理。业务 starter 只携带自己的迁移脚本和 `META-INF/flexboot4/flyway-module.properties` 声明；模块被引入 classpath 后，Admin 会自动把对应迁移目录合并到 `spring.flyway.locations`。
 
-- `init.sql`：该模块的业务表、索引和必要初始化数据
-- `menu_data.sql`：该模块的菜单、按钮和权限初始化数据
-- `migration/flexboot4/{module}/postgresql/V*__*.sql`：后续功能演进的 Flyway 脚本
+当前内置模块迁移入口：
 
-当前模块脚本入口：
+- `flexboot4-admin-starter/src/main/resources/db/flexboot4-migration/admin/postgresql`
+- `flexboot4-cms-starter/src/main/resources/db/flexboot4-migration/cms/postgresql`
+- `flexboot4-media-starter/src/main/resources/db/flexboot4-migration/media/postgresql`
+- `flexboot4-sms4j-starter/src/main/resources/db/flexboot4-migration/sms4j/postgresql`
+- `flexboot4-kb-starter/src/main/resources/db/flexboot4-migration/kb/postgresql`
 
-- `flexboot4-admin-starter/src/main/resources/db/init.sql`
-- `flexboot4-admin-starter/src/main/resources/db/menu_data.sql`
-- `flexboot4-cms-starter/src/main/resources/db/init.sql`
-- `flexboot4-cms-starter/src/main/resources/db/menu_data.sql`
-- `flexboot4-media-starter/src/main/resources/db/init.sql`
-- `flexboot4-media-starter/src/main/resources/db/menu_data.sql`
-- `flexboot4-sms4j-starter/src/main/resources/db/init.sql`
-- `flexboot4-sms4j-starter/src/main/resources/db/menu_data.sql`
-- `flexboot4-kb-starter/src/main/resources/db/init.sql`
-- `flexboot4-kb-starter/src/main/resources/db/menu_data.sql`
-
-开发阶段旧数据不要求兼容。若数据不符合当前契约，优先使用模块 SQL 或 Flyway 迁移修正数据，而不是在代码里保留旧兼容逻辑。
+开发阶段旧数据不要求兼容。若数据不符合当前契约，优先重建开发库或新增 Flyway 迁移修正数据，而不是在代码里保留旧兼容逻辑。详细规则见 [数据库迁移与 Flyway](database-migration.md)。

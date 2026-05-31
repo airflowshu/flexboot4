@@ -59,7 +59,7 @@ public class FlexBoot4AdminEnvironmentListener implements ApplicationListener<Ap
     }
 
     private void registerFlywayLocations(ConfigurableEnvironment environment) {
-        if (!FlexBoot4FlywayLocations.adminMigrationsEnabled(environment)) {
+        if (!FlexBoot4FlywayLocations.flexBoot4FlywayEnabled(environment)) {
             return;
         }
         String locations = FlexBoot4FlywayLocations.mergedLocations(environment);
@@ -67,7 +67,7 @@ public class FlexBoot4AdminEnvironmentListener implements ApplicationListener<Ap
                 "flexboot4-admin-flyway-locations",
                 Map.of(FlexBoot4FlywayLocations.LOCATIONS_PROPERTY, locations)
         ));
-        log.info("✅ Flexboot4 Admin Flyway 迁移目录已追加: {}", FlexBoot4FlywayLocations.ADMIN_POSTGRESQL_LOCATION);
+        log.info("✅ Flexboot4 Flyway 迁移目录已合并: {}", locations);
     }
 }
 
