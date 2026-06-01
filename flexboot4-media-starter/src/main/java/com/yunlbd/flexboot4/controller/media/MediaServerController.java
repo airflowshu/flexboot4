@@ -7,6 +7,7 @@ import com.yunlbd.flexboot4.controller.sys.EntityCrudController;
 import com.yunlbd.flexboot4.dto.media.MediaServerCreateReq;
 import com.yunlbd.flexboot4.dto.media.MediaServerUpdateReq;
 import com.yunlbd.flexboot4.entity.media.MediaServer;
+import com.yunlbd.flexboot4.media.dto.MediaServerHookInfo;
 import com.yunlbd.flexboot4.media.dto.MediaServerTestRequest;
 import com.yunlbd.flexboot4.media.dto.MediaServerTestResult;
 import com.yunlbd.flexboot4.service.media.MediaServerService;
@@ -59,5 +60,19 @@ public class MediaServerController extends EntityCrudController<MediaServerServi
                                           @RequestParam("stream") String stream,
                                           @RequestParam(value = "force", defaultValue = "true") boolean force) {
         return ApiResult.success(service.closeStream(id, app, stream, force));
+    }
+
+    @Operation(summary = "查询 ZLM Hook 配置")
+    @RequirePermission("media:server:test")
+    @GetMapping("/{id}/hook-info")
+    public ApiResult<MediaServerHookInfo> hookInfo(@PathVariable String id) {
+        return ApiResult.success(service.buildHookInfo(id));
+    }
+
+    @Operation(summary = "同步 ZLM Hook 配置")
+    @RequirePermission("media:server:test")
+    @PostMapping("/{id}/sync-hook")
+    public ApiResult<Boolean> syncHook(@PathVariable String id) {
+        return ApiResult.success(service.syncHookConfig(id));
     }
 }

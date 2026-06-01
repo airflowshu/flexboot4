@@ -10,7 +10,7 @@
 ## 实施进度（对应 `Media-PLAN.md`）
 
 1. DDL、菜单、权限、实体、Mapper、Service 骨架：已完成  
-2. `MediaServer`、`ZlmClient` 与 ZLM hook 闭环：已完成  
+2. `MediaServer`、`ZlmClient` 与 ZLM hook 闭环：已完成（Hook URL 使用服务 ID 稳定识别，支持一键同步到 ZLM）  
 3. `MediaGateway` SIP 运行时与 GB28181 注册/目录同步：已完成  
 4. RTSP 固定地址设备与通道管理：已完成  
 5. 实时预览、录像回放、PTZ、截图：已完成  
@@ -63,8 +63,18 @@ media:
   gateway-auto-recover: true
 ```
 
-Starter 默认不会启用媒体运行时能力；需要在业务应用中显式设置
-`media.enabled=true`，并在需要定时巡检时设置 `media.runtime-check-enabled=true`。
+Starter 默认不会注册媒体运行时 Bean 和后台 API；需要在业务应用中显式设置
+`media.enabled=true`。需要定时巡检时再设置 `media.runtime-check-enabled=true`。
+
+## ZLM Hook 配置
+
+每个 `MediaServer` 都有独立 Hook URL，回调路径中必须包含服务 ID，避免多个 ZLM 实例回调时无法识别服务来源。可通过后台接口查询或同步：
+
+- 查询：`GET /api/admin/media/server/{id}/hook-info`
+- 同步到 ZLM：`POST /api/admin/media/server/{id}/sync-hook`
+
+同步会写入 ZLM `hook.on_stream_changed`、`hook.on_stream_none_reader`、`hook.on_server_keepalive`、`hook.on_rtp_server_timeout` 和 `hook.admin_params`。
+Hook 控制器只接受 `/api/admin/media/zlm/hook/{serverId}/*` 形式的回调路径；无 `serverId` 的旧路径不再保留。
 
 ## 联调建议顺序
 
@@ -76,6 +86,7 @@ Starter 默认不会启用媒体运行时能力；需要在业务应用中显式
 
 ## Integration Artifacts
 
+- Practical access guide: `VIDEO-DEVICE-ACCESS-GUIDE.md`
 - Full acceptance checklist: `MEDIA-INTEGRATION-CHECKLIST.md`
 - Fast smoke script: `scripts/media-integration-smoke.ps1`
 

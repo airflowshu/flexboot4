@@ -2,6 +2,7 @@ package com.yunlbd.flexboot4.service.media;
 
 import com.yunlbd.flexboot4.entity.media.MediaServer;
 import com.yunlbd.flexboot4.media.core.ZlmClient;
+import com.yunlbd.flexboot4.media.dto.MediaServerHookInfo;
 import com.yunlbd.flexboot4.media.dto.MediaServerTestRequest;
 import com.yunlbd.flexboot4.media.dto.MediaServerTestResult;
 import com.yunlbd.flexboot4.service.sys.IExtendedService;
@@ -19,6 +20,10 @@ public interface MediaServerService extends IExtendedService<MediaServer> {
     boolean closeStream(String serverId, String app, String stream, boolean force);
 
     Map<String, String> buildPlayUrls(String serverId, String app, String stream);
+
+    MediaServerHookInfo buildHookInfo(String serverId);
+
+    boolean syncHookConfig(String serverId);
 
     void markHookAlive(String mediaServerId, LocalDateTime hookTime);
 

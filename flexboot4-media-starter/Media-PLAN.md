@@ -18,7 +18,7 @@
 - 截图能力采用前端播放器帧抓取后上传，落到现有文件体系，`bizType` 固定为 `media_snapshot`，不引入 ffmpeg 运行时依赖。
 - `MediaScreen`/`MediaScreenSlot` 存储单屏、四分屏、九分屏和自定义布局的通道绑定，支持保存方案、回显和全屏。
 - `MediaCascadePlatform` 保存上级平台 SIP 配置、认证、心跳周期和厂商信息；`MediaCascadeBinding` 保存被推送通道与国标 ID；级联只实现目录推送、通道绑定、启停和实时/回放透传，不扩展告警级联与本地录像托管。
-- 后端全部落在 `flexboot4-media-starter`，前端全部落在 `flexboot4-web/apps/web-antd/src/api/media` 与 `flexboot4-web/apps/web-antd/src/views/media`。
+- 后端全部落在 `flexboot4-media-starter`，前端按当前模块化架构落在 `flexboot-web/vue-vben-admin/packages/business/media-web`，并由 `apps/web-antd/src/modules/enabled.ts` 启用。
 
 ## 实施顺序
 1. 完成 DDL、菜单、权限、实体、Mapper、Service 骨架。
@@ -31,7 +31,7 @@
 8. 完成联调加固、异常恢复、示例配置和使用文档。
 
 ## 新增接口与类型
-- 后台控制器固定为 `/api/admin/media/server`、`/api/admin/media/gateway`、`/api/admin/media/device`、`/api/admin/media/channel`、`/api/admin/media/screen`、`/api/admin/media/cascade`、`/api/admin/media/zlm/hook/*`。
+- 后台控制器固定为 `/api/admin/media/server`、`/api/admin/media/gateway`、`/api/admin/media/device`、`/api/admin/media/channel`、`/api/admin/media/screen`、`/api/admin/media/cascade`、`/api/admin/media/zlm/hook/{serverId}/*`。
 - 关键 DTO 固定为 `MediaServerTestRequest`、`GatewayReloadRequest`、`ChannelLiveRequest`、`PlaybackQueryRequest`、`PlaybackStartRequest`、`PtzControlRequest`、`ScreenSaveRequest`、`CascadeBindRequest`。
 - 前端页面固定为 `流媒体服务`、`视频网关`、`视频设备列表/详情`、`分屏展示`、`国标级联`；设备详情页内集成通道树、实时播放、回放、PTZ 和截图。
 

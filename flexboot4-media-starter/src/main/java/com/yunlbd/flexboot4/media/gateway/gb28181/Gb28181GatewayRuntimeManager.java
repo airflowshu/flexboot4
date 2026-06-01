@@ -247,13 +247,23 @@ public class Gb28181GatewayRuntimeManager implements MediaGatewayRuntimeManager 
                 new DeviceRegistration(platform.getHost(), platform.getPort() == null ? 5060 : platform.getPort(), normalizeTransport(platform.getTransport())),
                 platform.getSipDomain(),
                 platform.getSipPassword(),
-                platform.getId()
+                platform.getId(),
+                state.gateway.getRegisterExpiresSeconds() == null ? 3600 : state.gateway.getRegisterExpiresSeconds()
         );
     }
 
     @Override
     public boolean stopCascade(MediaCascadePlatform platform) {
-        return true;
+        RuntimeState state = requireRuntime(platform.getGatewayId());
+        return sendRegister(
+                state,
+                platform.getSipId(),
+                new DeviceRegistration(platform.getHost(), platform.getPort() == null ? 5060 : platform.getPort(), normalizeTransport(platform.getTransport())),
+                platform.getSipDomain(),
+                platform.getSipPassword(),
+                platform.getId(),
+                0
+        );
     }
 
     private void handleRegister(RuntimeState state, RequestEvent event) throws Exception {
@@ -587,6 +597,7 @@ public class Gb28181GatewayRuntimeManager implements MediaGatewayRuntimeManager 
                     pending.registration(),
                     pending.domain(),
                     pending.password(),
+                    pending.expires(),
                     authenticateHeader
             );
             String retryCallId = ((CallIdHeader) retry.getHeader(CallIdHeader.NAME)).getCallId();
@@ -597,6 +608,7 @@ public class Gb28181GatewayRuntimeManager implements MediaGatewayRuntimeManager 
                     pending.domain(),
                     pending.password(),
                     pending.platformId(),
+                    pending.expires(),
                     true
             ));
             state.provider.getNewClientTransaction(retry).sendRequest();
@@ -690,11 +702,11 @@ public class Gb28181GatewayRuntimeManager implements MediaGatewayRuntimeManager 
         }
     }
 
-    private boolean sendRegister(RuntimeState state, String targetId, DeviceRegistration registration, String domain, String password, String platformId) {
+    private boolean sendRegister(RuntimeState state, String targetId, DeviceRegistration registration, String domain, String password, String platformId, int expires) {
         try {
-            Request request = createRegisterRequest(state, targetId, registration, domain, password);
+            Request request = createRegisterRequest(state, targetId, registration, domain, password, expires);
             CallIdHeader callIdHeader = (CallIdHeader) request.getHeader(CallIdHeader.NAME);
-            state.pendingRegisters.put(callIdHeader.getCallId(), new PendingRegister(targetId, registration, domain, password, platformId, false));
+            state.pendingRegisters.put(callIdHeader.getCallId(), new PendingRegister(targetId, registration, domain, password, platformId, expires, false));
             ClientTransaction transaction = state.provider.getNewClientTransaction(request);
             transaction.sendRequest();
             return true;
@@ -738,8 +750,8 @@ public class Gb28181GatewayRuntimeManager implements MediaGatewayRuntimeManager 
         return request;
     }
 
-    private Request createRegisterRequest(RuntimeState state, String targetId, DeviceRegistration registration, String domain, String password) throws Exception {
-        return createRegisterRequest(state, targetId, registration, domain, password, null);
+    private Request createRegisterRequest(RuntimeState state, String targetId, DeviceRegistration registration, String domain, String password, int expires) throws Exception {
+        return createRegisterRequest(state, targetId, registration, domain, password, expires, null);
     }
 
     private Request createRegisterRequest(RuntimeState state,
@@ -747,6 +759,7 @@ public class Gb28181GatewayRuntimeManager implements MediaGatewayRuntimeManager 
                                           DeviceRegistration registration,
                                           String domain,
                                           String password,
+                                          int expires,
                                           WWWAuthenticateHeader authenticateHeader) throws Exception {
         SipURI requestUri = state.addressFactory.createSipURI(targetId, registration.host());
         requestUri.setPort(registration.port());
@@ -758,10 +771,10 @@ public class Gb28181GatewayRuntimeManager implements MediaGatewayRuntimeManager 
         CSeqHeader cSeqHeader = state.headerFactory.createCSeqHeader(1L, Request.REGISTER);
         Request request = state.messageFactory.createRequest(requestUri, Request.REGISTER, callIdHeader, cSeqHeader, fromHeader, toHeader, viaHeaders, maxForwardsHeader);
         request.addHeader(createContactHeader(state));
-        request.addHeader(state.headerFactory.createExpiresHeader(state.gateway.getRegisterExpiresSeconds() == null ? 3600 : state.gateway.getRegisterExpiresSeconds()));
+        request.addHeader(state.headerFactory.createExpiresHeader(Math.max(0, expires)));
         if (authenticateHeader != null && password != null && !password.isBlank()) {
             AuthorizationHeader authorizationHeader = state.headerFactory.createAuthorizationHeader("Digest");
-            authorizationHeader.setUsername(state.gateway.getSipId());
+            authorizationHeader.setUsername(targetId);
             authorizationHeader.setRealm(authenticateHeader.getRealm());
             authorizationHeader.setNonce(authenticateHeader.getNonce());
             authorizationHeader.setURI(requestUri);
@@ -770,7 +783,7 @@ public class Gb28181GatewayRuntimeManager implements MediaGatewayRuntimeManager 
             authorizationHeader.setNonceCount(1);
             authorizationHeader.setQop(authenticateHeader.getQop());
             authorizationHeader.setResponse(Gb28181DigestUtils.buildResponse(
-                    state.gateway.getSipId(),
+                    targetId,
                     authenticateHeader.getRealm(),
                     password,
                     Request.REGISTER,
@@ -904,6 +917,7 @@ public class Gb28181GatewayRuntimeManager implements MediaGatewayRuntimeManager 
     }
 
     private String buildLiveSdp(RuntimeState state, MediaStreamSession session) {
+        int rtpPort = requireRtpPort(session);
         String rtpIp = state.gateway.getRtpIp() == null || state.gateway.getRtpIp().isBlank()
                 ? state.listeningPoint.getIPAddress()
                 : state.gateway.getRtpIp();
@@ -922,12 +936,13 @@ public class Gb28181GatewayRuntimeManager implements MediaGatewayRuntimeManager 
                 state.gateway.getSipId(),
                 rtpIp,
                 rtpIp,
-                session.getRtpPort() == null ? 0 : session.getRtpPort(),
+                rtpPort,
                 session.getSsrc()
         );
     }
 
     private String buildPlaybackSdp(RuntimeState state, MediaChannel channel, MediaStreamSession session, PlaybackStartRequest request) {
+        int rtpPort = requireRtpPort(session);
         String rtpIp = state.gateway.getRtpIp() == null || state.gateway.getRtpIp().isBlank()
                 ? state.listeningPoint.getIPAddress()
                 : state.gateway.getRtpIp();
@@ -951,9 +966,16 @@ public class Gb28181GatewayRuntimeManager implements MediaGatewayRuntimeManager 
                 rtpIp,
                 request.startTime().format(GB_TIME_FORMATTER),
                 request.endTime().format(GB_TIME_FORMATTER),
-                session.getRtpPort() == null ? 0 : session.getRtpPort(),
+                rtpPort,
                 session.getSsrc()
         );
+    }
+
+    private int requireRtpPort(MediaStreamSession session) {
+        if (session.getRtpPort() == null || session.getRtpPort() <= 0) {
+            throw new IllegalStateException("RTP server is not ready for session " + session.getStreamId());
+        }
+        return session.getRtpPort();
     }
 
     private String buildPlaybackQueryXml(String channelId, PlaybackQueryRequest request, int sn) {
@@ -1121,6 +1143,7 @@ public class Gb28181GatewayRuntimeManager implements MediaGatewayRuntimeManager 
             String domain,
             String password,
             String platformId,
+            int expires,
             boolean authenticated
     ) {
     }

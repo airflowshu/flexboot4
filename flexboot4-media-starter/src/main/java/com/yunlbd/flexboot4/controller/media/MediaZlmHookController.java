@@ -18,7 +18,7 @@ import java.util.Map;
 
 @Hidden
 @RestController
-@RequestMapping("/api/admin/media/zlm/hook")
+@RequestMapping("/api/admin/media/zlm/hook/{serverId}")
 @RequiredArgsConstructor
 public class MediaZlmHookController {
 
@@ -29,7 +29,10 @@ public class MediaZlmHookController {
 
     @RequirePermission(skip = true)
     @PostMapping("/on_stream_changed")
-    public ApiResult<Boolean> onStreamChanged(@RequestBody String rawBody, @RequestHeader Map<String, String> headers) {
+    public ApiResult<Boolean> onStreamChanged(@PathVariable("serverId") String serverId,
+                                              @RequestBody String rawBody,
+                                              @RequestHeader Map<String, String> headers,
+                                              @RequestParam Map<String, String> params) {
         Map<String, Object> body = parseBody(rawBody);
         if (body == null) {
             return ApiResult.error("invalid hook payload");
@@ -37,32 +40,25 @@ public class MediaZlmHookController {
         String app = stringValue(body.get("app"));
         String stream = stringValue(body.get("stream"));
         MediaStreamSession session = mediaStreamSessionService.findByStream(app, stream);
-        MediaServer server = resolveServer(body, session);
-        if (!validateHook(server, rawBody, headers)) {
+        MediaServer server = resolveServer(serverId);
+        if (server == null) {
+            return ApiResult.error("unknown media server");
+        }
+        if (!validateHook(server, rawBody, headers, body, params)) {
             return ApiResult.error("invalid hook signature");
         }
         if (server != null && server.getId() != null) {
             mediaServerService.markHookAlive(server.getId(), LocalDateTime.now());
         }
 
-        String mediaServerId = stringValue(body.get("mediaServerId"));
-        if (server == null && mediaServerId != null) {
-            mediaServerService.markHookAlive(mediaServerId, LocalDateTime.now());
-        }
-
         boolean regist = boolValue(body.get("regist"));
         if (session != null) {
             if (regist) {
-                if (server == null && session.getServerId() != null) {
-                    server = mediaServerService.getById(session.getServerId());
-                }
                 String playUrl = session.getPlayUrl();
-                if (server != null) {
-                    String protocol = session.getPlayProtocol() == null || session.getPlayProtocol().isBlank()
-                            ? "http-flv"
-                            : session.getPlayProtocol();
-                    playUrl = mediaServerService.buildPlayUrls(server.getId(), app, stream).getOrDefault(protocol, playUrl);
-                }
+                String protocol = session.getPlayProtocol() == null || session.getPlayProtocol().isBlank()
+                        ? "http-flv"
+                        : session.getPlayProtocol();
+                playUrl = mediaServerService.buildPlayUrls(server.getId(), app, stream).getOrDefault(protocol, playUrl);
                 mediaStreamSessionService.markStreaming(session.getId(), playUrl);
             } else {
                 mediaStreamSessionService.closeByStream(app, stream, LocalDateTime.now());
@@ -73,16 +69,21 @@ public class MediaZlmHookController {
 
     @RequirePermission(skip = true)
     @PostMapping("/on_stream_none_reader")
-    public ApiResult<Boolean> onStreamNoneReader(@RequestBody String rawBody, @RequestHeader Map<String, String> headers) {
+    public ApiResult<Boolean> onStreamNoneReader(@PathVariable("serverId") String serverId,
+                                                 @RequestBody String rawBody,
+                                                 @RequestHeader Map<String, String> headers,
+                                                 @RequestParam Map<String, String> params) {
         Map<String, Object> body = parseBody(rawBody);
         if (body == null) {
             return ApiResult.error("invalid hook payload");
         }
         String app = stringValue(body.get("app"));
         String stream = stringValue(body.get("stream"));
-        MediaStreamSession session = mediaStreamSessionService.findByStream(app, stream);
-        MediaServer server = resolveServer(body, session);
-        if (!validateHook(server, rawBody, headers)) {
+        MediaServer server = resolveServer(serverId);
+        if (server == null) {
+            return ApiResult.error("unknown media server");
+        }
+        if (!validateHook(server, rawBody, headers, body, params)) {
             return ApiResult.error("invalid hook signature");
         }
         if (server != null && server.getId() != null) {
@@ -94,25 +95,31 @@ public class MediaZlmHookController {
 
     @RequirePermission(skip = true)
     @PostMapping("/on_server_keepalive")
-    public ApiResult<Boolean> onServerKeepalive(@RequestBody String rawBody, @RequestHeader Map<String, String> headers) {
+    public ApiResult<Boolean> onServerKeepalive(@PathVariable("serverId") String serverId,
+                                                @RequestBody String rawBody,
+                                                @RequestHeader Map<String, String> headers,
+                                                @RequestParam Map<String, String> params) {
         Map<String, Object> body = parseBody(rawBody);
         if (body == null) {
             return ApiResult.error("invalid hook payload");
         }
-        String mediaServerId = stringValue(body.get("mediaServerId"));
-        MediaServer server = mediaServerId == null ? null : mediaServerService.getById(mediaServerId);
-        if (!validateHook(server, rawBody, headers)) {
+        MediaServer server = resolveServer(serverId);
+        if (server == null) {
+            return ApiResult.error("unknown media server");
+        }
+        if (!validateHook(server, rawBody, headers, body, params)) {
             return ApiResult.error("invalid hook signature");
         }
-        if (mediaServerId != null) {
-            mediaServerService.markHookAlive(mediaServerId, LocalDateTime.now());
-        }
+        mediaServerService.markHookAlive(server.getId(), LocalDateTime.now());
         return ApiResult.success(true);
     }
 
     @RequirePermission(skip = true)
     @PostMapping("/on_rtp_server_timeout")
-    public ApiResult<Boolean> onRtpServerTimeout(@RequestBody String rawBody, @RequestHeader Map<String, String> headers) {
+    public ApiResult<Boolean> onRtpServerTimeout(@PathVariable("serverId") String serverId,
+                                                 @RequestBody String rawBody,
+                                                 @RequestHeader Map<String, String> headers,
+                                                 @RequestParam Map<String, String> params) {
         Map<String, Object> body = parseBody(rawBody);
         if (body == null) {
             return ApiResult.error("invalid hook payload");
@@ -122,9 +129,11 @@ public class MediaZlmHookController {
         if (streamId == null || streamId.isBlank()) {
             streamId = stringValue(body.get("stream"));
         }
-        MediaStreamSession session = mediaStreamSessionService.findByStream(app == null ? "rtp" : app, streamId);
-        MediaServer server = resolveServer(body, session);
-        if (!validateHook(server, rawBody, headers)) {
+        MediaServer server = resolveServer(serverId);
+        if (server == null) {
+            return ApiResult.error("unknown media server");
+        }
+        if (!validateHook(server, rawBody, headers, body, params)) {
             return ApiResult.error("invalid hook signature");
         }
         if (server != null && server.getId() != null) {
@@ -148,21 +157,20 @@ public class MediaZlmHookController {
         }
     }
 
-    private MediaServer resolveServer(Map<String, Object> body, MediaStreamSession session) {
-        String mediaServerId = stringValue(body.get("mediaServerId"));
-        if (mediaServerId != null && !mediaServerId.isBlank()) {
-            MediaServer server = mediaServerService.getById(mediaServerId);
-            if (server != null) {
-                return server;
-            }
+    private MediaServer resolveServer(String serverId) {
+        if (serverId == null || serverId.isBlank()) {
+            return null;
         }
-        if (session != null && session.getServerId() != null && !session.getServerId().isBlank()) {
-            return mediaServerService.getById(session.getServerId());
-        }
-        return null;
+        return mediaServerService.getById(serverId);
     }
 
-    private boolean validateHook(MediaServer server, String rawBody, Map<String, String> headers) {
+    private boolean validateHook(MediaServer server, String rawBody, Map<String, String> headers, Map<String, Object> body, Map<String, String> params) {
+        if (server != null && server.getHookSecret() != null && !server.getHookSecret().isBlank()) {
+            String secret = firstNonBlank(stringValue(body.get("secret")), params == null ? null : params.get("secret"));
+            if (server.getHookSecret().equals(secret)) {
+                return true;
+            }
+        }
         String signature = headerValue(headers, mediaHookValidator.signatureHeaderName(), "X-Media-Hook-Signature");
         String timestamp = headerValue(headers, mediaHookValidator.timestampHeaderName(), "X-Media-Hook-Timestamp");
         return mediaHookValidator.validate(server, rawBody == null ? "" : rawBody, signature, timestamp);
@@ -207,5 +215,17 @@ public class MediaZlmHookController {
 
     private String stringValue(Object value) {
         return value == null ? null : String.valueOf(value);
+    }
+
+    private String firstNonBlank(String... values) {
+        if (values == null) {
+            return null;
+        }
+        for (String value : values) {
+            if (value != null && !value.isBlank()) {
+                return value;
+            }
+        }
+        return null;
     }
 }

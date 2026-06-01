@@ -5,6 +5,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.client.RestClient;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -24,6 +25,10 @@ public class ZlmClient {
 
     public List<Map<String, Object>> getServerConfig() {
         return extractList(post("/index/api/getServerConfig", Map.of()));
+    }
+
+    public Map<String, Object> setServerConfig(Map<String, ?> config) {
+        return post("/index/api/setServerConfig", new LinkedHashMap<>(config));
     }
 
     public List<Map<String, Object>> getMediaList(String app, String stream) {

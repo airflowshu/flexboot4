@@ -21,8 +21,10 @@ This checklist is for the final implementation step in `Media-PLAN.md`: joint de
 2. Verify result:
    - `code == 0`
    - `data.success == true`
-3. Trigger stream publish/unpublish on ZLM
-4. Verify hook callbacks update `media_stream_session` and channel play status
+3. Call `GET /api/admin/media/server/{id}/hook-info` and verify the returned URLs contain `/api/admin/media/zlm/hook/{id}/`
+4. Call `POST /api/admin/media/server/{id}/sync-hook` or manually configure the returned ZLM hook values
+5. Trigger stream publish/unpublish on ZLM
+6. Verify hook callbacks update `media_server.last_hook_time`, `media_stream_session`, and channel play status
 
 ### 2.2 GB28181 Gateway
 
@@ -54,6 +56,7 @@ This checklist is for the final implementation step in `Media-PLAN.md`: joint de
 2. Register cascade: `POST /api/admin/media/cascade/{id}/register`
 3. Verify platform status is written by REGISTER response handling
 4. Verify upstream platform can discover bound channels
+5. Stop cascade: `POST /api/admin/media/cascade/{id}/stop` and verify a REGISTER with `Expires: 0` is accepted by the upstream platform
 
 ## 3. Recovery and Hardening Drills
 
@@ -101,4 +104,3 @@ Use:
 - `scripts/media-integration-smoke.ps1`
 
 The script executes a small subset of high-value checks using actual API calls.
-
