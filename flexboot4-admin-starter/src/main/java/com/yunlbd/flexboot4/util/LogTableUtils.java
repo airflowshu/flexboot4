@@ -54,8 +54,7 @@ public class LogTableUtils {
      */
     public static String getQuarterTableName(LocalDateTime date) {
         int year = date.getYear();
-        int month = date.getMonthValue();
-        int quarter = (month - 1) / 3 + 1;
+        int quarter = getQuarter(date.getMonthValue());
         return "sys_oper_log_" + year + "_q" + quarter;
     }
 
@@ -64,6 +63,35 @@ public class LogTableUtils {
      */
     public static String getCurrentQuarterTableName() {
         return getQuarterTableName(LocalDateTime.now());
+    }
+
+    /**
+     * 获取当前日期的下一个季度表名
+     */
+    public static String getNextQuarterTableName() {
+        return getNextQuarterTableName(LocalDate.now());
+    }
+
+    /**
+     * 获取指定日期的下一个季度表名
+     */
+    public static String getNextQuarterTableName(LocalDate date) {
+        return getQuarterTableName(getNextQuarterStartDate(date).atStartOfDay());
+    }
+
+    /**
+     * 获取指定日期所在季度的下一个季度首日
+     */
+    public static LocalDate getNextQuarterStartDate(LocalDate date) {
+        int currentQuarter = getQuarter(date.getMonthValue());
+        int nextQuarter = currentQuarter == 4 ? 1 : currentQuarter + 1;
+        int year = currentQuarter == 4 ? date.getYear() + 1 : date.getYear();
+        int month = (nextQuarter - 1) * 3 + 1;
+        return LocalDate.of(year, month, 1);
+    }
+
+    private static int getQuarter(int month) {
+        return (month - 1) / 3 + 1;
     }
     
     /**

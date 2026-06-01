@@ -4,6 +4,7 @@ import com.yunlbd.flexboot4.vo.sys.BaseAuditVO;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 
 @Data
@@ -23,4 +24,7 @@ public class Sms4jConfigListVO extends BaseAuditVO {
     private Map<String, Object> extParams;
     private Integer status;
     private String statusStr;
+    private String testStatus;
+    private LocalDateTime lastTestTime;
+    private String lastTestMessage;
 }

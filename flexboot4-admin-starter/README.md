@@ -116,6 +116,8 @@ operlog:
 
 `operlog.stream.dead-letter-key` 默认值为 `operlog:stream:dead`。超过最大投递次数的 pending 消息，或 payload 无法解析的消息，会写入死信流并在写入成功后 ack 原消息，便于人工排查与重放。
 
+操作日志按季度写入物理表，例如 `sys_oper_log_2026_q2`。Flyway 基线会创建主表 `sys_oper_log`，并在初始化时创建当前季度表；应用启动后会检查当前季度和下一季度表，季末定时任务会提前创建下一季度表。
+
 `flexboot4.security.mfa-secret-key` 用于加密保存用户 TOTP MFA secret。生产环境必须通过环境变量、Secret 管理或外部配置注入稳定随机值，不要提交到仓库。同一环境多实例必须保持一致；修改该密钥会导致已绑定 MFA 的 secret 无法解密。更多说明见 [Admin 认证与账号安全](../docs/admin-auth-security.md)。
 
 ## 核心 API

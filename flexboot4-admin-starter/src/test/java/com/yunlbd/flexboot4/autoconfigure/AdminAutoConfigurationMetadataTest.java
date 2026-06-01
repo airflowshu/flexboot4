@@ -35,9 +35,13 @@ class AdminAutoConfigurationMetadataTest {
                 .contains("locations=classpath:db/flexboot4-migration/admin/postgresql");
         assertThat(resourceAsString("/db/flexboot4-migration/admin/postgresql/V1000__admin_core_schema.sql"))
                 .contains("CREATE TABLE IF NOT EXISTS sys_user")
-                .contains("CREATE TABLE IF NOT EXISTS sys_oper_log");
+                .contains("CREATE TABLE IF NOT EXISTS sys_oper_log")
+                .contains("current_quarter_table TEXT")
+                .contains("CREATE TABLE IF NOT EXISTS %I (LIKE sys_oper_log INCLUDING ALL)");
         assertThat(resourceAsString("/db/flexboot4-migration/admin/postgresql/V1010__admin_menu_data.sql"))
                 .contains("sys_menu_system")
+                .contains("('sys_menu_file', 'sys_menu_devops', '/devops/file', 'DevopsFile', '/devops/file/file-manage'")
+                .doesNotContain("/system/file")
                 .contains("sys:user:reset-password");
     }
 

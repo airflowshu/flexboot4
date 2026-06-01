@@ -13,6 +13,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 
 /**
@@ -85,6 +86,15 @@ public class Sms4jConfig extends BaseEntity {
     @DictEnum("status")
     @Schema(description = "状态：1-启用，0-禁用", example = "1")
     private Integer status;
+
+    @Schema(description = "测试状态：UNTESTED-未测试，PASSED-测试通过，FAILED-测试失败")
+    private String testStatus;
+
+    @Schema(description = "最近测试时间")
+    private LocalDateTime lastTestTime;
+
+    @Schema(description = "最近测试结果说明")
+    private String lastTestMessage;
 
     @Column(ignore = true)
     @Schema(description = "状态描述", accessMode = Schema.AccessMode.READ_ONLY)

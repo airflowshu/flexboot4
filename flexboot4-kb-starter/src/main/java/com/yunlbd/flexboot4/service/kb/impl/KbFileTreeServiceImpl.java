@@ -4,8 +4,10 @@ import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.core.relation.RelationManager;
 import com.yunlbd.flexboot4.entity.kb.KbFileTree;
 import com.yunlbd.flexboot4.entity.kb.table.KbFileTreeTableDef;
+import com.yunlbd.flexboot4.entity.sys.SysFile;
 import com.yunlbd.flexboot4.mapper.KbFileTreeMapper;
 import com.yunlbd.flexboot4.service.kb.KbFileTreeService;
+import com.yunlbd.flexboot4.service.sys.SysFileService;
 import com.yunlbd.flexboot4.service.sys.impl.BaseServiceImpl;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.stereotype.Service;
@@ -15,6 +17,12 @@ import java.util.List;
 @Service
 @CacheConfig(cacheNames = "kbFileTree")
 public class KbFileTreeServiceImpl extends BaseServiceImpl<KbFileTreeMapper, KbFileTree> implements KbFileTreeService {
+
+    private final SysFileService sysFileService;
+
+    public KbFileTreeServiceImpl(SysFileService sysFileService) {
+        this.sysFileService = sysFileService;
+    }
 
     @Override
     public List<KbFileTree> fsList(String kbId, String parentId) {
@@ -50,14 +58,34 @@ public class KbFileTreeServiceImpl extends BaseServiceImpl<KbFileTreeMapper, KbF
 
     @Override
     public boolean addFile(String kbId, String parentId, String fileId) {
+        return addFile(kbId, parentId, fileId, null);
+    }
+
+    @Override
+    public boolean addFile(String kbId, String parentId, String fileId, String fileName) {
         KbFileTree node = KbFileTree.builder()
                 .kbId(kbId)
                 .parentId(parentId)
+                .name(resolveFileNodeName(fileId, fileName))
                 .fileId(fileId)
                 .type("FILE")
                 .sortOrder(0)
                 .build();
         return cacheProxy().save(node);
+    }
+
+    private String resolveFileNodeName(String fileId, String fileName) {
+        if (fileName != null && !fileName.isBlank()) {
+            return fileName.trim();
+        }
+        if (fileId != null && !fileId.isBlank()) {
+            SysFile file = sysFileService.getById(fileId);
+            if (file != null && file.getFileName() != null && !file.getFileName().isBlank()) {
+                return file.getFileName().trim();
+            }
+            return fileId.trim();
+        }
+        throw new IllegalArgumentException("文件ID不能为空");
     }
 
     @Override

@@ -23,6 +23,11 @@ public interface KbFileTreeService extends IExtendedService<KbFileTree> {
     boolean addFile(String kbId, String parentId, String fileId);
 
     /**
+     * 添加文件节点到目录
+     */
+    boolean addFile(String kbId, String parentId, String fileId, String fileName);
+
+    /**
      * 创建目录
      */
     boolean createFolder(String kbId, String parentId, String name);

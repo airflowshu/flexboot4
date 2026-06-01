@@ -2,14 +2,18 @@ package com.yunlbd.flexboot4.controller.sms;
 
 import com.yunlbd.flexboot4.common.ApiResult;
 import com.yunlbd.flexboot4.common.annotation.OperLog;
+import com.yunlbd.flexboot4.common.annotation.RequirePermission;
 import com.yunlbd.flexboot4.common.enums.BusinessType;
 import com.yunlbd.flexboot4.config.ApiTagGroup;
 import com.yunlbd.flexboot4.config.SmsSupplierConfigDataSource;
 import com.yunlbd.flexboot4.controller.sys.EntityCrudController;
 import com.yunlbd.flexboot4.dto.sms.Sms4jConfigCreateReq;
+import com.yunlbd.flexboot4.dto.sms.Sms4jConfigTestReq;
+import com.yunlbd.flexboot4.dto.sms.Sms4jConfigTestResult;
 import com.yunlbd.flexboot4.dto.sms.Sms4jConfigUpdateReq;
 import com.yunlbd.flexboot4.entity.sms.Sms4jConfig;
 import com.yunlbd.flexboot4.service.sms.Sms4jConfigService;
+import com.yunlbd.flexboot4.sms.Sms4jConfigTestStatus;
 import com.yunlbd.flexboot4.vo.sms.Sms4jConfigDetailVO;
 import com.yunlbd.flexboot4.vo.sms.Sms4jConfigListVO;
 import io.swagger.v3.oas.annotations.Operation;
@@ -17,6 +21,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collection;
+import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -59,6 +65,9 @@ public class Sms4jConfigController extends EntityCrudController<Sms4jConfigServi
         if (entity.getConfigId() == null || entity.getConfigId().isBlank()) {
             entity.setConfigId(UUID.randomUUID().toString().replace("-", ""));
         }
+        entity.setTestStatus(Sms4jConfigTestStatus.UNTESTED);
+        entity.setLastTestMessage("");
+        entity.setLastTestTime(null);
         boolean ok = service.save(entity);
         if (ok) {
             smsSupplierConfigDataSource.reloadAll();
@@ -79,14 +88,28 @@ public class Sms4jConfigController extends EntityCrudController<Sms4jConfigServi
         if (entity == null) {
             throw new IllegalArgumentException("数据不存在: " + id);
         }
+        SmsSendingConfigSnapshot before = SmsSendingConfigSnapshot.from(entity);
         crudMapper.updateEntity(request, entity);
+        boolean shouldResetTestStatus = before.changed(SmsSendingConfigSnapshot.from(entity));
         // configId 不允许通过更新接口变更，强制置空让 updateById ignoreNulls 保留原值
         entity.setConfigId(null);
         boolean ok = service.updateById(entity, true);
+        if (ok && shouldResetTestStatus) {
+            service.resetTestStatus(id);
+        }
         if (ok) {
             smsSupplierConfigDataSource.reloadAll();
         }
         return ApiResult.success(ok);
+    }
+
+    @Operation(summary = "测试厂商配置", description = "使用当前短信厂商配置真实发送一条测试短信，并记录测试状态。")
+    @RequirePermission("sms4j:config:test")
+    @OperLog(title = "短信厂商配置", businessType = BusinessType.UPDATE)
+    @PostMapping("/{id}/test")
+    public ApiResult<Sms4jConfigTestResult> test(@PathVariable String id,
+                                                  @RequestBody Sms4jConfigTestReq request) {
+        return ApiResult.success(service.testConfig(id, request));
     }
 
     @Override
@@ -111,5 +134,36 @@ public class Sms4jConfigController extends EntityCrudController<Sms4jConfigServi
             smsSupplierConfigDataSource.reloadAll();
         }
         return ApiResult.success(ok);
+    }
+
+    private record SmsSendingConfigSnapshot(
+            String supplierType,
+            String accessKeyId,
+            String accessKeySecret,
+            String signature,
+            String templateId,
+            String sdkAppId,
+            Map<String, Object> extParams
+    ) {
+
+        private static SmsSendingConfigSnapshot from(Sms4jConfig config) {
+            return new SmsSendingConfigSnapshot(
+                    trimToEmpty(config.getSupplierType()),
+                    trimToEmpty(config.getAccessKeyId()),
+                    trimToEmpty(config.getAccessKeySecret()),
+                    trimToEmpty(config.getSignature()),
+                    trimToEmpty(config.getTemplateId()),
+                    trimToEmpty(config.getSdkAppId()),
+                    config.getExtParams()
+            );
+        }
+
+        private boolean changed(SmsSendingConfigSnapshot other) {
+            return !Objects.equals(this, other);
+        }
+
+        private static String trimToEmpty(String value) {
+            return value == null ? "" : value.trim();
+        }
     }
 }

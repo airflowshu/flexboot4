@@ -251,7 +251,7 @@ public class KnowledgeBaseController {
                 if (fileObj != null) {
                     uploadedFileIds.add(fileObj.id());
                     // 创建目录树节点（默认添加到根目录）
-                    kbFileTreeService.addFile(kbId, parentId, fileObj.id());
+                    kbFileTreeService.addFile(kbId, parentId, fileObj.id(), fileObj.fileName());
                 }
             }
         }

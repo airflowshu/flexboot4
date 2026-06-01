@@ -328,6 +328,16 @@ CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_oper_log_event_id
     ON sys_oper_log(event_id)
     WHERE event_id IS NOT NULL AND event_id <> '';
 
+DO $$
+DECLARE
+    current_quarter_table TEXT := format('sys_oper_log_%s_q%s',
+                                         EXTRACT(YEAR FROM CURRENT_DATE)::INT,
+                                         EXTRACT(QUARTER FROM CURRENT_DATE)::INT);
+BEGIN
+    EXECUTE format('CREATE TABLE IF NOT EXISTS %I (LIKE sys_oper_log INCLUDING ALL)', current_quarter_table);
+END;
+$$;
+
 
 CREATE TABLE IF NOT EXISTS sys_user_mfa (
     id VARCHAR(64) PRIMARY KEY,

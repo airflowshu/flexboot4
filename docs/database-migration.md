@@ -25,6 +25,8 @@ FlexBoot4 内置模块脚本使用独立目录，避免和业务项目脚本混�
 classpath:db/flexboot4-migration/<module>/postgresql
 ```
 
+Admin 的操作日志按季度写入物理表，命名格式为 `sys_oper_log_<year>_q<quarter>`。基线脚本会先创建结构模板表 `sys_oper_log`，再根据迁移执行时的数据库当前日期创建所在季度表，例如 2026 年第二季度会创建 `sys_oper_log_2026_q2`。后续应用启动和季末定时任务会继续检查当前季度与下一季度表，避免跨季度后写入失败。
+
 ## 模块声明
 
 每个带数据库资源的 starter 都提供一个声明文件：

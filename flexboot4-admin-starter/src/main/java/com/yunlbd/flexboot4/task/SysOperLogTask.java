@@ -4,13 +4,11 @@ import com.yunlbd.flexboot4.util.LogTableUtils;
 import com.yunlbd.flexboot4.lock.DistributedLockService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
-import java.time.LocalDate;
 
 /**
  * 操作日志定时任务
@@ -18,7 +16,6 @@ import java.time.LocalDate;
  */
 @Slf4j
 @Component
-@ConditionalOnProperty(prefix = "flexboot4.schedule", name = "enabled", havingValue = "true")
 @RequiredArgsConstructor
 public class SysOperLogTask {
 
@@ -36,12 +33,7 @@ public class SysOperLogTask {
 
     void doCreateNextQuarterTable() {
         log.info("Start checking next quarter log table...");
-        
-        // 获取下个季度的第一天
-        LocalDate nextQuarterDate = LocalDate.now().plusMonths(1);
-        String tableName = LogTableUtils.getQuarterTableName(nextQuarterDate.atStartOfDay());
-        
-        createTableIfNotExists(tableName);
+        createTableIfNotExists(LogTableUtils.getNextQuarterTableName());
     }
 
     /**
@@ -57,8 +49,7 @@ public class SysOperLogTask {
         createTableIfNotExists(LogTableUtils.getCurrentQuarterTableName());
         
         // 下个季度（防止临近换季时上线）
-        LocalDate nextQuarterDate = LocalDate.now().plusMonths(1);
-        createTableIfNotExists(LogTableUtils.getQuarterTableName(nextQuarterDate.atStartOfDay()));
+        createTableIfNotExists(LogTableUtils.getNextQuarterTableName());
     }
 
     private void createTableIfNotExists(String tableName) {

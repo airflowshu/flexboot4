@@ -7,10 +7,9 @@ import com.yunlbd.flexboot4.entity.sys.BaseEntity;
 import com.yunlbd.flexboot4.listener.GlobalDictSetListener;
 import com.yunlbd.flexboot4.listener.MybatisInsertListener;
 import com.yunlbd.flexboot4.listener.MybatisUpdateListener;
+import com.yunlbd.flexboot4.util.LogTableUtils;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.context.annotation.Configuration;
-
-import java.time.LocalDate;
 
 @Configuration
 @MapperScan("com.yunlbd.flexboot4.mapper")
@@ -37,11 +36,7 @@ public class MyBatisFlexConfiguration {
             }
             // 如果是原始的 sys_oper_log，则追加当前季度后缀
             if ("sys_oper_log".equals(tableName)) {
-                LocalDate now = LocalDate.now();
-                int year = now.getYear();
-                int month = now.getMonthValue();
-                int quarter = (month - 1) / 3 + 1;
-                return tableName + "_" + year + "_q" + quarter;
+                return LogTableUtils.getCurrentQuarterTableName();
             }
             return tableName;
         });

@@ -19,6 +19,9 @@ CREATE TABLE IF NOT EXISTS sms4j_config
     is_default        SMALLINT              DEFAULT 0,
     ext_params        JSONB,
     status            SMALLINT     NOT NULL DEFAULT 1,
+    test_status       VARCHAR(20)  NOT NULL DEFAULT 'UNTESTED',
+    last_test_time    TIMESTAMP,
+    last_test_message VARCHAR(500)          DEFAULT '',
     create_by         VARCHAR(32)           DEFAULT '',
     create_time       TIMESTAMP             DEFAULT now(),
     last_modify_by    VARCHAR(32)           DEFAULT '',
@@ -41,6 +44,9 @@ COMMENT ON COLUMN sms4j_config.weight IS '负载均衡权重，数值越大概�
 COMMENT ON COLUMN sms4j_config.is_default IS '是否默认：1-是，0-否';
 COMMENT ON COLUMN sms4j_config.ext_params IS '厂商特有扩展参数 JSONB';
 COMMENT ON COLUMN sms4j_config.status IS '状态：1-启用，0-禁用';
+COMMENT ON COLUMN sms4j_config.test_status IS '测试状态：UNTESTED-未测试，PASSED-测试通过，FAILED-测试失败';
+COMMENT ON COLUMN sms4j_config.last_test_time IS '最近测试时间';
+COMMENT ON COLUMN sms4j_config.last_test_message IS '最近测试结果说明';
 
 CREATE UNIQUE INDEX IF NOT EXISTS uk_sms4j_config_config_id ON sms4j_config (config_id) WHERE del_flag = 0;
 CREATE INDEX IF NOT EXISTS idx_sms4j_config_supplier ON sms4j_config (supplier_type, status);
