@@ -70,6 +70,6 @@ public class LoginUser implements UserDetails {
      * 是否为超级管理员
      */
     public boolean isSuperAdmin() {
-        return SysConstant.SYS_SUPER_USER_ID.equals(sysUser.getId());
+        return sysUser != null && SysConstant.SYS_SUPER_USER_ID.equals(sysUser.getId());
     }
 }

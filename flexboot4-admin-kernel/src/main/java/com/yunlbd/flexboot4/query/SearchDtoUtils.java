@@ -33,9 +33,6 @@ public final class SearchDtoUtils {
         if (dto == null || rootEntityClass == null || records == null || records.isEmpty()) {
             return;
         }
-        if (!hasRelationPaths(dto, rootEntityClass)) {
-            return;
-        }
         RelationQueryBuilder.RelationContext ctx = RelationQueryBuilder.prepare(rootEntityClass, dto);
         Map<String, List<LeafCondition>> relationConds = new LinkedHashMap<>();
         collectRelationConditions(ctx, dto.getItems(), relationConds);
@@ -92,6 +89,27 @@ public final class SearchDtoUtils {
         if (dto.getOrders() != null) {
             for (SearchDto.OrderItem od : dto.getOrders()) {
                 if (isRelationPath(od.getColumn(), ctx)) return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean hasQualifiedPaths(SearchDto dto) {
+        if (dto == null) {
+            return false;
+        }
+        if (dto.getItems() != null) {
+            for (SearchDto.SearchItem it : dto.getItems()) {
+                if (containsQualifiedPath(it)) {
+                    return true;
+                }
+            }
+        }
+        if (dto.getOrders() != null) {
+            for (SearchDto.OrderItem od : dto.getOrders()) {
+                if (hasQualifier(od.getColumn())) {
+                    return true;
+                }
             }
         }
         return false;
@@ -317,6 +335,31 @@ public final class SearchDtoUtils {
     }
 
     private record LeafCondition(String prop, String op, Object val) {
+    }
+
+    private static boolean containsQualifiedPath(SearchDto.SearchItem it) {
+        if (it == null) {
+            return false;
+        }
+        if (hasQualifier(it.getField())) {
+            return true;
+        }
+        if (it.getChildren() != null) {
+            for (SearchDto.SearchItem child : it.getChildren()) {
+                if (containsQualifiedPath(child)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static boolean hasQualifier(String fieldPath) {
+        if (fieldPath == null) {
+            return false;
+        }
+        String[] parts = fieldPath.split("\\.", -1);
+        return parts.length == 2 && !parts[0].isBlank() && !parts[1].isBlank();
     }
 
     private static boolean containsRelationPath(SearchDto.SearchItem it, RelationQueryBuilder.RelationContext ctx) {

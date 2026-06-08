@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.method.HandlerMethod;
 
@@ -60,6 +61,33 @@ class PermissionCheckInterceptorTest {
         assertThat(response.getStatus()).isEqualTo(403);
         assertThat(response.getContentAsString()).contains("权限不足");
         verify(metricsRecorder).increment(eq("flexboot4.permission.denied"), any());
+    }
+
+    @Test
+    void superUserIdBypassesPermissionCheck() throws Exception {
+        setLoginUser("1", "super", List.of(), List.of("super"));
+
+        boolean allowed = interceptor.preHandle(
+                request("/api/admin/monitor/stats"),
+                new MockHttpServletResponse(),
+                handler(AdminEndpoint.class, "monitorStats")
+        );
+
+        assertThat(allowed).isTrue();
+    }
+
+    @Test
+    void superRoleWithoutSuperUserIdDoesNotBypassPermissionCheck() throws Exception {
+        setLoginUser("user-99", "root-like", List.of(), List.of("super"));
+
+        MockHttpServletResponse response = preHandle(
+                "/api/admin/monitor/stats",
+                AdminEndpoint.class,
+                "monitorStats"
+        );
+
+        assertThat(response.getStatus()).isEqualTo(403);
+        assertThat(response.getContentAsString()).contains("权限不足");
     }
 
     @Test
@@ -251,13 +279,20 @@ class PermissionCheckInterceptorTest {
     }
 
     private static void setLoginUser(String userId, String username, List<String> permissions) {
+        setLoginUser(userId, username, permissions, List.of());
+    }
+
+    private static void setLoginUser(String userId, String username, List<String> permissions, List<String> roles) {
         SysUser sysUser = SysUser.builder()
                 .id(userId)
                 .username(username)
                 .password("{noop}password")
                 .status(1)
                 .build();
-        LoginUser loginUser = new LoginUser(sysUser, List.of(), permissions);
+        List<SimpleGrantedAuthority> authorities = roles.stream()
+                .map(SimpleGrantedAuthority::new)
+                .toList();
+        LoginUser loginUser = new LoginUser(sysUser, authorities, permissions);
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(loginUser, null, loginUser.getAuthorities())
         );

@@ -12,11 +12,8 @@ import com.yunlbd.flexboot4.entity.sys.table.SysRoleMenuTableDef;
 import com.yunlbd.flexboot4.entity.sys.table.SysRoleTableDef;
 import com.yunlbd.flexboot4.entity.sys.table.SysUserRoleTableDef;
 import com.yunlbd.flexboot4.mapper.SysMenuMapper;
-import com.yunlbd.flexboot4.mapper.SysUserRoleMapper;
 import com.yunlbd.flexboot4.service.sys.SysMenuService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheConfig;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -28,13 +25,10 @@ import java.util.stream.Collectors;
 import static com.yunlbd.flexboot4.common.constant.SysConstant.SYS_SUPER_USER_ID;
 
 @Service
-@RequiredArgsConstructor
 @CacheConfig(cacheNames = "sysMenu")
 public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> implements SysMenuService {
 
     private static final Set<String> ROUTE_TYPES = Set.of("catalog", "menu", "embedded", "link");
-
-    private final SysUserRoleMapper sysUserRoleMapper;
 
     //这里不声明使用缓存，一般系统登录后初始会调用一次，使用缓存意义大不，徒增缓存数据一致性的维护成本
     public List<VueRoute> getUserMenus(String userId) {
@@ -45,8 +39,8 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
                         .and(SysMenu::getParentId).isNull()
                         .orderBy(SysMenu::getOrderNo).asc()
         );
-        // 1. Super Admin (userId = "1"): Return all enabled menus
-        if (SYS_SUPER_USER_ID.equals(userId)) {
+        // 1. Super Admin: Return all enabled menus
+        if (isSuperAdmin(userId)) {
             if (fullTree == null) {
                 return List.of();
             }
@@ -94,7 +88,7 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
         if (accessibleIds == null) {
             return isRouteType(menu);
         }
-        if (isRouteType(menu) && accessibleIds.contains(menu.getId())) {
+        if (accessibleIds.contains(menu.getId())) {
             return true;
         }
         if (menu.getChildren() != null) {
@@ -140,7 +134,8 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
             return route;
         }
 
-        if (accessibleIds != null && accessibleIds.contains(menu.getId())) {
+        if (accessibleIds != null
+                && (accessibleIds.contains(menu.getId()) || hasAccessibleNonRouteDescendant(menu, accessibleIds))) {
             return route;
         }
 
@@ -176,21 +171,11 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
         return result;
     }
 
-    // todo ???
     @Override
-    @Cacheable(key = "'codes:' + #userId")
     public List<String> getPermissionCodes(String userId) {
         // 超级管理员返回所有权限码
-        if (SYS_SUPER_USER_ID.equals(userId)) {
-            QueryWrapper queryWrapper = QueryWrapper.create()
-                    .select(SysMenuTableDef.SYS_MENU.AUTH_CODE)
-                    .from(SysMenu.class)
-                    .where(SysMenu::getStatus).eq(1)
-                    .and(SysMenu::getAuthCode).isNotNull()
-                    .and(SysMenu::getAuthCode).ne("");
-            return mapper.selectListByQueryAs(queryWrapper, String.class).stream()
-                    .distinct()
-                    .collect(Collectors.toList());
+        if (isSuperAdmin(userId)) {
+            return getAllPermissionCodes();
         }
 
         // 普通用户：通过角色关联查询
@@ -208,6 +193,22 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
         return mapper.selectListByQueryAs(queryWrapper, String.class).stream()
                 .distinct()
                 .collect(Collectors.toList());
+    }
+
+    private List<String> getAllPermissionCodes() {
+        QueryWrapper queryWrapper = QueryWrapper.create()
+                .select(SysMenuTableDef.SYS_MENU.AUTH_CODE)
+                .from(SysMenu.class)
+                .where(SysMenu::getStatus).eq(1)
+                .and(SysMenu::getAuthCode).isNotNull()
+                .and(SysMenu::getAuthCode).ne("");
+        return mapper.selectListByQueryAs(queryWrapper, String.class).stream()
+                .distinct()
+                .collect(Collectors.toList());
+    }
+
+    private boolean isSuperAdmin(String userId) {
+        return SYS_SUPER_USER_ID.equals(userId);
     }
 
     private static RouteMeta getRouteMeta(SysMenu menu) {
@@ -270,7 +271,27 @@ public class SysMenuServiceImpl extends BaseServiceImpl<SysMenuMapper, SysMenu> 
     }
 
     private boolean isRouteType(SysMenu menu) {
-        return menu.getType() == null || ROUTE_TYPES.contains(menu.getType());
+        return (menu.getType() == null || ROUTE_TYPES.contains(menu.getType()))
+                && menu.getPath() != null
+                && !menu.getPath().isBlank();
+    }
+
+    private boolean hasAccessibleNonRouteDescendant(SysMenu menu, List<String> accessibleIds) {
+        if (menu.getChildren() == null || menu.getChildren().isEmpty() || accessibleIds == null) {
+            return false;
+        }
+        for (SysMenu child : menu.getChildren()) {
+            if (!isEnabled(child)) {
+                continue;
+            }
+            if (!isRouteType(child) && accessibleIds.contains(child.getId())) {
+                return true;
+            }
+            if (hasAccessibleNonRouteDescendant(child, accessibleIds)) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

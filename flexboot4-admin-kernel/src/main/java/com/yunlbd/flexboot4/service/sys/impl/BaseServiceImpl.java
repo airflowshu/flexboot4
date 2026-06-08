@@ -158,12 +158,14 @@ public class BaseServiceImpl<M extends BaseMapper<T>, T extends BaseEntity> exte
      */
     @Cacheable(keyGenerator = "versionedQueryKeyGenerator", cacheResolver = "dynamicCacheResolver")
     public Page<T> pageWithRelations(SearchDto searchDto) {
-        Page<T> page = new Page<>(searchDto.getPageNumber(), searchDto.getPageSize());
-        QueryWrapper queryWrapper = DefaultQueryWrapperBuilder.get().build(searchDto, resolveEntityClass());
+        SearchDto normalized = searchDto == null ? new SearchDto() : searchDto;
+        Class<?> entityClass = resolveEntityClass();
+        Page<T> page = new Page<>(normalized.getPageNumber(), normalized.getPageSize());
+        QueryWrapper queryWrapper = DefaultQueryWrapperBuilder.get().build(normalized, entityClass);
         Page<T> result = super.page(page, queryWrapper);
-        if (SearchDtoUtils.hasRelationPaths(searchDto, resolveEntityClass())) {
+        if (SearchDtoUtils.hasQualifiedPaths(normalized)) {
             RelationManager.queryRelations(getMapper(), result.getRecords());
-            SearchDtoUtils.filterRelationCollections(searchDto, resolveEntityClass(), result.getRecords());
+            SearchDtoUtils.filterRelationCollections(normalized, entityClass, result.getRecords());
         }
         return result;
     }
@@ -173,11 +175,13 @@ public class BaseServiceImpl<M extends BaseMapper<T>, T extends BaseEntity> exte
      */
     @Cacheable(keyGenerator = "versionedQueryKeyGenerator", cacheResolver = "dynamicCacheResolver")
     public List<T> listWithRelations(SearchDto searchDto) {
-        QueryWrapper queryWrapper = DefaultQueryWrapperBuilder.get().build(searchDto, resolveEntityClass());
+        SearchDto normalized = searchDto == null ? new SearchDto() : searchDto;
+        Class<?> entityClass = resolveEntityClass();
+        QueryWrapper queryWrapper = DefaultQueryWrapperBuilder.get().build(normalized, entityClass);
         List<T> result = super.list(queryWrapper);
-        if (SearchDtoUtils.hasRelationPaths(searchDto, resolveEntityClass())) {
+        if (SearchDtoUtils.hasQualifiedPaths(normalized)) {
             RelationManager.queryRelations(getMapper(), result);
-            SearchDtoUtils.filterRelationCollections(searchDto, resolveEntityClass(), result);
+            SearchDtoUtils.filterRelationCollections(normalized, entityClass, result);
         }
         return result;
     }

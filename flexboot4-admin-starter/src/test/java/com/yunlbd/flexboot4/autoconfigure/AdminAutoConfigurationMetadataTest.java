@@ -38,10 +38,28 @@ class AdminAutoConfigurationMetadataTest {
                 .contains("CREATE TABLE IF NOT EXISTS sys_oper_log")
                 .contains("current_quarter_table TEXT")
                 .contains("CREATE TABLE IF NOT EXISTS %I (LIKE sys_oper_log INCLUDING ALL)");
-        assertThat(resourceAsString("/db/flexboot4-migration/admin/postgresql/V1010__admin_menu_data.sql"))
+        String adminMenuData = resourceAsString("/db/flexboot4-migration/admin/postgresql/V1010__admin_menu_data.sql");
+        assertThat(adminMenuData)
                 .contains("sys_menu_system")
                 .contains("('sys_menu_file', 'sys_menu_devops', '/devops/file', 'DevopsFile', '/devops/file/file-manage'")
+                .contains("('sys_menu_dict', 'sys_menu_system', '/system/dict', 'SystemDict', '/system/dict/index'")
+                .contains("'system.dict.title'")
+                .contains("('sys_menu_dict_type', 'sys_menu_dict', '', 'SystemDictType', '', 'system.dict.type'")
+                .contains("'sys:dict:type:list'")
+                .contains("('sys_dict_type_add_btn', 'sys_menu_dict_type'")
+                .contains("('sys_menu_dict_item', 'sys_menu_dict', '', 'SystemDictItem', '', 'system.dict.item'")
+                .contains("('sys_dict_item_add_btn', 'sys_menu_dict_item'")
+                .contains("'sys:dict:item:list'")
+                .contains("('sys_user_add_btn', 'sys_menu_user'")
+                .contains("'sys:user:add'")
+                .contains("('sys_role_add_btn', 'sys_menu_role'")
+                .contains("'sys:role:add'")
+                .contains("('sys_config_add_btn', 'sys_menu_config'")
+                .contains("'sys:config:add'")
+                .contains("SELECT 'sys_role_admin_menu_' || m.id, '2', m.id")
                 .doesNotContain("/system/file")
+                .doesNotContain("/system/dict-type")
+                .doesNotContain("/system/dict-item")
                 .contains("sys:user:reset-password");
     }
 

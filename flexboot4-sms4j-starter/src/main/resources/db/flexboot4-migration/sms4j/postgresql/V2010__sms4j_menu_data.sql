@@ -52,7 +52,7 @@ VALUES
 ('sms_menu_config_delete_btn', 'sms_menu_config', '', 'SmsConfigDelete', '', 'common.delete', '', 30, true, false, 'button', 'sms4j:config:delete', 1, now(), now(), 0, 0),
 ('sms_menu_config_export_btn', 'sms_menu_config', '', 'SmsConfigExport', '', 'common.export', '', 40, true, false, 'button', 'sms4j:config:export', 1, now(), now(), 0, 0),
 ('sms_menu_config_import_btn', 'sms_menu_config', '', 'SmsConfigImport', '', 'common.import', '', 50, true, false, 'button', 'sms4j:config:import', 1, now(), now(), 0, 0),
-('sms_menu_config_test_btn', 'sms_menu_config', '', 'SmsConfigTest', '', '测试', '', 60, true, false, 'button', 'sms4j:config:test', 1, now(), now(), 0, 0)
+('sms_menu_config_test_btn', 'sms_menu_config', '', 'SmsConfigTest', '', 'sms.config.test', '', 60, true, false, 'button', 'sms4j:config:test', 1, now(), now(), 0, 0)
 ON CONFLICT (id) DO UPDATE SET
     parent_id = EXCLUDED.parent_id,
     path = '',

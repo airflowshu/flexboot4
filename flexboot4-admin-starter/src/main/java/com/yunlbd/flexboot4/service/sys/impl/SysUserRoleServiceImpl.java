@@ -1,6 +1,7 @@
 package com.yunlbd.flexboot4.service.sys.impl;
 
 import com.mybatisflex.core.query.QueryWrapper;
+import com.yunlbd.flexboot4.common.constant.SysConstant;
 import com.yunlbd.flexboot4.entity.sys.SysUserRole;
 import com.yunlbd.flexboot4.entity.sys.table.SysUserRoleTableDef;
 import com.yunlbd.flexboot4.mapper.SysUserRoleMapper;
@@ -26,10 +27,21 @@ public class SysUserRoleServiceImpl extends BaseServiceImpl<SysUserRoleMapper, S
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean assignRolesToUser(String userId, List<String> roleIds) {
+        if (SysConstant.SYS_SUPER_USER_ID.equals(userId)) {
+            throw new IllegalArgumentException("超级管理员用户不允许调整角色");
+        }
+        if (roleIds != null && roleIds.contains(SysConstant.SYS_SUPER_ROLE_ID)) {
+            throw new IllegalArgumentException("超级管理员角色不允许分配给其他用户");
+        }
+
         // 清除该用户的所有角色关联
         QueryWrapper wrapper = QueryWrapper.create()
                 .where(SysUserRoleTableDef.SYS_USER_ROLE.USER_ID.eq(userId));
         cacheProxy().remove(wrapper);
+
+        if (roleIds == null || roleIds.isEmpty()) {
+            return true;
+        }
 
         // 批量新增角色关联
         List<SysUserRole> userRoles = roleIds.stream()

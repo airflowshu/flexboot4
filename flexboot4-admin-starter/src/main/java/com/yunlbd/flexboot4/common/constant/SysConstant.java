@@ -8,5 +8,6 @@ package com.yunlbd.flexboot4.common.constant;
  */
 public class SysConstant {
     public static final String SYS_SUPER_USER_ID = "1";
+    public static final String SYS_SUPER_ROLE_ID = "1";
     public static final Integer SYS_ENUM_ERROR = 1;
 }

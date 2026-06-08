@@ -65,13 +65,9 @@ public class CmsArticleServiceImpl extends BaseServiceImpl<CmsArticleMapper, Cms
 
         Page<CmsArticle> result = cacheProxy().page(page, queryWrapper);
 
-        // 加载关系数据
-        if (SearchDtoUtils.hasRelationPaths(searchDto, CmsArticle.class)) {
+        if (SearchDtoUtils.hasQualifiedPaths(searchDto)) {
             RelationManager.queryRelations(getMapper(), result.getRecords());
             SearchDtoUtils.filterRelationCollections(searchDto, CmsArticle.class, result.getRecords());
-        } else {
-            // 即使没有指定关系路径，也加载基本关系
-            RelationManager.queryRelations(getMapper(), result.getRecords());
         }
 
         return result;
