@@ -13,11 +13,11 @@ import com.yunlbd.flexboot4.dto.LoginResp;
 import com.yunlbd.flexboot4.dto.MfaVerifyReq;
 import com.yunlbd.flexboot4.dto.ResetPasswordReq;
 import com.yunlbd.flexboot4.dto.SmsCodeReq;
+import com.yunlbd.flexboot4.security.AccessTokenResponseWriter;
 import com.yunlbd.flexboot4.security.JwtUtil;
 import com.yunlbd.flexboot4.service.sys.IAuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -28,7 +28,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.Duration;
 import java.util.List;
 
 @RestController
@@ -38,9 +37,8 @@ import java.util.List;
 @ApiTagGroup(group = "System")
 public class AuthController {
 
-    private static final long TOKEN_VALIDITY_HOURS = 2;
-
     private final IAuthService authService;
+    private final AccessTokenResponseWriter accessTokenResponseWriter;
 
     @Operation(summary = "Login options", description = "Fetch public login method options")
     @RequirePermission(skip = true)
@@ -89,12 +87,7 @@ public class AuthController {
     @PostMapping("/logout")
     public ApiResult<String> logout(HttpServletRequest request, HttpServletResponse response) {
         authService.logout(request);
-
-        Cookie cookie = new Cookie("access_token", null);
-        cookie.setHttpOnly(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(0);
-        response.addCookie(cookie);
+        accessTokenResponseWriter.clear(response);
 
         return ApiResult.success("Logged out successfully");
     }
@@ -104,14 +97,7 @@ public class AuthController {
     @PostMapping("/refresh")
     public ApiResult<String> refresh(HttpServletRequest request, HttpServletResponse response) {
         String newToken = authService.refreshToken(request);
-
-        Cookie cookie = new Cookie("access_token", newToken);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(request.isSecure());
-        cookie.setPath("/");
-        cookie.setMaxAge((int) Duration.ofHours(TOKEN_VALIDITY_HOURS).getSeconds());
-        cookie.setAttribute("SameSite", "Strict");
-        response.addCookie(cookie);
+        accessTokenResponseWriter.writeCookie(request, response, newToken);
 
         return ApiResult.success(newToken);
     }
@@ -153,12 +139,6 @@ public class AuthController {
         if (loginResp.getAccessToken() == null || loginResp.getAccessToken().isBlank()) {
             return;
         }
-        Cookie cookie = new Cookie("access_token", loginResp.getAccessToken());
-        cookie.setHttpOnly(true);
-        cookie.setSecure(request.isSecure());
-        cookie.setPath("/");
-        cookie.setMaxAge((int) Duration.ofHours(TOKEN_VALIDITY_HOURS).getSeconds());
-        cookie.setAttribute("SameSite", "Strict");
-        response.addCookie(cookie);
+        accessTokenResponseWriter.writeCookie(request, response, loginResp.getAccessToken());
     }
 }

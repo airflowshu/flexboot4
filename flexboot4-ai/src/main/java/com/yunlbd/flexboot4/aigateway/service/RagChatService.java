@@ -1,9 +1,5 @@
 package com.yunlbd.flexboot4.aigateway.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.yunlbd.flexboot4.aigateway.config.RagProperties;
 import com.yunlbd.flexboot4.aigateway.dto.RagChatRequest;
 import com.yunlbd.flexboot4.aigateway.dto.RagRetrievedChunkDto;
@@ -15,6 +11,10 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.Map;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
 @Service
 public class RagChatService {

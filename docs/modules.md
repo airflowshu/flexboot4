@@ -42,7 +42,7 @@ Media 专项文档：
 
 | 模块 | 定位 | 文档 |
 | --- | --- | --- |
-| `flexboot4-ai` | AI Gateway，WebFlux 流式代理、API Key 离线鉴权、调用日志汇聚 | [AI 结构说明](https://github.com/airflowshu/flexboot4/blob/master/flexboot4-ai/struc.md) |
+| `flexboot4-ai` | AI Gateway，WebFlux 流式代理、API Key 离线鉴权、调用日志汇聚 | [AI 厂商模型接入](ai-provider-models.md) / [AI 结构说明](https://github.com/airflowshu/flexboot4/blob/master/flexboot4-ai/struc.md) / [APISIX 对接](https://github.com/airflowshu/flexboot4/blob/master/flexboot4-ai/docs/apisix-ai.md) |
 
 ## 内部开发应用
 

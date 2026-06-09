@@ -1,10 +1,10 @@
 package com.yunlbd.flexboot4.aigateway.rag.pipeline;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.yunlbd.flexboot4.aigateway.dto.RagChatRequest;
 import com.yunlbd.flexboot4.aigateway.dto.RagRetrievedChunkDto;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import tools.jackson.databind.JsonNode;
 
 import java.util.List;
 

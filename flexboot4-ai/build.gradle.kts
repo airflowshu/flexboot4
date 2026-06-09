@@ -12,7 +12,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
     implementation("org.springframework:spring-aop")
     implementation("org.aspectj:aspectjweaver")
-    implementation("com.fasterxml.jackson.core:jackson-databind")
+    implementation("tools.jackson.core:jackson-databind")
 
     implementation(libs.jjwtApi)
     runtimeOnly(libs.jjwtImpl)

@@ -29,6 +29,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final UserDetailsService userDetailsService;
     private final StringRedisTemplate redisTemplate;
     private final MetricsRecorder metricsRecorder;
+    private final AccessTokenResponseWriter accessTokenResponseWriter;
 
     @Override
     @NullMarked
@@ -60,9 +61,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         );
                         authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                         SecurityContextHolder.getContext().setAuthentication(authToken);
+                        if (!isAuthRequest(request)) {
+                            refreshAccessToken(request, response, userDetails);
+                        }
                     }
                 }
             } catch (Exception e) {
+                if (isTokenOptionalAuthRequest(request)) {
+                    SecurityContextHolder.clearContext();
+                    filterChain.doFilter(request, response);
+                    return;
+                }
                 metricsRecorder.increment("flexboot4.auth.token_invalid", Map.of(
                         "uri", request.getRequestURI(),
                         "exception", e.getClass().getSimpleName()
@@ -74,5 +83,39 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         }
         filterChain.doFilter(request, response);
+    }
+
+    private void refreshAccessToken(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    UserDetails userDetails) {
+        if (!(userDetails instanceof LoginUser loginUser) || loginUser.getSysUser() == null) {
+            return;
+        }
+
+        String newToken = jwtUtil.generateToken(
+                loginUser,
+                loginUser.getSysUser().getId(),
+                loginUser.getAuthorities().stream()
+                        .map(authority -> authority.getAuthority())
+                        .toList(),
+                loginUser.getPermissionCodes() == null ? java.util.List.of() : loginUser.getPermissionCodes()
+        );
+        accessTokenResponseWriter.writeCookieAndHeader(request, response, newToken);
+    }
+
+    private boolean isAuthRequest(HttpServletRequest request) {
+        return request.getRequestURI().startsWith("/api/admin/auth/");
+    }
+
+    private boolean isTokenOptionalAuthRequest(HttpServletRequest request) {
+        return switch (request.getRequestURI()) {
+            case "/api/admin/auth/options",
+                 "/api/admin/auth/login",
+                 "/api/admin/auth/mfa/verify",
+                 "/api/admin/auth/sms-code",
+                 "/api/admin/auth/forget-password",
+                 "/api/admin/auth/reset-password" -> true;
+            default -> false;
+        };
     }
 }

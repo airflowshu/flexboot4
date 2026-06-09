@@ -25,7 +25,7 @@ flexboot4-ai
   AI Gateway 独立服务。
 ```
 
-更多模块文档见 [模块文档索引](modules.md)。
+更多模块文档见 [模块文档索引](modules.md)。AI 厂商模型、DeepSeek V4 与 APISIX 接入见 [AI 厂商模型接入指南](ai-provider-models.md)。
 
 ## 2. CRUD 范式
 

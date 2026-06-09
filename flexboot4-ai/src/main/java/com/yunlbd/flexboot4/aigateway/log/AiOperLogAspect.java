@@ -1,6 +1,5 @@
 package com.yunlbd.flexboot4.aigateway.log;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yunlbd.flexboot4.auth.jwt.JwtClaimKeys;
 import com.yunlbd.flexboot4.common.ApiResult;
 import com.yunlbd.flexboot4.common.annotation.OperLog;
@@ -22,6 +21,9 @@ import java.security.MessageDigest;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 @Aspect
 @Component
@@ -299,13 +301,13 @@ public class AiOperLogAspect {
             return Map.of();
         }
         try {
-            if (val instanceof com.fasterxml.jackson.databind.JsonNode node) {
-                com.fasterxml.jackson.databind.JsonNode usage = node.get("usage");
+            if (val instanceof JsonNode node) {
+                JsonNode usage = node.get("usage");
                 if (usage != null && usage.isObject()) {
                     Map<String, Object> out = new LinkedHashMap<>();
-                    com.fasterxml.jackson.databind.JsonNode pt = usage.get("prompt_tokens");
-                    com.fasterxml.jackson.databind.JsonNode ct = usage.get("completion_tokens");
-                    com.fasterxml.jackson.databind.JsonNode tt = usage.get("total_tokens");
+                    JsonNode pt = usage.get("prompt_tokens");
+                    JsonNode ct = usage.get("completion_tokens");
+                    JsonNode tt = usage.get("total_tokens");
                     if (pt != null && pt.isNumber()) out.put("prompt_tokens", pt.asLong());
                     if (ct != null && ct.isNumber()) out.put("completion_tokens", ct.asLong());
                     if (tt != null && tt.isNumber()) out.put("total_tokens", tt.asLong());
@@ -428,7 +430,7 @@ public class AiOperLogAspect {
             return c.stream().limit(20).map(this::sanitize).toList();
         }
         try {
-            Map<String, Object> asMap = objectMapper.convertValue(arg, new com.fasterxml.jackson.core.type.TypeReference<>() {
+            Map<String, Object> asMap = objectMapper.convertValue(arg, new TypeReference<>() {
             });
             return sanitizeMap(asMap);
         } catch (Exception e) {

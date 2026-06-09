@@ -1,7 +1,5 @@
 package com.yunlbd.flexboot4.aigateway.security;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yunlbd.flexboot4.auth.jwt.JwtClaimKeys;
 import com.yunlbd.flexboot4.auth.jwt.JwtScopes;
 import com.yunlbd.flexboot4.common.ApiResult;
@@ -23,6 +21,8 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.List;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 @Component
 @Order(0)
@@ -126,7 +126,7 @@ public class AiJwtScopeWebFilter implements WebFilter {
         byte[] bytes;
         try {
             bytes = objectMapper.writeValueAsBytes(errorResult);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             String fallback = String.format("{\"code\":%d,\"message\":\"%s\",\"error\":\"error\"}", status.value(), message);
             bytes = fallback.getBytes(StandardCharsets.UTF_8);
         }

@@ -1,7 +1,5 @@
 package com.yunlbd.flexboot4.aigateway.security;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yunlbd.flexboot4.aigateway.service.AiQuotaService;
 import com.yunlbd.flexboot4.apikey.ApiKeyRule;
 import com.yunlbd.flexboot4.common.ApiResult;
@@ -21,6 +19,8 @@ import reactor.core.publisher.Mono;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.List;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 @Component
 @Order(1)
@@ -179,7 +179,7 @@ public class AiApiKeyQuotaWebFilter implements WebFilter {
         byte[] bytes;
         try {
             bytes = objectMapper.writeValueAsBytes(errorResult);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             String fallback = String.format("{\"code\":%d,\"message\":\"%s\",\"error\":\"error\"}", status.value(), message);
             bytes = fallback.getBytes(StandardCharsets.UTF_8);
         }

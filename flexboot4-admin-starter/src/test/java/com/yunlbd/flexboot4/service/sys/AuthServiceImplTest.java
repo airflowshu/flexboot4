@@ -57,7 +57,7 @@ class AuthServiceImplTest {
     @BeforeEach
     void setUp() {
         ReflectionTestUtils.setField(jwtUtil, "secret", "thisIsASecretKeyThatIsLongEnoughForHmacSha256SecurityRequirement");
-        ReflectionTestUtils.setField(jwtUtil, "expiration", 7200000L);
+        ReflectionTestUtils.setField(jwtUtil, "expiration", 1800000L);
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         when(redisTemplate.hasKey(any())).thenReturn(false);
         when(valueOperations.increment(any())).thenReturn(1L);

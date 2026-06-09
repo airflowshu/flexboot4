@@ -1,6 +1,5 @@
 package com.yunlbd.flexboot4.aigateway.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yunlbd.flexboot4.aigateway.config.RagProperties;
 import com.yunlbd.flexboot4.aigateway.dto.RagChatRequest;
 import org.junit.jupiter.api.Test;
@@ -11,6 +10,7 @@ import reactor.test.StepVerifier;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import tools.jackson.databind.ObjectMapper;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;

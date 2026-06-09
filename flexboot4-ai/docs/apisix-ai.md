@@ -10,11 +10,15 @@ ai-gateway 已支持把生成请求转发到上游（OpenAI-compatible），并�
 llm-proxy:
   url: http://127.0.0.1:9080
   chat-path: /v1/chat/completions
+  api-key:
+  default-model: deepseek-v4-flash
 ```
 
 请求时携带：
 - Cookie: access_token=...
 - X-AI-API-KEY: <用户的 aiApiKey>（可选：前端不传时由 ai-gateway 按 userId 从 Redis 自动补齐，并在转发 APISIX 时注入）
+
+如果直连 DeepSeek、OpenAI 等官方 API，不走 APISIX，则把 `llm-proxy.url` 改为厂商 base URL，并配置 `llm-proxy.api-key`。完整接入说明见 [AI 厂商模型接入](provider-models.md)。
 
 ## 2. APISIX 侧建议路由（OpenAI-compatible 入口）
 
@@ -84,4 +88,5 @@ curl "http://127.0.0.1:9180/apisix/admin/routes/ai-chat" -X PUT \
 
 ## 3. 实战建议
 
-- 业务配额（按用户/Key/周期）优先在 ai-gateway 控制：更贴合你的管理后台规则与计费口径。\n+- 基础防护与流量治理在 APISIX 做：实例级 token 限流、重试、熔断、fallback、观测指标等。
+- 业务配额（按用户/Key/周期）优先在 ai-gateway 控制：更贴合管理后台规则与计费口径。
+- 基础防护与流量治理在 APISIX 做：实例级 token 限流、重试、熔断、fallback、观测指标等。

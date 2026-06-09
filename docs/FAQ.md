@@ -7,6 +7,7 @@
 - [缓存问题](#缓存问题)
 - [数据库](#数据库)
 - [构建问题](#构建问题)
+- [AI 模型接入](#ai-模型接入)
 
 ---
 
@@ -343,6 +344,35 @@ dependencies {
 
 4. **编写代码**
    - 创建 Controller、Service、Entity 等
+
+---
+
+## AI 模型接入
+
+### Q17: 如何接入 DeepSeek V4？
+
+**A:** `flexboot4-ai` 直接使用 OpenAI-compatible Chat Completions，不需要引入 Spring AI，也不需要新增 `ChatProvider` 适配层。把上游配置改为 DeepSeek 官方 API 即可：
+
+```powershell
+$env:LLM_PROXY_URL = "https://api.deepseek.com"
+$env:LLM_PROXY_CHAT_PATH = "/chat/completions"
+$env:LLM_PROXY_API_KEY = "sk-..."
+$env:LLM_PROXY_DEFAULT_MODEL = "deepseek-v4-flash"
+$env:AI_PRIMARY_MODEL = "deepseek-v4-flash"
+$env:AI_FALLBACK_MODEL = "deepseek-v4-flash"
+
+.\gradlew.bat :flexboot4-ai:bootRun
+```
+
+DeepSeek V4 当前模型名为 `deepseek-v4-flash` 和 `deepseek-v4-pro`。纯 AI 对话使用 `/api/ai/chat`、`/api/ai/chat/stream`；知识库问答使用 `/api/ai/rag/chat`、`/api/ai/rag/chat/stream`，并且必须传 `kbId`。
+
+完整说明见 [AI 厂商模型接入指南](ai-provider-models.md)。
+
+### Q18: DeepSeek 的 API Key 应该放在哪里？
+
+**A:** DeepSeek、OpenAI 等厂商密钥统一放后端环境变量 `LLM_PROXY_API_KEY`，由 `flexboot4-ai` 转发时补 `Authorization: Bearer ...`。前端只使用 FlexBoot4 登录态和内部 `X-AI-API-KEY`，不得持有厂商官方 API Key。
+
+如果通过 APISIX 汇聚多厂商，`LLM_PROXY_URL` 指向 APISIX，厂商密钥配置在 APISIX 上游插件或服务中；`X-AI-API-KEY` 可继续作为用户配额和 APISIX consumer key 使用。
 
 ---
 

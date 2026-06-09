@@ -25,9 +25,13 @@ ON CONFLICT (id) DO UPDATE SET
 INSERT INTO sys_menu (id, parent_id, path, name, component, title, icon, order_no,
                       hide_in_menu, keep_alive, type, auth_code, status,
                       create_time, last_modify_time, del_flag, version)
-VALUES ('kb_menu_manage', 'kb_menu_root', '/kb/manage', 'KbManage',
-        '/kb/index', 'kb.manage.title', 'ant-design:read-outlined', 1,
-        false, true, 'menu', 'kb:manage:list', 1, now(), now(), 0, 0)
+VALUES
+('kb_menu_manage', 'kb_menu_root', '/kb/manage', 'KbManage',
+ '/kb/index', 'kb.manage.title', 'ant-design:read-outlined', 1,
+ false, true, 'menu', 'kb:manage:list', 1, now(), now(), 0, 0),
+('kb_menu_chat', 'kb_menu_root', '/kb/chat', 'KbChat',
+ '/kb/chat/index', 'kb.chat.title', 'ant-design:message-outlined', 2,
+ false, true, 'menu', 'kb:chat', 1, now(), now(), 0, 0)
 ON CONFLICT (id) DO UPDATE SET
     parent_id = EXCLUDED.parent_id,
     path = EXCLUDED.path,

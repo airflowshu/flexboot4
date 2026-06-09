@@ -1,6 +1,5 @@
 package com.yunlbd.flexboot4.aigateway.security;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yunlbd.flexboot4.apikey.ApiKeyRule;
 import com.yunlbd.flexboot4.apikey.ApiKeySnapshot;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -12,6 +11,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
+import tools.jackson.databind.ObjectMapper;
 
 @Component
 public class ApiKeySnapshotCache {

@@ -22,7 +22,7 @@ public class JwtUtil {
     @Value("${jwt.secret:thisIsASecretKeyThatIsLongEnoughForHmacSha256SecurityRequirement}")
     private String secret;
 
-    @Value("${jwt.expiration:7200000}") // 2 hours by default as requested
+    @Value("${jwt.expiration:1800000}") // 30 minutes idle session window by default
     private long expiration;
 
     private SecretKey getSigningKey() {
@@ -33,6 +33,14 @@ public class JwtUtil {
         return secret.getBytes(StandardCharsets.UTF_8);
     }
 
+    public long getExpirationMillis() {
+        return expiration;
+    }
+
+    public long getExpirationSeconds() {
+        return expiration / 1000;
+    }
+
     /**
      * Generate Token
      */
@@ -40,7 +48,6 @@ public class JwtUtil {
         Map<String, Object> claims = new HashMap<>();
         claims.put(JwtClaimKeys.USERNAME, userDetails.getUsername());
         claims.put(JwtClaimKeys.ROLES, roles);
-        claims.put(JwtClaimKeys.PERMISSIONS, permissions);
         claims.put(JwtClaimKeys.SCOPE, deriveScopes(roles));
         return createToken(claims, userId);
     }

@@ -1,7 +1,5 @@
 package com.yunlbd.flexboot4.aigateway.log;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yunlbd.flexboot4.operlog.OperLogRecord;
 import com.yunlbd.flexboot4.operlog.OperLogSink;
 import org.springframework.data.redis.connection.stream.MapRecord;
@@ -12,6 +10,8 @@ import org.springframework.stereotype.Component;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 @Component
 public class RedisStreamOperLogSink implements OperLogSink {
@@ -33,7 +33,7 @@ public class RedisStreamOperLogSink implements OperLogSink {
         String payload;
         try {
             payload = objectMapper.writeValueAsString(log);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             return CompletableFuture.completedFuture(null);
         }
 

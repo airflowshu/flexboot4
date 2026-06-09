@@ -26,7 +26,7 @@ spring:
 
 jwt:
   secret: ${JWT_SECRET:thisIsASecretKeyThatIsLongEnoughForHmacSha256SecurityRequirement}
-  expiration: ${JWT_EXPIRATION:7200000}
+  expiration: ${JWT_EXPIRATION:1800000}
 
 operlog:
   stream:
@@ -47,6 +47,8 @@ llm-proxy:
   url: ${LLM_PROXY_URL:http://192.168.11.104:11434}
 #  url: ${LLM_PROXY_URL:http://127.0.0.1:9080}       #配置APISIX服务
   chat-path: ${LLM_PROXY_CHAT_PATH:/v1/chat/completions}
+  api-key: ${LLM_PROXY_API_KEY:}
+  default-model: ${LLM_PROXY_DEFAULT_MODEL:qwen2.5:1.5b}
   timeout: 120s
 
 rag:

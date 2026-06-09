@@ -53,17 +53,20 @@ VALUES
 ('sys_menu_api_key', 'sys_menu_devops', '/devops/api-key', 'DevopsApiKey', '/devops/api-key/index',
  'API Key', 'ant-design:key-outlined', 1, FALSE, TRUE, 'menu', 'ai:api:key:list', 1,
  now(), now(), 0, 0),
+('sys_menu_ai_chat', 'sys_menu_devops', '/devops/ai/chat', 'DevopsAiChat', '/devops/ai/ai-chat',
+ 'devops.ai.chat', 'ant-design:message-outlined', 2, FALSE, TRUE, 'menu', 'ai:chat', 1,
+ now(), now(), 0, 0),
 ('sys_menu_oper_log', 'sys_menu_devops', '/devops/log', 'DevopsLog', '/devops/log/index',
- 'devops.log.title', 'ant-design:profile-outlined', 2, FALSE, TRUE, 'menu', 'sys:oper:log:list', 1,
+ 'devops.log.title', 'ant-design:profile-outlined', 3, FALSE, TRUE, 'menu', 'sys:oper:log:list', 1,
  now(), now(), 0, 0),
 ('sys_menu_monitor', 'sys_menu_devops', '/devops/monitor', 'DevopsMonitor', '/devops/monitor/index',
- 'devops.monitor.title', 'ant-design:monitor-outlined', 3, FALSE, TRUE, 'menu', 'sys:monitor:stats', 1,
+ 'devops.monitor.title', 'ant-design:monitor-outlined', 4, FALSE, TRUE, 'menu', 'sys:monitor:stats', 1,
  now(), now(), 0, 0),
 ('sys_menu_file', 'sys_menu_devops', '/devops/file', 'DevopsFile', '/devops/file/file-manage',
- 'devops.file.title', 'ant-design:file-outlined', 4, FALSE, TRUE, 'menu', 'sys:file:list', 1,
+ 'devops.file.title', 'ant-design:file-outlined', 5, FALSE, TRUE, 'menu', 'sys:file:list', 1,
  now(), now(), 0, 0),
 ('sys_menu_version_log', 'sys_menu_devops', '/devops/version-log', 'DevopsVersionLog', '/devops/version-log/index',
- 'devops.versionlog.title', 'ant-design:history-outlined', 5, FALSE, TRUE, 'menu', 'sys:version:log:list', 1,
+ 'devops.versionlog.title', 'ant-design:history-outlined', 6, FALSE, TRUE, 'menu', 'sys:version:log:list', 1,
  now(), now(), 0, 0)
 ON CONFLICT (id) DO UPDATE SET
     parent_id = EXCLUDED.parent_id,
@@ -159,5 +162,6 @@ SELECT 'sys_role_admin_menu_' || m.id, '2', m.id, now(), now(), 0, 0
 FROM sys_menu m
 WHERE m.id LIKE 'sys_%'
    OR m.id = 'system_user_reset_password_btn'
+   OR m.id = 'sys_menu_ai_chat'
    OR m.id LIKE 'ai_api_key_%'
 ON CONFLICT (id) DO NOTHING;
