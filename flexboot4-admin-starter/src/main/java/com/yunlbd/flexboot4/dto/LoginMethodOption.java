@@ -30,7 +30,10 @@ public class LoginMethodOption {
 
     public static LoginMethodOption thirdPartyDefaults() {
         LoginMethodOption option = new LoginMethodOption();
-        option.setProviders(List.of(LoginProviderOption.github(false)));
+        option.setProviders(List.of(
+                LoginProviderOption.github(false),
+                LoginProviderOption.qq(false)
+        ));
         return option;
     }
 

@@ -44,6 +44,7 @@ class SocialAuthServiceImplTest {
     private final AuthenticationManager authenticationManager = mock(AuthenticationManager.class);
     private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
     private final FakeProviderClient providerClient = new FakeProviderClient();
+    private final FakeProviderClient qqProviderClient = new FakeProviderClient("qq", "qq-openid", null, false);
     private SocialAuthServiceImpl service;
 
     @BeforeEach
@@ -51,7 +52,7 @@ class SocialAuthServiceImplTest {
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         when(authService.getLoginOptions()).thenReturn(enabledGithubOptions());
         service = new SocialAuthServiceImpl(
-                List.of(providerClient),
+                List.of(providerClient, qqProviderClient),
                 authService,
                 sysUserService,
                 socialAccountService,
@@ -182,9 +183,59 @@ class SocialAuthServiceImplTest {
         assertThat(url).startsWith("https://github.test/authorize?");
     }
 
+    @Test
+    void callbackForUnboundQqProfileReturnsBindRequiredWithoutCandidate() throws Exception {
+        when(authService.getLoginOptions()).thenReturn(enabledOptions("qq", true));
+        String stateJson = objectMapper.writeValueAsString(OAuthState.of(
+                "qq",
+                "http://localhost/api/admin/auth/oauth/qq/callback",
+                "http://localhost/auth/oauth/callback"
+        ));
+        when(valueOperations.get("auth:oauth:state:state1")).thenReturn(stateJson);
+        when(socialAccountService.getOne(any(QueryWrapper.class))).thenReturn(null);
+
+        service.handleCallback("qq", "code1", "state1", request());
+
+        ArgumentCaptor<String> payloadCaptor = ArgumentCaptor.forClass(String.class);
+        verify(valueOperations).set(
+                org.mockito.ArgumentMatchers.startsWith("auth:oauth:result:"),
+                payloadCaptor.capture(),
+                eq(3L),
+                eq(TimeUnit.MINUTES)
+        );
+        OAuthCallbackResultResp result = objectMapper.readValue(payloadCaptor.getValue(), OAuthCallbackResultResp.class);
+        assertThat(result.status()).isEqualTo(OAuthCallbackStatus.BIND_REQUIRED);
+        assertThat(result.externalUser().provider()).isEqualTo("qq");
+        assertThat(result.candidates()).isEmpty();
+    }
+
+    @Test
+    void qqDisabledProviderRejectsAuthorizeWithProviderName() {
+        when(authService.getLoginOptions()).thenReturn(enabledOptions("qq", false));
+
+        assertThatThrownBy(() -> service.buildAuthorizeUrl("qq", request()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("QQ 登录未启用");
+    }
+
+    @Test
+    void qqUnconfiguredProviderRejectsAuthorizeWithProviderName() {
+        qqProviderClient.configured = false;
+        when(authService.getLoginOptions()).thenReturn(enabledOptions("qq", true));
+
+        assertThatThrownBy(() -> service.buildAuthorizeUrl("qq", request()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("QQ 登录未配置");
+    }
+
     private static AuthLoginOptions enabledGithubOptions() {
+        return enabledOptions("github", true);
+    }
+
+    private static AuthLoginOptions enabledOptions(String provider, boolean enabled) {
         AuthLoginOptions options = AuthLoginOptions.defaults();
-        options.getMethods().get(AuthLoginOptions.METHOD_THIRD_PARTY).setProviders(List.of(LoginProviderOption.github(true)));
+        options.getMethods().get(AuthLoginOptions.METHOD_THIRD_PARTY)
+                .setProviders(List.of(LoginProviderOption.of(provider, enabled)));
         return options;
     }
 
@@ -222,29 +273,40 @@ class SocialAuthServiceImplTest {
     }
 
     private static class FakeProviderClient implements OAuthProviderClient {
-        private final OAuthProviderProfile profile = new OAuthProviderProfile(
-                "github",
-                "gh1",
-                "alice-gh",
-                "Alice GitHub",
-                "https://avatars.example/alice.png",
-                "alice@example.com",
-                true
-        );
+        private final String provider;
+        private final OAuthProviderProfile profile;
+        private boolean configured = true;
+
+        private FakeProviderClient() {
+            this("github", "gh1", "alice@example.com", true);
+        }
+
+        private FakeProviderClient(String provider, String providerUserId, String email, boolean emailVerified) {
+            this.provider = provider;
+            this.profile = new OAuthProviderProfile(
+                    provider,
+                    providerUserId,
+                    "alice-" + provider,
+                    "Alice " + provider,
+                    "https://avatars.example/alice.png",
+                    email,
+                    emailVerified
+            );
+        }
 
         @Override
         public String provider() {
-            return "github";
+            return provider;
         }
 
         @Override
         public boolean configured() {
-            return true;
+            return configured;
         }
 
         @Override
         public String buildAuthorizeUrl(String state, String redirectUri) {
-            return "https://github.test/authorize?state=" + state + "&redirect_uri=" + redirectUri;
+            return "https://" + provider + ".test/authorize?state=" + state + "&redirect_uri=" + redirectUri;
         }
 
         @Override

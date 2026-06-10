@@ -51,6 +51,10 @@ flexboot4:
         client-id: ${FLEXBOOT4_AUTH_OAUTH_GITHUB_CLIENT_ID:}
         client-secret: ${FLEXBOOT4_AUTH_OAUTH_GITHUB_CLIENT_SECRET:}
         callback-uri: ${FLEXBOOT4_AUTH_OAUTH_GITHUB_CALLBACK_URI:http://localhost:8080/api/admin/auth/oauth/github/callback}
+      qq:
+        app-id: ${FLEXBOOT4_AUTH_OAUTH_QQ_APP_ID:}
+        app-key: ${FLEXBOOT4_AUTH_OAUTH_QQ_APP_KEY:}
+        callback-uri: ${FLEXBOOT4_AUTH_OAUTH_QQ_CALLBACK_URI:http://localhost:8080/api/admin/auth/oauth/qq/callback}
   security:
     mfa-secret-key: ${FLEXBOOT4_SECURITY_MFA_SECRET_KEY:${jwt.secret:thisIsASecretKeyThatIsLongEnoughForHmacSha256SecurityRequirement}}
   schedule:

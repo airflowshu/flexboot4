@@ -96,11 +96,11 @@ class AuthServiceImplTest {
         assertThat(options.getMethods().get("sms").getEnabled()).isFalse();
         assertThat(options.getMethods().get("sms").getCodeLength()).isEqualTo(6);
         assertThat(options.getMethods().get("thirdParty").getProviders())
-                .singleElement()
-                .satisfies(provider -> {
-                    assertThat(provider.getCode()).isEqualTo("github");
-                    assertThat(provider.getEnabled()).isFalse();
-                });
+                .extracting("code")
+                .containsExactly("github", "qq");
+        assertThat(options.getMethods().get("thirdParty").getProviders())
+                .extracting("enabled")
+                .containsExactly(false, false);
     }
 
     @Test

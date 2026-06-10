@@ -86,11 +86,17 @@ public class SocialAuthServiceImpl implements SocialAuthService {
     public String handleCallback(String provider, String code, String state, HttpServletRequest request) {
         String normalizedProvider = normalizeProvider(provider);
         if (!StringUtils.hasText(code)) {
-            return buildFrontendCallbackUrl(frontendCallbackBase(request), errorResult("GitHub 授权失败或已取消"));
+            return buildFrontendCallbackUrl(
+                    frontendCallbackBase(request),
+                    errorResult(providerName(normalizedProvider) + " 授权失败或已取消")
+            );
         }
         OAuthState statePayload = takeJson(STATE_KEY_PREFIX + state, OAuthState.class);
         if (statePayload == null || !normalizedProvider.equals(statePayload.provider())) {
-            return buildFrontendCallbackUrl(frontendCallbackBase(request), errorResult("GitHub 授权状态已过期，请重新登录"));
+            return buildFrontendCallbackUrl(
+                    frontendCallbackBase(request),
+                    errorResult(providerName(normalizedProvider) + " 授权状态已过期，请重新登录")
+            );
         }
 
         try {
@@ -226,7 +232,7 @@ public class SocialAuthServiceImpl implements SocialAuthService {
     private void ensureCanBind(String userId, OAuthProviderProfile profile) {
         findByProviderIdentity(profile.provider(), profile.providerUserId()).ifPresent(existing -> {
             if (!userId.equals(existing.getUserId())) {
-                throw new IllegalStateException("该 GitHub 账号已绑定其他系统账号");
+                throw new IllegalStateException("该 " + providerName(profile.provider()) + " 账号已绑定其他系统账号");
             }
         });
         List<SysUserSocialAccount> userAccounts = socialAccountService.list(
@@ -237,7 +243,9 @@ public class SocialAuthServiceImpl implements SocialAuthService {
         );
         for (SysUserSocialAccount account : userAccounts) {
             if (!Objects.equals(account.getProviderUserId(), profile.providerUserId())) {
-                throw new IllegalStateException("当前系统账号已绑定其他 GitHub 账号，请先解绑");
+                throw new IllegalStateException("当前系统账号已绑定其他 "
+                        + providerName(profile.provider())
+                        + " 账号，请先解绑");
             }
         }
     }
@@ -321,14 +329,14 @@ public class SocialAuthServiceImpl implements SocialAuthService {
                 .map(option -> option.isEnabled(false))
                 .orElse(false);
         if (!providerEnabled) {
-            throw new IllegalStateException("GitHub 登录未启用");
+            throw new IllegalStateException(providerName(normalized) + " 登录未启用");
         }
         OAuthProviderClient client = providerMap().get(normalized);
         if (client == null) {
             throw new IllegalArgumentException("不支持的第三方登录方式");
         }
         if (!client.configured()) {
-            throw new IllegalStateException("GitHub 登录未配置 clientId/clientSecret");
+            throw new IllegalStateException(providerName(normalized) + " 登录未配置");
         }
         return client;
     }
@@ -448,6 +456,15 @@ public class SocialAuthServiceImpl implements SocialAuthService {
             throw new IllegalArgumentException("第三方登录方式不能为空");
         }
         return provider.trim().toLowerCase();
+    }
+
+    private static String providerName(String provider) {
+        String normalized = normalizeProvider(provider);
+        return switch (normalized) {
+            case "github" -> "GitHub";
+            case "qq" -> "QQ";
+            default -> normalized;
+        };
     }
 
     private static String safeToken(String token) {

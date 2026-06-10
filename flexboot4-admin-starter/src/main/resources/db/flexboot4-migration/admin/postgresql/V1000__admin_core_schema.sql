@@ -507,7 +507,7 @@ INSERT INTO sys_config (id, config_key, config_value, config_type, description, 
                         create_time, last_modify_time, del_flag, version, remark)
 VALUES
 ('auth_login_options', 'auth.login.options',
- '{"methods":{"password":{"enabled":true},"sms":{"enabled":false,"codeLength":4,"cooldownSeconds":60},"qrcode":{"enabled":false},"thirdParty":{"providers":[{"code":"github","enabled":false}]},"register":{"enabled":false},"forgetPassword":{"enabled":true}}}',
+ '{"methods":{"password":{"enabled":true},"sms":{"enabled":false,"codeLength":4,"cooldownSeconds":60},"qrcode":{"enabled":false},"thirdParty":{"providers":[{"code":"github","enabled":false},{"code":"qq","enabled":false}]},"register":{"enabled":false},"forgetPassword":{"enabled":true}}}',
  'JSON', '登录页认证方式开关配置', 1, now(), now(), 0, 0, '短信登录启用前需配置短信厂商与用户手机号'),
 ('auth_sms_template_id', 'auth.sms.templateId', '1', 'STRING',
  '手机号登录短信模板ID；容联云测试模板默认 1', 1, now(), now(), 0, 0,

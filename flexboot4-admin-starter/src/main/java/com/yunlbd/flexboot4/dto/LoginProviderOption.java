@@ -13,8 +13,16 @@ public class LoginProviderOption {
     private Boolean enabled;
 
     public static LoginProviderOption github(boolean enabled) {
+        return of("github", enabled);
+    }
+
+    public static LoginProviderOption qq(boolean enabled) {
+        return of("qq", enabled);
+    }
+
+    public static LoginProviderOption of(String code, boolean enabled) {
         LoginProviderOption option = new LoginProviderOption();
-        option.setCode("github");
+        option.setCode(code);
         option.setEnabled(enabled);
         return option;
     }
