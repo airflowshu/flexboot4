@@ -22,6 +22,7 @@ security:
       - /api/admin/auth/sms-code
       - /api/admin/auth/forget-password
       - /api/admin/auth/reset-password
+      - /api/admin/auth/oauth/**
       - /api/admin/file/access/**
       - /v3/api-docs/**
       - /scalar/**
@@ -44,6 +45,12 @@ flexboot4:
       bucket: ${FLEXBOOT4_LOCAL_STORAGE_BUCKET:local}
   mail:
     enabled: ${FLEXBOOT4_MAIL_ENABLED:false}
+  auth:
+    oauth:
+      github:
+        client-id: ${FLEXBOOT4_AUTH_OAUTH_GITHUB_CLIENT_ID:}
+        client-secret: ${FLEXBOOT4_AUTH_OAUTH_GITHUB_CLIENT_SECRET:}
+        callback-uri: ${FLEXBOOT4_AUTH_OAUTH_GITHUB_CALLBACK_URI:http://localhost:8080/api/admin/auth/oauth/github/callback}
   security:
     mfa-secret-key: ${FLEXBOOT4_SECURITY_MFA_SECRET_KEY:${jwt.secret:thisIsASecretKeyThatIsLongEnoughForHmacSha256SecurityRequirement}}
   schedule:

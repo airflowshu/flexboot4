@@ -22,7 +22,7 @@ public class AuthLoginOptions {
         options.getMethods().put(METHOD_PASSWORD, LoginMethodOption.enabled(true));
         options.getMethods().put(METHOD_SMS, LoginMethodOption.smsDefaults(false));
         options.getMethods().put(METHOD_QRCODE, LoginMethodOption.enabled(false));
-        options.getMethods().put(METHOD_THIRD_PARTY, LoginMethodOption.thirdPartyDefaults(false));
+        options.getMethods().put(METHOD_THIRD_PARTY, LoginMethodOption.thirdPartyDefaults());
         options.getMethods().put(METHOD_REGISTER, LoginMethodOption.enabled(false));
         options.getMethods().put(METHOD_FORGET_PASSWORD, LoginMethodOption.enabled(true));
         return options;
@@ -39,6 +39,10 @@ public class AuthLoginOptions {
             }
             merged.getMethods().compute(name, (k, base) -> base == null ? option.copy() : base.merge(option));
         });
+        LoginMethodOption thirdParty = merged.getMethods().get(METHOD_THIRD_PARTY);
+        if (thirdParty != null) {
+            thirdParty.setEnabled(null);
+        }
         return merged;
     }
 

@@ -20,6 +20,7 @@ import com.yunlbd.flexboot4.dto.sys.UserMfaTotpConfirmReq;
 import com.yunlbd.flexboot4.dto.sys.UserMfaTotpDisableReq;
 import com.yunlbd.flexboot4.dto.sys.UserMfaTotpSetupResp;
 import com.yunlbd.flexboot4.dto.sys.UserMfaTotpStatusResp;
+import com.yunlbd.flexboot4.dto.oauth.UserSocialAccountResp;
 import com.yunlbd.flexboot4.entity.sys.SysRole;
 import com.yunlbd.flexboot4.entity.sys.SysUser;
 import com.yunlbd.flexboot4.excel.sys.SysUserExportRow;
@@ -29,6 +30,7 @@ import com.yunlbd.flexboot4.file.FileObject;
 import com.yunlbd.flexboot4.security.UserDetailsCacheService;
 import com.yunlbd.flexboot4.service.sys.FileManagerService;
 import com.yunlbd.flexboot4.service.sys.SysUserService;
+import com.yunlbd.flexboot4.service.sys.SocialAuthService;
 import com.yunlbd.flexboot4.service.sys.UserMfaService;
 import com.yunlbd.flexboot4.service.sys.UserSecurityEmailService;
 import com.yunlbd.flexboot4.service.sys.UserSecurityPhoneService;
@@ -72,6 +74,7 @@ public class SysUserController extends BaseCrudController<SysUserService, SysUse
     private final UserSecurityEmailService userSecurityEmailService;
     private final UserMfaService userMfaService;
     private final UserDetailsCacheService userDetailsCacheService;
+    private final SocialAuthService socialAuthService;
     private final SysUserCrudMapper mapper;
 
     public SysUserController(SysUserService service,
@@ -81,7 +84,8 @@ public class SysUserController extends BaseCrudController<SysUserService, SysUse
                              UserSecurityPhoneService userSecurityPhoneService,
                              UserSecurityEmailService userSecurityEmailService,
                              UserMfaService userMfaService,
-                             UserDetailsCacheService userDetailsCacheService) {
+                             UserDetailsCacheService userDetailsCacheService,
+                             SocialAuthService socialAuthService) {
         super(service, mapper);
         this.mapper = mapper;
         this.passwordEncoder = passwordEncoder;
@@ -90,6 +94,7 @@ public class SysUserController extends BaseCrudController<SysUserService, SysUse
         this.userSecurityEmailService = userSecurityEmailService;
         this.userMfaService = userMfaService;
         this.userDetailsCacheService = userDetailsCacheService;
+        this.socialAuthService = socialAuthService;
     }
 
 
@@ -251,6 +256,25 @@ public class SysUserController extends BaseCrudController<SysUserService, SysUse
     public ApiResult<UserMfaTotpStatusResp> disableMfaTotp(@Valid @RequestBody UserMfaTotpDisableReq req) {
         SysUser user = SecurityUtils.getSysUser();
         return ApiResult.success(userMfaService.disableTotp(user, req));
+    }
+
+    @Operation(summary = "当前用户第三方账号绑定列表", description = "获取当前登录用户已绑定的第三方登录账号")
+    @RequirePermission(skip = true)
+    @GetMapping("/social-accounts")
+    public ApiResult<List<UserSocialAccountResp>> listCurrentUserSocialAccounts() {
+        SysUser user = requireCurrentUser();
+        return ApiResult.success(socialAuthService.listBoundAccounts(user.getId()));
+    }
+
+    @Operation(summary = "解绑当前用户第三方账号", description = "解绑当前登录用户的第三方登录账号")
+    @OperLog(title = "解绑第三方账号", businessType = BusinessType.UPDATE,
+            isSaveRequestData = false, isSaveResponseData = false)
+    @RequirePermission(skip = true)
+    @DeleteMapping("/social-accounts")
+    public ApiResult<String> unbindCurrentUserSocialAccount(@RequestParam String id) {
+        SysUser user = requireCurrentUser();
+        socialAuthService.unbind(user.getId(), id);
+        return ApiResult.success("解绑成功");
     }
 
     @Operation(summary = "修改当前用户密码", description = "校验旧密码后修改当前登录用户密码")

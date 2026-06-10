@@ -10,6 +10,7 @@ import com.yunlbd.flexboot4.config.JacksonConfig;
 import com.yunlbd.flexboot4.config.MailProperties;
 import com.yunlbd.flexboot4.config.MinioConfig;
 import com.yunlbd.flexboot4.config.MyBatisFlexConfiguration;
+import com.yunlbd.flexboot4.config.OAuthClientConfig;
 import com.yunlbd.flexboot4.config.OpenApiConfig;
 import com.yunlbd.flexboot4.config.OpenApiTagGroupScanner;
 import com.yunlbd.flexboot4.config.OperLogStreamConfig;
@@ -33,6 +34,7 @@ import org.springframework.context.annotation.Import;
         MailProperties.class,
         MinioConfig.class,
         MyBatisFlexConfiguration.class,
+        OAuthClientConfig.class,
         OpenApiConfig.class,
         OpenApiTagGroupScanner.class,
         OperLogStreamConfig.class,
@@ -45,6 +47,7 @@ import org.springframework.context.annotation.Import;
                 "com.yunlbd.flexboot4.common.aspect",
                 "com.yunlbd.flexboot4.controller.ops",
                 "com.yunlbd.flexboot4.controller.sys",
+                "com.yunlbd.flexboot4.oauth",
                 "com.yunlbd.flexboot4.security",
                 "com.yunlbd.flexboot4.service.ops",
                 "com.yunlbd.flexboot4.service.sys",

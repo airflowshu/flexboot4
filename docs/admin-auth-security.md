@@ -1,6 +1,6 @@
 # Admin 认证与账号安全
 
-本文说明 Admin Starter 当前登录认证、个人中心安全设置与 MFA 部署配置。相关能力由 `flexboot4-admin-starter` 提供，前端入口位于 `/profile` 与 `/auth/login`。
+本文说明 Admin Starter 当前登录认证、个人中心安全设置与 MFA 部署配置。相关能力由 `flexboot4-admin-starter` 提供，前端入口位于 `/profile`、`/auth/login` 与 `/auth/oauth/callback`。
 
 ## 1. 登录方式
 
@@ -10,14 +10,17 @@
 POST /api/admin/auth/login
 ```
 
-当前支持两类第一阶段登录：
+当前支持以下第一阶段登录或认证入口：
 
 | 登录方式 | 说明 | 前端入口控制 |
 | --- | --- | --- |
-| 账号密码登录 | 使用 `username + password` 完成第一阶段登录 | `auth.login.options.password.enabled` |
-| 手机验证码登录 | 使用已绑定的 `sys_user.phone` 与短信验证码登录 | `auth.login.options.sms.enabled` |
+| 账号密码登录 | 使用 `username + password` 完成第一阶段登录 | `auth.login.options.methods.password.enabled` |
+| 手机验证码登录 | 使用已绑定的 `sys_user.phone` 与短信验证码登录 | `auth.login.options.methods.sms.enabled` |
+| GitHub 第三方登录 | 使用 GitHub OAuth 完成外部身份认证，再绑定或登录本地系统账号 | `auth.login.options.methods.thirdParty.providers[].enabled` |
 
 短信登录是否展示与是否可用由系统配置 `auth.login.options` 控制。用户在个人中心绑定手机号后，不会自动开启短信登录入口；管理员仍需要显式开启短信登录配置。
+
+第三方登录的详细集成、GitHub OAuth App 配置、账号绑定规则与扩展方式见 [第三方登录集成与使用](admin-social-login.md)。
 
 ## 2. 手机验证码登录流程与限流
 
@@ -248,7 +251,7 @@ services:
 
 ## 7. 数据库与迁移
 
-短信登录、IP 限流与 MFA 均由 Admin Starter 内置 PostgreSQL Flyway 迁移维护：
+短信登录、IP 限流、MFA 与第三方登录绑定表均由 Admin Starter 内置 PostgreSQL Flyway 迁移维护：
 
 ```text
 db/flexboot4-migration/admin/postgresql/V1000__admin_core_schema.sql

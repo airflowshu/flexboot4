@@ -13,7 +13,7 @@ public class LoginMethodOption {
     private Boolean enabled;
     private Integer codeLength;
     private Integer cooldownSeconds;
-    private List<String> providers;
+    private List<LoginProviderOption> providers;
 
     public static LoginMethodOption enabled(boolean enabled) {
         LoginMethodOption option = new LoginMethodOption();
@@ -28,9 +28,9 @@ public class LoginMethodOption {
         return option;
     }
 
-    public static LoginMethodOption thirdPartyDefaults(boolean enabled) {
-        LoginMethodOption option = enabled(enabled);
-        option.setProviders(List.of());
+    public static LoginMethodOption thirdPartyDefaults() {
+        LoginMethodOption option = new LoginMethodOption();
+        option.setProviders(List.of(LoginProviderOption.github(false)));
         return option;
     }
 

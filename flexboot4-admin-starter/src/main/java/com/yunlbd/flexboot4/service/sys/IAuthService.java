@@ -1,6 +1,7 @@
 package com.yunlbd.flexboot4.service.sys;
 
 import com.yunlbd.flexboot4.dto.*;
+import com.yunlbd.flexboot4.entity.sys.SysUser;
 import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
@@ -26,6 +27,11 @@ public interface IAuthService {
      * User login
      */
     LoginResp login(LoginReq req, String clientIp);
+
+    /**
+     * Build local login result for a verified user from an external login flow.
+     */
+    LoginResp loginVerifiedUser(SysUser sysUser, String loginType, String clientIp);
 
     /**
      * Verify second-factor login challenge

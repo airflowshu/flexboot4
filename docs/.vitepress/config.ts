@@ -33,6 +33,7 @@ export default {
         items: [
           { text: '数据库迁移与 Flyway', link: '/database-migration' },
           { text: 'Admin 认证与账号安全', link: '/admin-auth-security' },
+          { text: '第三方登录集成', link: '/admin-social-login' },
           { text: '权限设计', link: '/backend_permission_control_design' },
           { text: 'OpenAPI 标签分组', link: '/API_TAG_GROUP_GUIDE' },
           { text: 'CRUD 生成契约', link: '/crud_module_generator_contract' },
@@ -94,6 +95,7 @@ export default {
         items: [
           { text: '数据库迁移与 Flyway', link: '/database-migration' },
           { text: 'Admin 认证与账号安全', link: '/admin-auth-security' },
+          { text: '第三方登录集成', link: '/admin-social-login' },
           { text: '后端权限控制设计', link: '/backend_permission_control_design' },
           { text: 'OpenAPI 标签分组', link: '/API_TAG_GROUP_GUIDE' },
           { text: 'CRUD 生成契约', link: '/crud_module_generator_contract' },

@@ -108,6 +108,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private boolean isTokenOptionalAuthRequest(HttpServletRequest request) {
+        if (request.getRequestURI().startsWith("/api/admin/auth/oauth/")) {
+            return true;
+        }
         return switch (request.getRequestURI()) {
             case "/api/admin/auth/options",
                  "/api/admin/auth/login",

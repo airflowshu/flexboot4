@@ -95,6 +95,27 @@ class AuthServiceImplTest {
         assertThat(options.getMethods().get("password").getEnabled()).isTrue();
         assertThat(options.getMethods().get("sms").getEnabled()).isFalse();
         assertThat(options.getMethods().get("sms").getCodeLength()).isEqualTo(6);
+        assertThat(options.getMethods().get("thirdParty").getProviders())
+                .singleElement()
+                .satisfies(provider -> {
+                    assertThat(provider.getCode()).isEqualTo("github");
+                    assertThat(provider.getEnabled()).isFalse();
+                });
+    }
+
+    @Test
+    void loginOptionsSupportSimpleProviderConfig() {
+        when(configLookupService.getConfigValue("auth.login.options")).thenReturn(
+                "{\"methods\":{\"thirdParty\":{\"providers\":[{\"code\":\"github\",\"enabled\":true}]}}}"
+        );
+
+        AuthLoginOptions options = authService.getLoginOptions();
+
+        assertThat(options.getMethods().get("thirdParty").getEnabled()).isNull();
+        assertThat(options.getMethods().get("thirdParty").getProviders())
+                .extracting("code")
+                .containsExactly("github");
+        assertThat(options.getMethods().get("thirdParty").getProviders().getFirst().getEnabled()).isTrue();
     }
 
     @Test

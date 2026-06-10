@@ -369,6 +369,47 @@ CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_user_mfa_enabled_totp
       AND type = 'TOTP';
 
 
+CREATE TABLE IF NOT EXISTS sys_user_social_account (
+    id VARCHAR(64) PRIMARY KEY,
+    user_id VARCHAR(64) NOT NULL,
+    provider VARCHAR(32) NOT NULL,
+    provider_user_id VARCHAR(128) NOT NULL,
+    provider_username VARCHAR(120),
+    nickname VARCHAR(120),
+    avatar_url TEXT,
+    email VARCHAR(255),
+    email_verified BOOLEAN DEFAULT FALSE,
+    bind_time TIMESTAMP,
+    last_login_time TIMESTAMP,
+    status INTEGER DEFAULT 1,
+    version BIGINT DEFAULT 0,
+    del_flag INTEGER DEFAULT 0,
+    create_time TIMESTAMP DEFAULT now(),
+    last_modify_time TIMESTAMP DEFAULT now(),
+    create_by VARCHAR(64),
+    last_modify_by VARCHAR(64),
+    remark VARCHAR(500)
+);
+
+COMMENT ON TABLE sys_user_social_account IS '用户第三方登录绑定表';
+COMMENT ON COLUMN sys_user_social_account.user_id IS '系统用户ID';
+COMMENT ON COLUMN sys_user_social_account.provider IS '第三方登录提供方，例如 github';
+COMMENT ON COLUMN sys_user_social_account.provider_user_id IS '第三方平台用户唯一ID';
+COMMENT ON COLUMN sys_user_social_account.provider_username IS '第三方平台登录名';
+COMMENT ON COLUMN sys_user_social_account.email_verified IS '第三方平台邮箱是否已验证';
+
+CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_user_social_provider_uid_alive
+    ON sys_user_social_account(provider, provider_user_id)
+    WHERE del_flag = 0;
+
+CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_user_social_user_provider_alive
+    ON sys_user_social_account(user_id, provider)
+    WHERE del_flag = 0;
+
+CREATE INDEX IF NOT EXISTS idx_sys_user_social_user_id
+    ON sys_user_social_account(user_id);
+
+
 CREATE TABLE IF NOT EXISTS sys_version_log (
     id VARCHAR(64) PRIMARY KEY,
     version_no VARCHAR(64) NOT NULL,
@@ -466,7 +507,7 @@ INSERT INTO sys_config (id, config_key, config_value, config_type, description, 
                         create_time, last_modify_time, del_flag, version, remark)
 VALUES
 ('auth_login_options', 'auth.login.options',
- '{"methods":{"password":{"enabled":true},"sms":{"enabled":false,"codeLength":4,"cooldownSeconds":60},"qrcode":{"enabled":false},"thirdParty":{"enabled":false,"providers":[]},"register":{"enabled":false},"forgetPassword":{"enabled":true}}}',
+ '{"methods":{"password":{"enabled":true},"sms":{"enabled":false,"codeLength":4,"cooldownSeconds":60},"qrcode":{"enabled":false},"thirdParty":{"providers":[{"code":"github","enabled":false}]},"register":{"enabled":false},"forgetPassword":{"enabled":true}}}',
  'JSON', '登录页认证方式开关配置', 1, now(), now(), 0, 0, '短信登录启用前需配置短信厂商与用户手机号'),
 ('auth_sms_template_id', 'auth.sms.templateId', '1', 'STRING',
  '手机号登录短信模板ID；容联云测试模板默认 1', 1, now(), now(), 0, 0,

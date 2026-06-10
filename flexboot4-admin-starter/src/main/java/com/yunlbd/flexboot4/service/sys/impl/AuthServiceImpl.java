@@ -210,6 +210,21 @@ public class AuthServiceImpl implements IAuthService {
         };
     }
 
+    @Override
+    public LoginResp loginVerifiedUser(SysUser sysUser, String loginType, String clientIp) {
+        if (sysUser == null || sysUser.getUsername() == null || sysUser.getUsername().isBlank()) {
+            throw new SecurityException("Invalid user");
+        }
+        if (sysUser.getStatus() != null && sysUser.getStatus() == 0) {
+            throw new IllegalStateException("当前账号已停用");
+        }
+        if (sysUser.getDelFlag() != null && sysUser.getDelFlag() != 0) {
+            throw new SecurityException("Invalid user");
+        }
+        UserDetails userDetails = userDetailsService.loadUserByUsername(sysUser.getUsername());
+        return buildLoginResult(sysUser, userDetails, loginType, clientIp);
+    }
+
     private LoginResp passwordLogin(LoginReq req, String clientIp) {
         LoginMethodOption passwordOption = getLoginOptions().method(AuthLoginOptions.METHOD_PASSWORD);
         if (passwordOption == null || !passwordOption.isEnabled(true)) {

@@ -6,6 +6,7 @@ import com.yunlbd.flexboot4.entity.sys.SysUser;
 import com.yunlbd.flexboot4.dto.sys.UserMfaTotpStatusResp;
 import com.yunlbd.flexboot4.security.UserDetailsCacheService;
 import com.yunlbd.flexboot4.service.sys.FileManagerService;
+import com.yunlbd.flexboot4.service.sys.SocialAuthService;
 import com.yunlbd.flexboot4.service.sys.SysUserService;
 import com.yunlbd.flexboot4.service.sys.UserMfaService;
 import com.yunlbd.flexboot4.service.sys.UserSecurityEmailService;
@@ -59,7 +60,8 @@ class SysUserControllerProfileTest {
                 mock(UserSecurityPhoneService.class),
                 mock(UserSecurityEmailService.class),
                 userMfaService,
-                mock(UserDetailsCacheService.class)
+                mock(UserDetailsCacheService.class),
+                mock(SocialAuthService.class)
         );
 
         var data = controller.getUserInfo().getData();
@@ -159,7 +161,8 @@ class SysUserControllerProfileTest {
                 mock(UserSecurityPhoneService.class),
                 mock(UserSecurityEmailService.class),
                 userMfaService,
-                userDetailsCacheService
+                userDetailsCacheService,
+                mock(SocialAuthService.class)
         );
     }
 }

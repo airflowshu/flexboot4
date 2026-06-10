@@ -20,6 +20,7 @@
 
 - [权限设计](backend_permission_control_design.md)
 - [Admin 认证与账号安全](admin-auth-security.md)
+- [第三方登录集成与使用](admin-social-login.md)
 - [OpenAPI 标签分组](API_TAG_GROUP_GUIDE.md)
 - [通用查询](Mf基础功能.md)
 - [CRUD 生成契约](crud_module_generator_contract.md)
